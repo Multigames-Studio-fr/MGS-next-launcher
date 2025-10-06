@@ -1,0 +1,20 @@
+# Custom Language File for Launcher Customizer
+
+[ejs.app]
+title = "MultiGames Studio Launcher"
+
+[ejs.landing]
+mediaGitHubURL = "https://github.com/Multigames-Studio-fr"
+mediaTwitterURL = "https://twitter.com/multigames_studio"
+mediaInstagramURL = "https://www.instagram.com/multigames_studio/"
+mediaYouTubeURL = "https://www.youtube.com/@multigames_studio"
+mediaDiscordURL = "https://discord.gg/multigames"
+
+[ejs.settings]
+sourceGithubLink = "https://github.com/Multigames-Studio-fr/Multigames-studio-lancheur"
+supportLink = "https://multigames-studio.fr/support"
+
+[ejs.welcome]
+welcomeHeader = "BIENVENUE SUR MULTIGAMES STUDIO"
+welcomeDescription = "Le launcher ultime pour tous vos jeux."
+welcomeDescCTA = "Vous n'êtes qu'à quelques clics de vos jeux favoris."

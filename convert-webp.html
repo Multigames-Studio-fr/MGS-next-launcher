@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebP to PNG Converter</title>
+</head>
+<body>
+    <h1>WebP to PNG Converter</h1>
+    <input type="file" id="fileInput" accept=".webp">
+    <br><br>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <br>
+    <a id="downloadLink" style="display:none;">Download PNG</a>
+    <br><br>
+    <a id="downloadIcoLink" style="display:none;">Download ICO</a>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // Create canvas for PNG
+                        const canvas = document.getElementById('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Convert to PNG
+                        canvas.toBlob(function(blob) {
+                            const url = URL.createObjectURL(blob);
+                            const link = document.getElementById('downloadLink');
+                            link.href = url;
+                            link.download = 'multigames-logo.png';
+                            link.style.display = 'block';
+                            link.textContent = 'Download PNG';
+                        }, 'image/png');
+                        
+                        // Create smaller canvas for ICO (32x32)
+                        const icoCanvas = document.createElement('canvas');
+                        const icoCtx = icoCanvas.getContext('2d');
+                        icoCanvas.width = 32;
+                        icoCanvas.height = 32;
+                        icoCtx.drawImage(img, 0, 0, 32, 32);
+                        
+                        // Convert to ICO (PNG format for ICO)
+                        icoCanvas.toBlob(function(blob) {
+                            const url = URL.createObjectURL(blob);
+                            const link = document.getElementById('downloadIcoLink');
+                            link.href = url;
+                            link.download = 'multigames-logo.ico';
+                            link.style.display = 'block';
+                            link.textContent = 'Download ICO (32x32)';
+                        }, 'image/png');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

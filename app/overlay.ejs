@@ -1,0 +1,37 @@
+<div id="overlayContainer" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center" style="z-index: 6996; display: none;">
+    <div id="serverSelectContent" class="hidden bg-gray-800 border border-gray-600 p-5 rounded-lg max-w-md w-full mx-4">
+        <h3 id="serverSelectHeader" class="text-lg font-semibold text-white mb-4"><%- lang('overlay.serverSelectHeader') %></h3>
+        <div id="serverSelectList">
+            <div id="serverSelectListScrollable" class="max-h-60 overflow-y-auto bg-gray-900 rounded border border-gray-700 p-2">
+                <!-- Server listings populated here. -->
+            </div>
+        </div>
+        <div id="serverSelectActions" class="mt-4 flex justify-end gap-3">
+            <button id="serverSelectCancel" class="overlayKeybindEsc bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded text-sm"><%- lang('overlay.serverSelectCancel') %></button>
+            <button id="serverSelectConfirm" class="overlayKeybindEnter bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded text-sm" type="submit"><%- lang('overlay.serverSelectConfirm') %></button>
+        </div>
+    </div>
+    <div id="accountSelectContent" class="hidden bg-gray-800 border border-gray-600 p-5 rounded-lg max-w-md w-full mx-4">
+        <h3 id="accountSelectHeader" class="text-lg font-semibold text-white mb-4"><%- lang('overlay.accountSelectHeader') %></h3>
+        <div id="accountSelectList">
+            <div id="accountSelectListScrollable" class="max-h-60 overflow-y-auto bg-gray-900 rounded border border-gray-700 p-2">
+                <!-- Accounts populated here. -->
+            </div>
+        </div>
+        <div id="accountSelectActions" class="mt-4 flex justify-end gap-3">
+            <button id="accountSelectCancel" class="overlayKeybindEsc bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded text-sm"><%- lang('overlay.accountSelectCancel') %></button>
+            <button id="accountSelectConfirm" class="overlayKeybindEnter bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded text-sm" type="submit"><%- lang('overlay.accountSelectConfirm') %></button>
+        </div>
+    </div>
+    <div id="overlayContent" class="bg-gray-800 border border-gray-600 p-5 rounded-lg max-w-lg w-full mx-4">
+        <h2 id="overlayTitle" class="text-xl font-semibold text-white mb-3">Lorem Ipsum<br>Finis Illud</h2>
+        <p id="overlayDesc" class="text-gray-300 text-sm leading-relaxed mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud..</p>
+        <div id="overlayActionContainer" class="flex justify-end gap-3">
+            <div id="overlayDismissWrapper">
+                <button id="overlayDismiss" class="overlayKeybindEsc bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded text-sm hidden">Fermer</button>
+            </div>
+            <button id="overlayAcknowledge" class="overlayKeybindEnter bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded text-sm">Réessayer</button>
+        </div>
+    </div>
+    <script src="./assets/js/scripts/overlay.js"></script>
+</div>

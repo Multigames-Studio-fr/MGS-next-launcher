@@ -1,0 +1,422 @@
+<div id="settingsContainer" style="display: none;">
+  <div class="flex min-h-screen bg-gray-900">
+    <div id="settingsContainerLeft" class="w-64 bg-gray-800 border-r border-gray-700">
+      <div id="settingsNavContainer" class="p-4">
+        <div id="settingsNavHeader" class="mb-6">
+          <span id="settingsNavHeaderText" class="text-lg font-semibold text-white"><%- lang('settings.navHeaderText') %></span>
+        </div>
+        <div id="settingsNavItemsContainer">
+          <div id="settingsNavItemsContent" class="space-y-1">
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabAccount" id="settingsNavAccount" selected>
+              <%- lang('settings.navAccount') %>
+            </button>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabMinecraft">
+              <%- lang('settings.navMinecraft') %>
+            </button>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabMods">
+              <%- lang('settings.navMods') %>
+            </button>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabJava">
+              <%- lang('settings.navJava') %>
+            </button>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabLauncher">
+              <%- lang('settings.navLauncher') %>
+            </button>
+            <div class="my-4 border-t border-gray-700"></div>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabAbout">
+              <%- lang('settings.navAbout') %>
+            </button>
+            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabUpdate" id="settingsNavUpdate">
+              <%- lang('settings.navUpdates') %>
+            </button>
+            <div class="mt-6 pt-4 border-t border-gray-700">
+              <button id="settingsNavDone" class="w-full bg-brand-primary hover:bg-brand-light text-white py-2 px-3 rounded transition-colors font-medium">
+                <%- lang('settings.navDone') %>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="settingsContainerRight" class="flex-1 p-6">
+      <div id="settingsTabAccount" class="settingsTab">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabAccountHeaderText') %></h2>
+          <p class="text-sm text-gray-400"><%- lang('settings.tabAccountHeaderDesc') %></p>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 23 23">
+                  <path fill="#f35325" d="M1 1h10v10H1z" />
+                  <path fill="#81bc06" d="M12 1h10v10H12z" />
+                  <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                  <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+                <span class="text-white font-medium"><%- lang('settings.microsoftAccount') %></span>
+              </div>
+              <button class="bg-brand-primary hover:bg-brand-light text-white py-1 px-3 rounded text-sm transition-colors" id="settingsAddMicrosoftAccount">
+                <%- lang('settings.addMicrosoftAccount') %>
+              </button>
+            </div>
+            <div id="settingsCurrentMicrosoftAccounts">
+              <!-- Microsoft auth accounts populated here. -->
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-white font-medium"><%- lang('settings.mojangAccount') %></span>
+              <button class="bg-brand-primary hover:bg-brand-light text-white py-1 px-3 rounded text-sm transition-colors" id="settingsAddMojangAccount">
+                <%- lang('settings.addMojangAccount') %>
+              </button>
+            </div>
+            <div id="settingsCurrentMojangAccounts">
+              <!-- Mojang auth accounts populated here. -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabMinecraft" class="settingsTab hidden">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.minecraftTabHeaderText') %></h2>
+          <p class="text-sm text-gray-400"><%- lang('settings.minecraftTabHeaderDesc') %></p>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <label class="text-white font-medium block mb-2"><%- lang('settings.gameResolutionTitle') %></label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="settingsGameWidth" min="0" cValue="GameWidth" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
+              <span class="text-white">×</span>
+              <input type="number" id="settingsGameHeight" min="0" cValue="GameHeight" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <label class="text-white font-medium"><%- lang('settings.launchFullscreenTitle') %></label>
+              </div>
+              <label class="toggleSwitch">
+                <input type="checkbox" cValue="Fullscreen" class="hidden">
+                <span class="toggleSwitchSlider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <label class="text-white font-medium"><%- lang('settings.autoConnectTitle') %></label>
+              </div>
+              <label class="toggleSwitch">
+                <input type="checkbox" cValue="AutoConnect" class="hidden">
+                <span class="toggleSwitchSlider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <label class="text-white font-medium"><%- lang('settings.launchDetachedTitle') %></label>
+                <p class="text-sm text-gray-400 mt-1"><%- lang('settings.launchDetachedDesc') %></p>
+              </div>
+              <label class="toggleSwitch">
+                <input type="checkbox" cValue="LaunchDetached" class="hidden">
+                <span class="toggleSwitchSlider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabMods" class="settingsTab hidden">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabModsHeaderText') %></h2>
+          <p class="text-sm text-gray-400"><%- lang('settings.tabModsHeaderDesc') %></p>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="settingsSelServContent"></div>
+            <button class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors mt-3 settingsSwitchServerButton">
+              <%- lang('settings.switchServerButton') %>
+            </button>
+          </div>
+          <div id="settingsModsContainer" class="space-y-4">
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <h3 class="text-white font-medium mb-3"><%- lang('settings.requiredMods') %></h3>
+              <div id="settingsReqModsContent"></div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <h3 class="text-white font-medium mb-3"><%- lang('settings.optionalMods') %></h3>
+              <div id="settingsOptModsContent"></div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <h3 class="text-white font-medium mb-3"><%- lang('settings.dropinMods') %></h3>
+              <button id="settingsDropinFileSystemButton" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors">
+                <%- lang('settings.addMods') %>
+              </button>
+              <p class="text-sm text-gray-400 mt-2"><%- lang('settings.dropinRefreshNote') %></p>
+              <div id="settingsDropinModsContent" class="mt-3"></div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <h3 class="text-white font-medium mb-3"><%- lang('settings.shaderpacks') %></h3>
+              <p class="text-sm text-gray-400 mb-3"><%- lang('settings.shaderpackDesc') %></p>
+              <div class="flex items-center gap-2">
+                <button id="settingsShaderpackButton" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors">+</button>
+                <div class="flex-1">
+                  <div class="bg-gray-700 text-white py-2 px-4 rounded" id="settingsShadersSelected">
+                    <%- lang('settings.selectShaderpack') %>
+                  </div>
+                  <div class="bg-gray-700 text-white py-2 px-4 rounded mt-2 hidden" id="settingsShadersOptions"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabJava" class="settingsTab hidden">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabJavaHeaderText') %></h2>
+          <p class="text-sm text-gray-400"><%- lang('settings.tabJavaHeaderDesc') %></p>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div class="settingsSelServContent"></div>
+            <button class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors mt-3">
+              <%- lang('settings.switchServerButton') %>
+            </button>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4" id="settingsMemoryContainer">
+            <h3 class="text-white font-medium mb-4"><%- lang('settings.memoryTitle') %></h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="settingsMemoryContent">
+              <div class="lg:col-span-2">
+                <div class="space-y-4">
+                  <div>
+                    <label class="text-white font-medium block mb-2"><%- lang('settings.maxRAM') %></label>
+                    <div class="flex items-center gap-3">
+                      <div id="settingsMaxRAMRange" class="rangeSlider flex-1" cValue="MaxRAM" serverDependent min="3" max="8" value="3" step="0.5">
+                        <div class="rangeSliderBar"></div>
+                        <div class="rangeSliderTrack"></div>
+                      </div>
+                      <span id="settingsMaxRAMLabel" class="text-white font-medium w-12">3G</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-white font-medium block mb-2"><%- lang('settings.minRAM') %></label>
+                    <div class="flex items-center gap-3">
+                      <div id="settingsMinRAMRange" class="rangeSlider flex-1" cValue="MinRAM" serverDependent min="3" max="8" value="3" step="0.5">
+                        <div class="rangeSliderBar"></div>
+                        <div class="rangeSliderTrack"></div>
+                      </div>
+                      <span id="settingsMinRAMLabel" class="text-white font-medium w-12">3G</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="text-sm text-gray-400 mt-4" id="settingsMemoryDesc"><%- lang('settings.memoryDesc') %></p>
+              </div>
+              <div id="settingsMemoryStatus" class="bg-gray-900 rounded-lg p-4">
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-white font-medium block"><%- lang('settings.memoryTotalTitle') %></label>
+                    <span id="settingsMemoryTotal" class="text-blue-400 text-lg font-semibold">16G</span>
+                  </div>
+                  <div>
+                    <label class="text-white font-medium block"><%- lang('settings.memoryAvailableTitle') %></label>
+                    <span id="settingsMemoryAvail" class="text-green-400 text-lg font-semibold">7.3G</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <h3 class="text-white font-medium mb-4"><%- lang('settings.javaExecutableTitle') %></h3>
+            <div class="space-y-3">
+              <div id="settingsJavaExecDetails" class="text-sm text-gray-400"><!-- Invalid Selection --></div>
+              <div class="flex items-center gap-2">
+                <i class="bi bi-folder2-open text-gray-400"></i>
+                <input class="bg-gray-700 text-white rounded p-2 flex-1 border border-gray-600 focus:border-brand-primary" 
+                       id="settingsJavaExecVal" type="text" value="null" cValue="JavaExecutable" serverDependent disabled />
+                <button class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors" 
+                        id="settingsJavaExecSel" dialogTitle="<%- lang('settings.javaExecSelDialogTitle') %>" dialogDirectory="false">
+                  <%- lang('settings.javaExecSelButtonText') %>
+                </button>
+              </div>
+              <div class="text-sm text-gray-400">
+                <%- lang('settings.javaExecDesc') %>
+                <strong id="settingsJavaReqDesc"><!-- Requires Java 8 x64. --></strong><br />
+                <%- lang('settings.javaPathDesc', {'pathSuffix': `bin${process.platform==='win32' ? '\\javaw.exe' : '/java' }`}) %>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4" id="settingsJVMOptsContainer">
+            <h3 class="text-white font-medium mb-4"><%- lang('settings.jvmOptsTitle') %></h3>
+            <div class="flex items-center gap-2">
+              <i class="bi bi-gear text-gray-400"></i>
+              <input id="settingsJVMOptsVal" class="bg-gray-700 text-white rounded p-2 flex-1 border border-gray-600 focus:border-blue-500" 
+                     cValue="JVMOptions" serverDependent type="text" />
+            </div>
+            <div class="text-sm text-gray-400 mt-3">
+              <%- lang('settings.jvmOptsDesc') %><br />
+              <a href="#" id="settingsJvmOptsLink" class="text-blue-400 hover:text-blue-300 underline"><!-- Available Options --></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabLauncher" class="settingsTab hidden">
+        <div class="settingsTabHeader mb-4">
+          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%- lang('settings.launcherTabHeaderText')
+              %></span>
+          <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.launcherTabHeaderDesc') %></span>
+        </div>
+        <div class="settingsFieldContainer mb-4">
+          <div class="settingsFieldLeft">
+            <span class="settingsFieldTitle text-lg font-semibold text-white"><%- lang('settings.allowPrereleaseTitle')
+                %></span>
+            <span class="settingsFieldDesc text-sm text-gray-400"><%- lang('settings.allowPrereleaseDesc') %></span>
+          </div>
+          <div class="settingsFieldRight">
+            <label class="toggleSwitch">
+              <input type="checkbox" cValue="AllowPrerelease" class="hidden">
+              <span class="toggleSwitchSlider "></span>
+            </label>
+          </div>
+        </div>
+        <div class="settingsFileSelContainer mb-4">
+          <div class="settingsFileSelContent">
+            <div class="settingsFieldTitle text-lg font-semibold text-white" id="settingsDataDirTitle">
+              <%- lang('settings.dataDirectoryTitle') %>
+            </div>
+            <div class="settingsFileSelActions flex items-center mt-2">
+              <i class="bi bi-folder2-open text-gray-400 mr-2"></i>
+              <input class="settingsFileSelVal bg-gray-700 text-white rounded p-2 flex-grow" type="text" value="null"
+                cValue="DataDirectory" disabled>
+              <button class="settingsFileSelButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light ml-2"
+                dialogTitle="<%- lang('settings.selectDataDirectory') %>" dialogDirectory="true">
+                <%- lang('settings.chooseFolder') %>
+              </button>
+            </div>
+          </div>
+          <div class="settingsFileSelDesc text-sm text-gray-400 mt-2">
+            <%- lang('settings.dataDirectoryDesc') %>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabAbout" class="settingsTab hidden">
+        <div class="settingsTabHeader mb-4">
+          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%- lang('settings.aboutTabHeaderText')
+              %></span>
+          <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.aboutTabHeaderDesc') %></span>
+        </div>
+        <div id="settingsAboutCurrentContainer" class="mb-4">
+          <div id="settingsAboutCurrentContent">
+            <div id="settingsAboutCurrentHeadline" class="flex items-center mb-4">
+              <img id="settingsAboutLogo" src="./assets/images/multigames-logo.webp" class="w-12 h-12 mr-4" />
+              <span id="settingsAboutTitle" class="text-2xl font-bold text-white">
+                <%- lang('settings.aboutTitle', { appName: lang('app.title') }) %>
+              </span>
+            </div>
+            <div id="settingsAboutCurrentVersion" class="flex items-center mb-4">
+              <div id="settingsAboutCurrentVersionCheck" class="text-green-500 mr-2">&#10003;</div>
+              <div id="settingsAboutCurrentVersionDetails">
+                <span id="settingsAboutCurrentVersionTitle" class="text-lg font-semibold text-white">
+                  <%- lang('settings.stableRelease') %>
+                </span>
+                <div id="settingsAboutCurrentVersionLine" class="flex items-center">
+                  <span id="settingsAboutCurrentVersionText" class="text-sm text-gray-400 mr-2">
+                    <%- lang('settings.versionText') %>
+                  </span>
+                  <span id="settingsAboutCurrentVersionValue" class="text-sm text-white">2.1.1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="settingsAboutButtons" class="flex flex-col space-y-2">
+            <a href="<%- lang('settings.sourceGithubLink') %>" id="settingsAboutSourceButton"
+              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              <%- lang('settings.sourceGithub') %>
+            </a>
+            <!-- The following must be included in third-party usage. -->
+            <!-- <a href="https://github.com/dscalzi/HeliosLauncher" id="settingsAboutSourceButton" class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">Original Source</a> -->
+            <a href="<%- lang('settings.supportLink') %>" id="settingsAboutSupportButton"
+              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              <%- lang('settings.support') %>
+            </a>
+            <a href="#" id="settingsAboutDevToolsButton"
+              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              <%- lang('settings.devToolsConsole') %>
+            </a>
+          </div>
+        </div>
+        <div class="settingsChangelogContainer">
+          <div class="settingsChangelogContent">
+            <div class="settingsChangelogHeadline mb-4">
+              <div class="settingsChangelogLabel text-lg font-semibold text-white">
+                <%- lang('settings.releaseNotes') %>
+              </div>
+              <div class="settingsChangelogTitle text-2xl font-bold text-white">
+                <%- lang('settings.changelog') %>
+              </div>
+            </div>
+            <div class="settingsChangelogText text-sm text-gray-400">
+              <%- lang('settings.noReleaseNotes') %>
+            </div>
+          </div>
+          <div class="settingsChangelogActions mt-4">
+            <a class="settingsChangelogButton settingsAboutButton bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500"
+              href="#">
+              <%- lang('settings.viewReleaseNotes') %>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabUpdate" class="settingsTab hidden">
+        <div class="settingsTabHeader mb-4">
+          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%-
+              lang('settings.launcherUpdatesHeaderText') %></span>
+          <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.launcherUpdatesHeaderDesc')
+              %></span>
+        </div>
+        <div id="settingsUpdateStatusContainer" class="mb-4">
+          <div id="settingsUpdateStatusContent">
+            <div id="settingsUpdateStatusHeadline" class="mb-4">
+              <span id="settingsUpdateTitle"
+                class="text-lg font-semibold text-white"><!-- You Are Running the Latest Version --></span>
+            </div>
+            <div id="settingsUpdateVersion" class="flex items-center mb-4">
+              <div id="settingsUpdateVersionCheck" class="text-green-500 mr-2">&#10003;</div>
+              <div id="settingsUpdateVersionDetails">
+                <span id="settingsUpdateVersionTitle" class="text-lg font-semibold text-white"><%-
+                    lang('settings.stableRelease') %></span>
+                <div id="settingsUpdateVersionLine" class="flex items-center">
+                  <span id="settingsUpdateVersionText" class="text-sm text-gray-400 mr-2"><%-
+                      lang('settings.versionText') %></span>
+                  <span id="settingsUpdateVersionValue" class="text-sm text-white">2.1.1</span>
+                </div>
+              </div>
+            </div>
+            <div id="settingsUpdateActionContainer" class="mt-4">
+              <a id="settingsUpdateActionButton" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500">
+                <%- lang('settings.checkForUpdates') %>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="settingsChangelogContainer">
+          <div class="settingsChangelogContent">
+            <div class="settingsChangelogHeadline mb-4">
+              <div class="settingsChangelogLabel text-lg font-semibold text-white">
+                <%- lang('settings.whatsNew') %>
+              </div>
+              <div class="settingsChangelogTitle text-2xl font-bold text-white">
+                <%- lang('settings.updateReleaseNotes') %>
+              </div>
+            </div>
+            <div class="settingsChangelogText text-sm text-gray-400">
+              <%- lang('settings.noReleaseNotes') %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="./assets/js/scripts/settings.js"></script>
+</div>
