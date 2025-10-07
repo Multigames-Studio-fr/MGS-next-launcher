@@ -60,6 +60,39 @@ Avant de commencer, assurez-vous d'avoir :
    npm run build
    ```
 
+## Rapport de bugs
+
+### Méthode automatique (recommandée)
+Le launcher dispose d'un système de rapport de bugs intégré :
+
+1. **Appuyez sur `Ctrl + Shift + L`** pour ouvrir le formulaire de rapport
+2. Remplissez les informations demandées :
+   - **Votre pseudo**
+   - **Titre du problème**
+   - **Description détaillée** du problème rencontré
+3. Les informations système et logs sont collectés automatiquement
+4. Cliquez sur "Envoyer le rapport"
+
+### Méthode manuelle
+Si le système automatique ne fonctionne pas, créez un rapport manuel :
+
+**Utilisateur :** [Votre Pseudo]
+
+**Titre :** [Titre du problème rencontré]
+
+**Description :**  
+Veuillez détailler les problèmes rencontrés avec le launcher. Fournissez les informations suivantes :  
+- **Système d'exploitation (OS)** : [Indiquez votre OS, par exemple Windows 10, macOS, etc.]  
+- **RAM** : [Indiquez la quantité de RAM de votre machine]  
+- **Processeur (CPU)** : [Indiquez le modèle de votre processeur]  
+- **Version du launcher** : [Indiquez la version du launcher utilisée]  
+
+Pour nous aider à diagnostiquer le problème, fournissez également les logs :  
+1. Ouvrez le launcher  
+2. Appuyez sur **Ctrl + Shift + I** pour ouvrir la console de développement  
+3. Allez dans l'onglet **Console**  
+4. Copiez tous les logs affichés et collez-les dans votre rapport  
+
 ## Contribution
 
 Les contributions sont les bienvenues ! Pour contribuer :
@@ -76,4 +109,4 @@ Les contributions sont les bienvenues ! Pour contribuer :
 
 ---
 
-Pour toute question ou problème, n'hésitez pas à ouvrir une issue dans le dépôt GitHub.
+Pour toute question ou problème, n'hésitez pas à utiliser le système de rapport intégré (`Ctrl + Shift + L`) ou ouvrir une issue dans le dépôt GitHub.

@@ -235,15 +235,21 @@ function loadBugReporterConfig() {
     try {
         const path = require('path')
         const fs = require('fs')
-        const configPath = path.join(__dirname, '..', 'config', 'bug-reporter.json')
+        
+        // Use remote.app.getAppPath() to get the correct path in both dev and production
+        const appPath = remote.app.getAppPath()
+        const configPath = path.join(appPath, 'app', 'assets', 'config', 'bug-reporter.json')
+        
         const configData = fs.readFileSync(configPath, 'utf8')
         bugReporterConfig = JSON.parse(configData)
+        console.log('Configuration bug reporter chargée depuis:', configPath)
     } catch (error) {
         console.error('Erreur lors du chargement de la configuration bug reporter:', error)
+        console.log('Utilisation de la configuration par défaut avec webhook configuré')
         bugReporterConfig = {
             discord: {
-                webhookUrl: 'https://discord.com/api/webhooks/1425202414314586227/oy-Q5BiSmN10jFmvcDZW2fyPAzx8pBfUccMNOG_7BtuD-RCsNqHyrspXyzQ02H9fk47R',
-                enabled: false
+                webhookUrl: 'https://discord.com/api/webhooks/1425207398171279481/ykYLbR8LgdYrctUEfFiDFQYTvFkIfZxknRHZjipUMGdrYB6ecAxfS0OBea2eL1Tas_4I',
+                enabled: true
             },
             logs: {
                 maxLogLength: 1024,
@@ -321,6 +327,11 @@ function showLogsModal() {
                 <div>Version du launcher: ${remote.app.getVersion()}</div>
                 <div>Node.js: ${process.version}</div>
                 <div>Electron: ${process.versions.electron}</div>
+                <div>RAM Totale: ${Math.round(require('os').totalmem() / 1024 / 1024 / 1024)}GB</div>
+                <div>RAM Libre: ${Math.round(require('os').freemem() / 1024 / 1024 / 1024)}GB</div>
+                <div>CPU: ${require('os').cpus()[0]?.model || 'Inconnu'}</div>
+                <div>Écran: ${screen.width}x${screen.height}</div>
+                <div id="mcAccountInfo">Compte MC: Chargement...</div>
             </div>
         </div>
         
@@ -340,6 +351,9 @@ function showLogsModal() {
 
     // Collect console logs
     collectConsoleLogs()
+    
+    // Load and display Minecraft account information
+    loadMinecraftAccountInfo()
 
     // Event listeners
     document.getElementById('closeLogsModal').addEventListener('click', closeLogsModal)
@@ -353,8 +367,76 @@ function showLogsModal() {
         }
     })
 
-    // Focus on first input
-    document.getElementById('userPseudo').focus()
+    // Pre-fill pseudo with Minecraft username if available
+    const accountInfo = getMinecraftAccountInfo()
+    const pseudoInput = document.getElementById('userPseudo')
+    
+    if (accountInfo.exists && accountInfo.username !== 'Inconnu') {
+        pseudoInput.value = accountInfo.username
+        // Focus on title input since pseudo is pre-filled
+        document.getElementById('bugTitle').focus()
+    } else {
+        // Focus on pseudo input if it needs to be filled
+        pseudoInput.focus()
+    }
+}
+
+/**
+ * Get Minecraft account information
+ */
+function getMinecraftAccountInfo() {
+    try {
+        const path = require('path')
+        const appPath = remote.app.getAppPath()
+        const configManagerPath = path.join(appPath, 'app', 'assets', 'js', 'configmanager')
+        const ConfigManager = require(configManagerPath)
+        const selectedAccount = ConfigManager.getSelectedAccount()
+        
+        if (selectedAccount) {
+            return {
+                exists: true,
+                type: selectedAccount.type || 'Inconnu',
+                username: selectedAccount.displayName || 'Inconnu',
+                uuid: selectedAccount.uuid || 'Inconnu',
+                accessTokenLength: selectedAccount.accessToken ? selectedAccount.accessToken.length : 0
+            }
+        } else {
+            return {
+                exists: false,
+                message: 'Aucun compte sélectionné'
+            }
+        }
+    } catch (error) {
+        return {
+            exists: false,
+            error: error.message
+        }
+    }
+}
+
+/**
+ * Load and display Minecraft account information in the modal
+ */
+function loadMinecraftAccountInfo() {
+    const mcAccountInfoElement = document.getElementById('mcAccountInfo')
+    if (!mcAccountInfoElement) return
+    
+    const accountInfo = getMinecraftAccountInfo()
+    
+    if (accountInfo.exists) {
+        mcAccountInfoElement.innerHTML = `
+            <div>Compte MC: ${accountInfo.username}</div>
+            <div>UUID MC: ${accountInfo.uuid}</div>
+            <div>Type: ${accountInfo.type}</div>
+        `
+        mcAccountInfoElement.style.color = '#90EE90' // Light green for success
+    } else if (accountInfo.error) {
+        mcAccountInfoElement.innerHTML = `<div>Erreur MC: ${accountInfo.error}</div>`
+        mcAccountInfoElement.style.color = '#FFB6C1' // Light red for error
+    } else {
+        mcAccountInfoElement.innerHTML = `<div>Compte MC: ${accountInfo.message}</div>`
+        mcAccountInfoElement.style.color = '#FFA500' // Orange for warning
+    }
 }
 
 /**
@@ -384,15 +466,109 @@ function collectConsoleLogs() {
     logs.push(`[${new Date().toISOString()}] INFO: Node.js: ${process.version}`)
     logs.push(`[${new Date().toISOString()}] INFO: Electron: ${process.versions.electron}`)
     
-    // Try to get actual console logs from the devtools console
-    // This is a basic implementation - in a real scenario you might want to implement
-    // a proper logging system that stores logs in memory
-    
     try {
-        // Check if there are any errors in the console
-        const errorEntries = []
+        // Detailed system information
+        const os = require('os')
+        logs.push(`[${new Date().toISOString()}] SYSTEM: OS Type: ${os.type()}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: OS Release: ${os.release()}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: CPU Architecture: ${os.arch()}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: CPU Model: ${os.cpus()[0]?.model || 'Inconnu'}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: CPU Cores: ${os.cpus().length}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: Total RAM: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)}GB`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: Free RAM: ${Math.round(os.freemem() / 1024 / 1024 / 1024)}GB`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: Hostname: ${os.hostname()}`)
+        logs.push(`[${new Date().toISOString()}] SYSTEM: Uptime: ${Math.round(os.uptime() / 3600)}h`)
         
-        // Get performance entries that might indicate issues
+        // GPU Information (if available through navigator)
+        if (navigator.userAgentData) {
+            logs.push(`[${new Date().toISOString()}] BROWSER: Platform: ${navigator.userAgentData.platform}`)
+            logs.push(`[${new Date().toISOString()}] BROWSER: Mobile: ${navigator.userAgentData.mobile}`)
+        }
+        
+        // Screen information
+        logs.push(`[${new Date().toISOString()}] DISPLAY: Screen Resolution: ${screen.width}x${screen.height}`)
+        logs.push(`[${new Date().toISOString()}] DISPLAY: Color Depth: ${screen.colorDepth}bit`)
+        logs.push(`[${new Date().toISOString()}] DISPLAY: Pixel Ratio: ${window.devicePixelRatio}`)
+        
+        // WebGL information (for GPU details)
+        try {
+            const canvas = document.createElement('canvas')
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+            if (gl) {
+                logs.push(`[${new Date().toISOString()}] GPU: Renderer: ${gl.getParameter(gl.RENDERER)}`)
+                logs.push(`[${new Date().toISOString()}] GPU: Vendor: ${gl.getParameter(gl.VENDOR)}`)
+                logs.push(`[${new Date().toISOString()}] GPU: WebGL Version: ${gl.getParameter(gl.VERSION)}`)
+                logs.push(`[${new Date().toISOString()}] GPU: GLSL Version: ${gl.getParameter(gl.SHADING_LANGUAGE_VERSION)}`)
+            }
+        } catch (e) {
+            logs.push(`[${new Date().toISOString()}] GPU: Impossible de récupérer les informations WebGL: ${e.message}`)
+        }
+        
+        // Java information (if available)
+        logs.push(`[${new Date().toISOString()}] JAVA: Process Platform: ${process.platform}`)
+        logs.push(`[${new Date().toISOString()}] JAVA: Process Arch: ${process.arch}`)
+        logs.push(`[${new Date().toISOString()}] JAVA: Process Version: ${process.version}`)
+        
+        // Try to get Minecraft account information
+        try {
+            const path = require('path')
+            const appPath = remote.app.getAppPath()
+            const configManagerPath = path.join(appPath, 'app', 'assets', 'js', 'configmanager')
+            const ConfigManager = require(configManagerPath)
+            const selectedAccount = ConfigManager.getSelectedAccount()
+            if (selectedAccount) {
+                logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: Type: ${selectedAccount.type || 'Inconnu'}`)
+                logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: Username: ${selectedAccount.displayName || 'Inconnu'}`)
+                logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: UUID: ${selectedAccount.uuid || 'Inconnu'}`)
+                logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: AccessToken Length: ${selectedAccount.accessToken ? selectedAccount.accessToken.length : 0}`)
+            } else {
+                logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: Aucun compte sélectionné`)
+            }
+        } catch (error) {
+            logs.push(`[${new Date().toISOString()}] MC_ACCOUNT: Erreur lors de la récupération: ${error.message}`)
+        }
+        
+        // Try to get server information
+        try {
+            const path = require('path')
+            const appPath = remote.app.getAppPath()
+            const configManagerPath = path.join(appPath, 'app', 'assets', 'js', 'configmanager')
+            const ConfigManager = require(configManagerPath)
+            const selectedServer = ConfigManager.getSelectedServer()
+            if (selectedServer) {
+                logs.push(`[${new Date().toISOString()}] MC_SERVER: Selected Server: ${selectedServer}`)
+            }
+            
+            const gameDirectory = ConfigManager.getGameDirectory()
+            if (gameDirectory) {
+                logs.push(`[${new Date().toISOString()}] MC_DIRS: Game Directory: ${gameDirectory}`)
+            }
+            
+            const javaExecutable = ConfigManager.getJavaExecutable()
+            if (javaExecutable) {
+                logs.push(`[${new Date().toISOString()}] MC_JAVA: Java Executable: ${javaExecutable}`)
+            }
+            
+            const maxRAM = ConfigManager.getMaxRAM()
+            const minRAM = ConfigManager.getMinRAM()
+            logs.push(`[${new Date().toISOString()}] MC_MEMORY: Min RAM: ${minRAM}MB, Max RAM: ${maxRAM}MB`)
+            
+        } catch (error) {
+            logs.push(`[${new Date().toISOString()}] MC_CONFIG: Erreur lors de la récupération: ${error.message}`)
+        }
+        
+        // Network information
+        const networkInterfaces = os.networkInterfaces()
+        Object.keys(networkInterfaces).forEach(interfaceName => {
+            const interfaces = networkInterfaces[interfaceName]
+            interfaces.forEach((iface, index) => {
+                if (!iface.internal) {
+                    logs.push(`[${new Date().toISOString()}] NETWORK: ${interfaceName}[${index}]: ${iface.address} (${iface.family})`)
+                }
+            })
+        })
+        
+        // Performance information
         if (typeof performance !== 'undefined' && performance.getEntries) {
             const entries = performance.getEntries()
             entries.forEach(entry => {
@@ -402,17 +578,30 @@ function collectConsoleLogs() {
             })
         }
         
-        // Add memory usage information
+        // Memory usage information
         if (typeof performance !== 'undefined' && performance.memory) {
             logs.push(`[${new Date().toISOString()}] MEMORY: Used: ${Math.round(performance.memory.usedJSHeapSize / 1024 / 1024)}MB, Total: ${Math.round(performance.memory.totalJSHeapSize / 1024 / 1024)}MB, Limit: ${Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)}MB`)
         }
         
+        // Process information
+        logs.push(`[${new Date().toISOString()}] PROCESS: PID: ${process.pid}`)
+        logs.push(`[${new Date().toISOString()}] PROCESS: Memory Usage: ${JSON.stringify(process.memoryUsage())}`)
+        logs.push(`[${new Date().toISOString()}] PROCESS: CPU Usage: ${JSON.stringify(process.cpuUsage())}`)
+        
+        // Environment variables (safe ones only)
+        logs.push(`[${new Date().toISOString()}] ENV: TEMP: ${process.env.TEMP || 'Non défini'}`)
+        logs.push(`[${new Date().toISOString()}] ENV: APPDATA: ${process.env.APPDATA || 'Non défini'}`)
+        logs.push(`[${new Date().toISOString()}] ENV: PROCESSOR_ARCHITECTURE: ${process.env.PROCESSOR_ARCHITECTURE || 'Non défini'}`)
+        logs.push(`[${new Date().toISOString()}] ENV: NUMBER_OF_PROCESSORS: ${process.env.NUMBER_OF_PROCESSORS || 'Non défini'}`)
+        
         // Get current URL and page information
         logs.push(`[${new Date().toISOString()}] PAGE: Current URL: ${window.location.href}`)
         logs.push(`[${new Date().toISOString()}] PAGE: User Agent: ${navigator.userAgent}`)
+        logs.push(`[${new Date().toISOString()}] PAGE: Language: ${navigator.language}`)
+        logs.push(`[${new Date().toISOString()}] PAGE: Online: ${navigator.onLine}`)
         
         // Check for specific launcher components
-        const launcherElements = ['launch_button', 'server_selection_button', 'launch_progress']
+        const launcherElements = ['launch_button', 'server_selection_button', 'launch_progress', 'newsContent', 'mojang_status_icon']
         launcherElements.forEach(elementId => {
             const element = document.getElementById(elementId)
             if (element) {
@@ -421,6 +610,19 @@ function collectConsoleLogs() {
                 logs.push(`[${new Date().toISOString()}] DOM: Element '${elementId}' manquant`)
             }
         })
+        
+        // Check localStorage for launcher settings
+        try {
+            const localStorageKeys = Object.keys(localStorage)
+            logs.push(`[${new Date().toISOString()}] STORAGE: LocalStorage keys: ${localStorageKeys.length}`)
+            localStorageKeys.forEach(key => {
+                if (key.toLowerCase().includes('launcher') || key.toLowerCase().includes('config')) {
+                    logs.push(`[${new Date().toISOString()}] STORAGE: ${key}: ${localStorage.getItem(key)?.substring(0, 100)}...`)
+                }
+            })
+        } catch (error) {
+            logs.push(`[${new Date().toISOString()}] STORAGE: Erreur localStorage: ${error.message}`)
+        }
         
     } catch (error) {
         logs.push(`[${new Date().toISOString()}] ERROR: Erreur lors de la collecte des logs: ${error.message}`)
@@ -445,7 +647,7 @@ async function sendLogsReport() {
         return
     }
 
-    if (!bugReporterConfig || !bugReporterConfig.discord.enabled || bugReporterConfig.discord.webhookUrl === 'https://discord.com/api/webhooks/1425202414314586227/oy-Q5BiSmN10jFmvcDZW2fyPAzx8pBfUccMNOG_7BtuD-RCsNqHyrspXyzQ02H9fk47R') {
+    if (!bugReporterConfig || !bugReporterConfig.discord.enabled || bugReporterConfig.discord.webhookUrl === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
         alert('Configuration du webhook Discord manquante ou désactivée. Contactez un administrateur.')
         return
     }
@@ -456,36 +658,64 @@ async function sendLogsReport() {
     sendButton.disabled = true
 
     try {
+        // Limit data to Discord embed limits
+        const maxFieldValue = 1000 // Leave some margin from 1024 limit
+        const maxTitle = 250 // Leave some margin from 256 limit
+        
+        // Truncate title if too long
+        const truncatedTitle = title.length > maxTitle ? title.substring(0, maxTitle - 3) + '...' : title
+        
+        // Truncate description
+        const truncatedDescription = description.length > maxFieldValue ? description.substring(0, maxFieldValue - 3) + '...' : description
+        
+        // Truncate system info
+        let truncatedSystemInfo = systemInfo
+        if (systemInfo.length > maxFieldValue - 10) { // -10 for code block markup
+            truncatedSystemInfo = systemInfo.substring(0, maxFieldValue - 13) + '...'
+        }
+        
+        // Truncate logs significantly
+        let truncatedLogs = consoleLogs
+        if (consoleLogs.length > maxFieldValue - 10) { // -10 for code block markup
+            // Take first and last parts for better context
+            const halfSize = Math.floor((maxFieldValue - 50) / 2) // -50 for separators and markup
+            const firstPart = consoleLogs.substring(0, halfSize)
+            const lastPart = consoleLogs.substring(consoleLogs.length - halfSize)
+            truncatedLogs = firstPart + '\n...\n[LOGS TRONQUÉS]\n...\n' + lastPart
+        }
+
         const embed = {
-            title: `🐛 ${title}`,
+            title: `🐛 ${truncatedTitle}`,
             color: 0xff0000, // Red color
             timestamp: new Date().toISOString(),
             fields: [
                 {
                     name: '👤 Utilisateur',
-                    value: pseudo,
+                    value: pseudo.substring(0, maxFieldValue),
                     inline: true
                 },
                 {
                     name: '📝 Description',
-                    value: description.length > 1024 ? description.substring(0, 1021) + '...' : description,
+                    value: truncatedDescription,
                     inline: false
                 },
                 {
-                    name: '🖥️ Informations système',
-                    value: '```\n' + systemInfo + '\n```',
+                    name: '🖥️ Système',
+                    value: '```\n' + truncatedSystemInfo + '\n```',
                     inline: false
                 },
                 {
-                    name: '📊 Logs console',
-                    value: consoleLogs.length > 1024 ? '```\n' + consoleLogs.substring(0, 1021) + '...\n```' : '```\n' + consoleLogs + '\n```',
+                    name: '📊 Logs',
+                    value: '```\n' + truncatedLogs + '\n```',
                     inline: false
                 }
             ],
             footer: {
-                text: 'MultiGames Studio Launcher - Rapport automatique'
+                text: 'MGS Launcher - Rapport automatique'
             }
         }
+
+        console.log('Taille de l\'embed:', JSON.stringify(embed).length, 'caractères')
 
         const response = await fetch(bugReporterConfig.discord.webhookUrl, {
             method: 'POST',
@@ -503,11 +733,13 @@ async function sendLogsReport() {
             alert('Rapport envoyé avec succès ! Merci pour votre contribution.')
             closeLogsModal()
         } else {
-            throw new Error('Erreur HTTP: ' + response.status)
+            const errorText = await response.text()
+            console.error('Réponse du serveur:', errorText)
+            throw new Error('Erreur HTTP: ' + response.status + ' - ' + errorText)
         }
     } catch (error) {
         console.error('Erreur lors de l\'envoi du rapport:', error)
-        alert('Erreur lors de l\'envoi du rapport. Veuillez réessayer ou contacter un administrateur.')
+        alert('Erreur lors de l\'envoi du rapport. Veuillez réessayer ou contacter un administrateur.\nDétails: ' + error.message)
     } finally {
         sendButton.textContent = originalText
         sendButton.disabled = false

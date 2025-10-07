@@ -22,7 +22,7 @@ Pour que le système fonctionne, vous devez configurer un webhook Discord :
 ### 2. Configurer le launcher
 
 1. Ouvrez le fichier `app/assets/config/bug-reporter.json`
-2. Remplacez `https://discord.com/api/webhooks/1425202414314586227/oy-Q5BiSmN10jFmvcDZW2fyPAzx8pBfUccMNOG_7BtuD-RCsNqHyrspXyzQ02H9fk47R` par l'URL de votre webhook
+2. Remplacez `https://discord.com/api/webhooks/1425207398171279481/ykYLbR8LgdYrctUEfFiDFQYTvFkIfZxknRHZjipUMGdrYB6ecAxfS0OBea2eL1Tas_4I` par l'URL de votre webhook
 3. Assurez-vous que `enabled` est défini sur `true`
 
 Exemple de configuration :
