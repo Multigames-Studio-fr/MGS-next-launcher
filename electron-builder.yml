@@ -29,6 +29,7 @@ nsis:
 
 # macOS Configuration
 mac:
+  icon: "build/icon.png"
   target:
     - target: "dmg"
       arch:
@@ -39,6 +40,7 @@ mac:
 
 # Linux Configuration
 linux:
+  icon: "build/icon.png"
   target: "AppImage"
   maintainer: "MultiGames Studio"
   vendor: "MultiGames Studio"
