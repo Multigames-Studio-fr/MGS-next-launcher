@@ -110,6 +110,7 @@ jobs:
           tag_name: v${{ needs.create-release.outputs.version }}
           files: |
             dist/*.exe
+            dist/latest.yml
 
       - name: Upload macOS Artifacts
         if: matrix.os == 'macos-14'
@@ -118,6 +119,7 @@ jobs:
           tag_name: v${{ needs.create-release.outputs.version }}
           files: |
             dist/*.dmg
+            dist/latest-mac.yml
 
       - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-latest'
@@ -126,3 +128,4 @@ jobs:
           tag_name: v${{ needs.create-release.outputs.version }}
           files: |
             dist/*.AppImage
+            dist/latest-linux.yml

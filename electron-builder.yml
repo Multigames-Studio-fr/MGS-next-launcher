@@ -16,8 +16,10 @@ extraResources:
 # Windows Configuration
 win:
   icon: "build/icon.ico"
+  publisherName: "MultiGames Studio"
+  verifyUpdateCodeSignature: false
   target:
-    - target: "portable"
+    - target: "nsis"
       arch: "x64"
 
 # Windows Installer Configuration
@@ -26,6 +28,14 @@ nsis:
   perMachine: false
   allowElevation: true
   allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "MultiGames Studio Launcher"
+  displayLanguageSelector: false
+  installerIcon: "build/icon.ico"
+  uninstallerIcon: "build/icon.ico"
+  license: "LICENSE.txt"
+  warningsAsErrors: false
 
 # macOS Configuration
 mac:
