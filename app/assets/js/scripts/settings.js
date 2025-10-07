@@ -9,6 +9,7 @@ const {
   MSFT_ERROR,
 } = require("./assets/js/ipcconstants");
 
+
 const settingsState = {
   invalid: new Set(),
 };

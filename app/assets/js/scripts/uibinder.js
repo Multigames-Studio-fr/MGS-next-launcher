@@ -67,6 +67,16 @@ async function showMainUI(data){
     await prepareSettings(true)
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
+    
+    // Populate sidebar instances for the new interface
+    console.log('[UIBINDER] Checking if populateSidebarInstances is available:', typeof populateSidebarInstances)
+    if (typeof populateSidebarInstances === 'function') {
+        console.log('[UIBINDER] Calling populateSidebarInstances()...')
+        populateSidebarInstances()
+    } else {
+        console.warn('[UIBINDER] populateSidebarInstances function not found!')
+    }
+    
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
         document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
@@ -138,6 +148,11 @@ function onDistroRefresh(data){
     initNews()
     syncModConfigurations(data)
     ensureJavaSettings(data)
+    
+    // Populate sidebar instances for the new interface
+    if (typeof populateSidebarInstances === 'function') {
+        populateSidebarInstances()
+    }
 }
 
 /**

@@ -1,8 +1,8 @@
 <div id="landingContainer" class="no-scroll" style="display: none;">
-    <link rel="stylesheet" href="../assets/css/output.css">
+    <link rel="stylesheet" href="./assets/css/output.css">
 
     <div class="flex min-h-screen w-full relative fit-content"
-        style="background: url('../assets/images/background/dark/2.jpg') center/cover no-repeat;">
+        style="background: url('./assets/images/backgrounds/0.jpg') center/cover no-repeat;">
         <!-- Overlay sombre global -->
         <div class="absolute inset-0 bg-black/60 z-0"></div>
         <!-- Overlay glassmorphism global -->
@@ -33,6 +33,41 @@
             .glass-sidebar:hover {
                 transform: translateY(-4px) scale(1.04);
                 box-shadow: 0 8px 32px 0 #F8BA5977;
+            }
+
+            /* Sidebar instances styling */
+            .server-instance-item {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .server-instance-btn {
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border-radius: 0.75rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .server-instance-btn:hover {
+                transform: scale(1.1) translateY(-2px);
+            }
+
+            .server-instance-btn.selected {
+                transform: scale(1.05);
+            }
+
+            .server-instance-btn img {
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            }
+
+            .server-instance-btn:hover img {
+                filter: drop-shadow(0 6px 12px rgba(248, 186, 89, 0.4));
             }
         </style>
      
@@ -270,11 +305,12 @@
                         class="absolute top-0 right-0 sm:top-1 sm:right-1 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-green-400 border-1 sm:border-2 border-white "></span>
                 </div>
                 <!-- Bloc glassmorphism arrondi pour les instances -->
-                <div class="flex flex-col items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 md:mt-10 min-h-[200px] sm:min-h-[280px] md:min-h-[320px]">
+                <div class="flex flex-col items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 md:mt-10 ">
                     <div class="glass-sidebar bg-[#181818]/60 hover:bg-[#F8BA59]/30 rounded-2xl sm:rounded-3xl py-2 sm:py-3 md:py-4 px-2 sm:px-3 md:px-4 flex flex-col gap-4 sm:gap-6 shadow-2xl border border-white/10"
                         style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
                         <ul id="sidebar-instances" class="flex flex-col gap-4 sm:gap-6 md:gap-8 items-center justify-center">
                             <!-- JS: injecte dynamiquement les boutons d'instances ici -->
+                            <li class="text-white/50 text-xs text-center">Chargement...</li>
                         </ul>
                     </div>
                 </div>

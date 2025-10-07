@@ -42,6 +42,11 @@ const user_text               = document.getElementById('user_text')
 
 const loggerLanding = LoggerUtil.getLogger('Landing')
 
+// News Variables - Initialize early to prevent reference errors
+let newsArr = null
+let newsLoadingListener = null
+let newsActive = false
+
 /* Launch Progress Wrapper Functions */
 
 /**
@@ -190,6 +195,35 @@ function updateSelectedAccount(authUser){
 }
 updateSelectedAccount(ConfigManager.getSelectedAccount())
 
+/**
+ * Update the visual selection in the sidebar
+ */
+function updateSidebarSelection(selectedServerId) {
+    const instanceButtons = document.querySelectorAll('.server-instance-btn')
+    
+    instanceButtons.forEach(button => {
+        const serverId = button.getAttribute('data-server-id')
+        const img = button.querySelector('img')
+        
+        if (serverId === selectedServerId) {
+            button.classList.add('selected')
+            if (img) {
+                img.classList.remove('border-white/20')
+                img.classList.add('border-[#F8BA59]')
+            }
+        } else {
+            button.classList.remove('selected')
+            if (img) {
+                img.classList.remove('border-[#F8BA59]')
+                img.classList.add('border-white/20')
+            }
+        }
+    })
+}
+
+// Make function globally accessible
+window.updateSidebarSelection = updateSidebarSelection
+
 // Bind selected server
 function updateSelectedServer(serv){
     if(getCurrentView() === VIEWS.settings){
@@ -219,6 +253,9 @@ function updateSelectedServer(serv){
         if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
     }
     
+    // Update sidebar visual selection
+    updateSidebarSelection(serv != null ? serv.rawServer.id : null)
+    
     // Update old UI for compatibility
     const serverSelectionButton = document.getElementById('server_selection_button')
     if (serverSelectionButton) {
@@ -230,6 +267,9 @@ function updateSelectedServer(serv){
     }
     setLaunchEnabled(serv != null)
 }
+
+// Make function globally accessible
+window.updateSelectedServer = updateSelectedServer
 // Real text is set in uibinder.js on distributionIndexDone.
 server_selection_button.innerHTML = '&#8226; ' + Lang.queryJS('landing.selectedServer.loading')
 server_selection_button.onclick = async e => {
@@ -725,7 +765,7 @@ async function dlAsync(login = true) {
  * News Loading Functions
  */
 
-// DOM Cache
+// DOM Cache - With null checks for missing elements
 const newsContent                   = document.getElementById('newsContent')
 const newsArticleTitle              = document.getElementById('newsArticleTitle')
 const newsArticleDate               = document.getElementById('newsArticleDate')
@@ -734,9 +774,9 @@ const newsArticleComments           = document.getElementById('newsArticleCommen
 const newsNavigationStatus          = document.getElementById('newsNavigationStatus')
 const newsArticleContentScrollable  = document.getElementById('newsArticleContentScrollable')
 const nELoadSpan                    = document.getElementById('nELoadSpan')
+const newsErrorRetry                = document.getElementById('newsErrorRetry')
 
 // News slide caches.
-let newsActive = false
 let newsGlideCount = 0
 
 /**
@@ -771,15 +811,17 @@ function slide_(up){
         newsGlideCount--
     }, 500)
 }
-// Bind news button
-document.getElementById('newsButton').onclick = () => {
-    // Simple toggle for the new interface
-    if(newsActive){
-        // Hide news
-        const newsContainer = document.querySelector('#newsContainer')
-        if (newsContainer) newsContainer.style.display = 'none'
-        
-        // Reset tabbing if needed
+// Bind news button (only if it exists)
+const newsButton = document.getElementById('newsButton')
+if (newsButton) {
+    newsButton.onclick = () => {
+        // Simple toggle for the new interface
+        if(newsActive){
+            // Hide news
+            const newsContainer = document.querySelector('#newsContainer')
+            if (newsContainer) newsContainer.style.display = 'none'
+            
+            // Reset tabbing if needed
         if (typeof $ !== 'undefined') {
             $('#landingContainer *').removeAttr('tabindex')
             $('#newsContainer *').attr('tabindex', '-1')
@@ -818,12 +860,6 @@ if (newsButtonl) {
     }
 }
 
-// Array to store article meta.
-let newsArr = null
-
-// News load animation listener.
-let newsLoadingListener = null
-
 /**
  * Set the news loading animation.
  * 
@@ -831,6 +867,8 @@ let newsLoadingListener = null
  */
 function setNewsLoading(val){
     if(val){
+        if (!nELoadSpan) return; // Early return if element doesn't exist
+        
         const nLStr = Lang.queryJS('landing.news.checking')
         let dotStr = '..'
         nELoadSpan.innerHTML = nLStr + dotStr
@@ -840,7 +878,7 @@ function setNewsLoading(val){
             } else {
                 dotStr += '.'
             }
-            nELoadSpan.innerHTML = nLStr + dotStr
+            if (nELoadSpan) nELoadSpan.innerHTML = nLStr + dotStr
         }, 750)
     } else {
         if(newsLoadingListener != null){
@@ -850,19 +888,23 @@ function setNewsLoading(val){
     }
 }
 
-// Bind retry button.
-newsErrorRetry.onclick = () => {
-    $('#newsErrorFailed').fadeOut(250, () => {
-        initNews()
-        $('#newsErrorLoading').fadeIn(250)
-    })
+// Bind retry button (only if it exists).
+if (newsErrorRetry) {
+    newsErrorRetry.onclick = () => {
+        $('#newsErrorFailed').fadeOut(250, () => {
+            initNews()
+            $('#newsErrorLoading').fadeIn(250)
+        })
+    }
 }
 
-newsArticleContentScrollable.onscroll = (e) => {
-    if(e.target.scrollTop > Number.parseFloat($('.newsArticleSpacerTop').css('height'))){
-        newsContent.setAttribute('scrolled', '')
-    } else {
-        newsContent.removeAttribute('scrolled')
+if (newsArticleContentScrollable) {
+    newsArticleContentScrollable.onscroll = (e) => {
+        if(e.target.scrollTop > Number.parseFloat($('.newsArticleSpacerTop').css('height'))){
+            if (newsContent) newsContent.setAttribute('scrolled', '')
+        } else {
+            if (newsContent) newsContent.removeAttribute('scrolled')
+        }
     }
 }
 
@@ -1121,9 +1163,128 @@ async function loadNews(){
 }
 
 /**
+ * Populate the sidebar with server instances
+ */
+async function populateSidebarInstances() {
+    console.log('[SIDEBAR] populateSidebarInstances() called')
+    
+    const sidebarContainer = document.getElementById('sidebar-instances')
+    if (!sidebarContainer) {
+        console.error('[SIDEBAR] Sidebar container not found!')
+        return
+    }
+    
+    try {
+        console.log('[SIDEBAR] Fetching distribution...')
+        const distro = await DistroAPI.getDistribution()
+        
+        if (!distro) {
+            console.error('[SIDEBAR] Distribution is null or undefined!')
+            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: distribution non chargée</li>'
+            return
+        }
+        
+        console.log('[SIDEBAR] Distribution loaded:', distro)
+        
+        const selectedServerId = ConfigManager.getSelectedServer()
+        console.log('[SIDEBAR] Selected server ID:', selectedServerId)
+        
+        const servers = distro.servers
+        console.log('[SIDEBAR] Servers array:', servers)
+        console.log('[SIDEBAR] Number of servers:', servers ? servers.length : 0)
+        
+        if (!servers || servers.length === 0) {
+            console.warn('[SIDEBAR] No servers found in distribution')
+            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Aucune instance disponible</li>'
+            return
+        }
+        
+        let htmlString = ''
+        
+        for (let i = 0; i < servers.length; i++) {
+            const serv = servers[i]
+            console.log('[SIDEBAR] Processing server #' + i + ':', serv)
+            
+            if (!serv || !serv.rawServer) {
+                console.warn('[SIDEBAR] Server #' + i + ' has invalid structure, skipping')
+                continue
+            }
+            
+            const serverId = serv.rawServer.id
+            const serverName = serv.rawServer.name || 'Instance ' + (i + 1)
+            const isSelected = serverId === selectedServerId
+            const iconUrl = serv.rawServer.icon || 'assets/images/SealCircle.png'
+            
+            console.log('[SIDEBAR] Server details - ID:', serverId, 'Name:', serverName, 'Selected:', isSelected, 'Icon:', iconUrl)
+            
+            htmlString += `
+                <li class="server-instance-item">
+                    <button class="server-instance-btn ${isSelected ? 'selected' : ''}" 
+                            data-server-id="${serverId}"
+                            title="${serverName}">
+                        <img src="${iconUrl}" 
+                             alt="${serverName}"
+                             class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl object-cover border-2 ${isSelected ? 'border-[#F8BA59]' : 'border-white/20'} hover:border-[#F8BA59] transition-all duration-200" 
+                             onerror="this.src='assets/images/SealCircle.png'" />
+                    </button>
+                </li>
+            `
+        }
+        
+        console.log('[SIDEBAR] Generated HTML:', htmlString)
+        sidebarContainer.innerHTML = htmlString
+        
+        // Bind click events to server instance buttons
+        bindSidebarInstanceEvents()
+        
+        console.log('[SIDEBAR] Populated sidebar with ' + servers.length + ' server instances')
+        
+    } catch (error) {
+        console.error('[SIDEBAR] Error populating sidebar instances:', error)
+        sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: ' + error.message + '</li>'
+    }
+}
+
+// Make function globally accessible
+window.populateSidebarInstances = populateSidebarInstances
+
+/**
+ * Bind events to sidebar instance buttons
+ */
+function bindSidebarInstanceEvents() {
+    const instanceButtons = document.querySelectorAll('.server-instance-btn')
+    
+    instanceButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault()
+            e.target.closest('button').blur()
+            
+            const serverId = button.getAttribute('data-server-id')
+            
+            try {
+                const distro = await DistroAPI.getDistribution()
+                const server = distro.getServerById(serverId)
+                
+                if (server) {
+                    // Update selected server
+                    updateSelectedServer(server)
+                    
+                    // Refresh server status for the new server
+                    await refreshServerStatus(true)
+                }
+            } catch (error) {
+                console.error('Error selecting server:', error)
+            }
+        })
+    })
+}
+
+/**
  * Initialize the new interface compatibility
  */
 function initNewInterface() {
+    console.log('initNewInterface() called')
+    
     // Hide news section initially
     const newsContainer = document.querySelector('#newsContainer')
     if (newsContainer) {
@@ -1163,20 +1324,40 @@ function initNewInterface() {
         progressLabel.textContent = '0%'
     }
     
-    console.log('New interface initialized')
+    // Set initial loading message in sidebar
+    const sidebarContainer = document.getElementById('sidebar-instances')
+    if (sidebarContainer) {
+        sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center animate-pulse">En attente de la distribution...</li>'
+    }
+    
+    console.log('[INIT] New interface initialized')
 }
 
 // Initialize new interface when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing in 100ms...')
     setTimeout(initNewInterface, 100)
+    
+    // Add debug click handler to sidebar for testing
+    setTimeout(() => {
+        const sidebarContainer = document.getElementById('sidebar-instances')
+        if (sidebarContainer) {
+            sidebarContainer.addEventListener('click', () => {
+                console.log('Sidebar clicked - forcing population...')
+                populateSidebarInstances()
+            })
+            console.log('Debug click handler added to sidebar')
+        }
+    }, 500)
 })
 
 // Also initialize immediately if DOM is already loaded
 if (document.readyState === 'loading') {
-    // DOM is still loading
+    console.log('DOM is still loading...')
 } else {
-    // DOM is ready
+    console.log('DOM is ready, initializing immediately...')
     setTimeout(initNewInterface, 100)
+}
 }
 
 
