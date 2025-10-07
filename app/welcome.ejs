@@ -1,25 +1,91 @@
 <div id="welcomeContainer" class="hidden">
-    <!--<div class="cloudDiv">
-        <div class="cloudTop"></div>
-        <div class="cloudBottom"></div>
-    </div>-->
-    <div id="welcomeContent" class="text-center">
-        <img id="welcomeImageSeal" src="assets/images/multigames-logo.webp" class="mx-auto"/>
-        <span id="welcomeHeader" class="block text-2xl font-bold"><%- lang('welcome.welcomeHeader') %></span>
-        <span id="welcomeDescription" class="block text-lg"><%- lang('welcome.welcomeDescription') %></span>
-        <br>
-        <span id="welcomeDescCTA" class="block text-lg"><%- lang('welcome.welcomeDescCTA') %></span>
-        <button id="welcomeButton" class="mt-4 px-4 py-2 bg-brand-primary text-white rounded hover:bg-brand-light">
-            <div id="welcomeButtonContent" class="flex items-center justify-center">
-                <%- lang('welcome.continueButton') %>
-                <svg id="welcomeSVG" viewBox="0 0 24.87 13.97" class="ml-2 w-6 h-6">
-                    <defs>
-                        <style>.arrowLine{fill:none;stroke:#FFF;stroke-width:2px;transition: 0.25s ease;}</style>
-                    </defs>
-                    <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02"/>
-                </svg>
-            </div>
-        </button>
+    <link rel="stylesheet" href="./assets/css/output.css">
+    
+    <div class="flex min-h-screen w-full relative items-center justify-center"
+        style="background: url('./assets/images/backgrounds/0.jpg') center/cover no-repeat;">
+        <!-- Overlay sombre global -->
+        <div class="absolute inset-0 bg-black/60 z-0"></div>
+        <!-- Overlay glassmorphism global -->
+        <div class="absolute inset-0 z-0" style="backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"></div>
+        
+        <style>
+            :root {
+                --primary: #451F21;
+                --secondary: #F8BA59;
+                --secondary-dark: #EB843B;
+                --white: #FFFFFF;
+            }
+
+            /* Glassmorphism card */
+            .glass-welcome {
+                background: rgba(24, 24, 24, 0.30);
+                border-radius: 2rem;
+                box-shadow: 0 8px 32px 0 #00000033;
+                border: 1px solid rgba(255, 255, 255, 0.10);
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+                transition: transform 0.18s cubic-bezier(.4, 0, .2, 1), box-shadow 0.18s;
+            }
+
+            .glass-welcome:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 40px 0 rgba(248, 186, 89, 0.3);
+            }
+
+            #welcomeButton {
+                background: linear-gradient(135deg, #FF6A1A 0%, #F8BA59 100%);
+                transition: all 0.3s ease;
+            }
+
+            #welcomeButton:hover {
+                background: linear-gradient(135deg, #F8BA59 0%, #FF6A1A 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(248, 186, 89, 0.4);
+            }
+
+            #welcomeButton:active {
+                transform: translateY(0px);
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .fade-in-content {
+                animation: fadeIn 0.6s ease-out;
+            }
+        </style>
+
+        <!-- Content glassmorphism -->
+        <div id="welcomeContent" class="glass-welcome relative z-10 text-center p-8 sm:p-12 md:p-16 max-w-2xl mx-4 fade-in-content">
+            <img id="welcomeImageSeal" src="assets/images/multigames-logo.webp" class="mx-auto mb-6 w-32 h-32 sm:w-40 sm:h-40 drop-shadow-2xl"/>
+            
+            <span id="welcomeHeader" class="block text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-4">
+                <%- lang('welcome.welcomeHeader') %>
+            </span>
+            
+            <span id="welcomeDescription" class="block text-lg sm:text-xl text-white/90 font-medium mb-3">
+                <%- lang('welcome.welcomeDescription') %>
+            </span>
+            
+            <span id="welcomeDescCTA" class="block text-base sm:text-lg text-[#F8BA59] font-semibold mb-8">
+                <%- lang('welcome.welcomeDescCTA') %>
+            </span>
+            
+            <button id="welcomeButton" class="mt-4 px-8 py-4 rounded-xl sm:rounded-2xl text-white font-bold text-xl sm:text-2xl shadow-xl">
+                <div id="welcomeButtonContent" class="flex items-center justify-center gap-3">
+                    <%- lang('welcome.continueButton') %>
+                    <svg id="welcomeSVG" viewBox="0 0 24.87 13.97" class="w-6 h-6 sm:w-7 sm:h-7">
+                        <defs>
+                            <style>.arrowLine{fill:none;stroke:#FFF;stroke-width:2px;transition: 0.25s ease;}</style>
+                        </defs>
+                        <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02"/>
+                    </svg>
+                </div>
+            </button>
+        </div>
     </div>
+    
     <script src="./assets/js/scripts/welcome.js"></script>
 </div>
