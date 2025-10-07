@@ -4,3 +4,17 @@
 /target/
 /logs/
 /dist/
+
+# Fichiers de test et temporaires
+/test/
+test-deduplication.js
+convert-webp.html
+fdsf.html
+app/assets/config/fgdsfd.json
+app/assets/js/scripts/Untitled-1.txt
+
+# Fichiers de développement
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
