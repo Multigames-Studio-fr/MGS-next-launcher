@@ -1041,6 +1041,9 @@ async function initNews(){
 
 }
 
+// Make function globally accessible
+window.initNews = initNews
+
 /**
  * Add keyboard controls to the news UI. Left and right arrows toggle
  * between articles. If you are on the landing page, the up arrow will
@@ -1164,7 +1167,10 @@ async function loadNews(){
 
 /**
  * Populate the sidebar with server instances
+ * NOTE: This function has been moved to uibinder.js for better availability
+ * Keeping this as a reference/fallback
  */
+
 async function populateSidebarInstances() {
     console.log('[SIDEBAR] populateSidebarInstances() called')
     
@@ -1248,6 +1254,13 @@ async function populateSidebarInstances() {
 // Make function globally accessible
 window.populateSidebarInstances = populateSidebarInstances
 
+// Notify uibinder that the function is now available
+console.log('[LANDING] populateSidebarInstances is now globally available')
+if (typeof window.triggerSidebarPopulation === 'function') {
+    console.log('[LANDING] Triggering sidebar population via uibinder...')
+    window.triggerSidebarPopulation()
+}
+
 /**
  * Bind events to sidebar instance buttons
  */
@@ -1278,6 +1291,7 @@ function bindSidebarInstanceEvents() {
         })
     })
 }
+
 
 /**
  * Initialize the new interface compatibility
@@ -1347,6 +1361,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 populateSidebarInstances()
             })
             console.log('Debug click handler added to sidebar')
+        }
+        
+        // Trigger sidebar population if uibinder is waiting
+        if (typeof window.triggerSidebarPopulation === 'function') {
+            console.log('[LANDING] Triggering sidebar population...')
+            window.triggerSidebarPopulation()
         }
     }, 500)
 })

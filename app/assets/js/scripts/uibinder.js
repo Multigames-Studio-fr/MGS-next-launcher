@@ -13,6 +13,121 @@ const { DistroAPI } = require('./assets/js/distromanager')
 let rscShouldLoad = false
 let fatalStartupError = false
 
+/**
+ * Populate the sidebar with server instances
+ */
+async function populateSidebarInstances() {
+    console.log('[UIBINDER] populateSidebarInstances() called')
+    
+    const sidebarContainer = document.getElementById('sidebar-instances')
+    if (!sidebarContainer) {
+        console.error('[UIBINDER] Sidebar container not found!')
+        return
+    }
+    
+    try {
+        console.log('[UIBINDER] Fetching distribution...')
+        const distro = await DistroAPI.getDistribution()
+        
+        if (!distro) {
+            console.error('[UIBINDER] Distribution is null or undefined!')
+            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: distribution non chargée</li>'
+            return
+        }
+        
+        console.log('[UIBINDER] Distribution loaded:', distro)
+        
+        const selectedServerId = ConfigManager.getSelectedServer()
+        console.log('[UIBINDER] Selected server ID:', selectedServerId)
+        
+        const servers = distro.servers
+        console.log('[UIBINDER] Number of servers:', servers ? servers.length : 0)
+        
+        if (!servers || servers.length === 0) {
+            console.warn('[UIBINDER] No servers found in distribution')
+            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Aucune instance disponible</li>'
+            return
+        }
+        
+        let htmlString = ''
+        
+        for (let i = 0; i < servers.length; i++) {
+            const serv = servers[i]
+            
+            if (!serv || !serv.rawServer) {
+                console.warn('[UIBINDER] Server #' + i + ' has invalid structure, skipping')
+                continue
+            }
+            
+            const serverId = serv.rawServer.id
+            const serverName = serv.rawServer.name || 'Instance ' + (i + 1)
+            const isSelected = serverId === selectedServerId
+            const iconUrl = serv.rawServer.icon || 'assets/images/SealCircle.png'
+            
+            htmlString += `
+                <li class="server-instance-item">
+                    <button class="server-instance-btn ${isSelected ? 'selected' : ''}" 
+                            data-server-id="${serverId}"
+                            title="${serverName}">
+                        <img src="${iconUrl}" 
+                             alt="${serverName}"
+                             class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl object-cover border-2 ${isSelected ? 'border-[#F8BA59]' : 'border-white/20'} hover:border-[#F8BA59] transition-all duration-200" 
+                             onerror="this.src='assets/images/SealCircle.png'" />
+                    </button>
+                </li>
+            `
+        }
+        
+        sidebarContainer.innerHTML = htmlString
+        
+        // Bind click events to server instance buttons
+        bindSidebarInstanceEvents()
+        
+        console.log('[UIBINDER] Populated sidebar with ' + servers.length + ' server instances')
+        
+    } catch (error) {
+        console.error('[UIBINDER] Error populating sidebar instances:', error)
+        sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: ' + error.message + '</li>'
+    }
+}
+
+/**
+ * Bind events to sidebar instance buttons
+ */
+function bindSidebarInstanceEvents() {
+    const instanceButtons = document.querySelectorAll('.server-instance-btn')
+    
+    instanceButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault()
+            e.target.closest('button').blur()
+            
+            const serverId = button.getAttribute('data-server-id')
+            
+            try {
+                const distro = await DistroAPI.getDistribution()
+                const server = distro.getServerById(serverId)
+                
+                if (server) {
+                    // Update selected server
+                    updateSelectedServer(server)
+                    
+                    // Refresh server status for the new server
+                    await refreshServerStatus(true)
+                    
+                    // Repopulate sidebar to update selection state
+                    await populateSidebarInstances()
+                }
+            } catch (error) {
+                console.error('[UIBINDER] Error selecting server:', error)
+            }
+        })
+    })
+}
+
+// Make function globally accessible
+window.populateSidebarInstances = populateSidebarInstances
+
 // Mapping of each view to their container IDs.
 const VIEWS = {
     landing: '#landingContainer',
@@ -69,13 +184,8 @@ async function showMainUI(data){
     refreshServerStatus()
     
     // Populate sidebar instances for the new interface
-    console.log('[UIBINDER] Checking if populateSidebarInstances is available:', typeof populateSidebarInstances)
-    if (typeof populateSidebarInstances === 'function') {
-        console.log('[UIBINDER] Calling populateSidebarInstances()...')
-        populateSidebarInstances()
-    } else {
-        console.warn('[UIBINDER] populateSidebarInstances function not found!')
-    }
+    console.log('[UIBINDER] Calling populateSidebarInstances()...')
+    populateSidebarInstances()
     
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
@@ -114,9 +224,13 @@ async function showMainUI(data){
         
     }, 750)
     // Disable tabbing to the news container.
-    initNews().then(() => {
-        $('#newsContainer *').attr('tabindex', '-1')
-    })
+    if (typeof window.initNews === 'function') {
+        initNews().then(() => {
+            $('#newsContainer *').attr('tabindex', '-1')
+        })
+    } else {
+        console.warn('[UIBINDER] initNews is not yet available')
+    }
 }
 
 function showFatalStartupError(){
@@ -145,14 +259,20 @@ function showFatalStartupError(){
 function onDistroRefresh(data){
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
-    initNews()
+    
+    // Call initNews if it's available
+    if (typeof window.initNews === 'function') {
+        initNews()
+    } else {
+        console.warn('[UIBINDER] initNews is not yet available')
+    }
+    
     syncModConfigurations(data)
     ensureJavaSettings(data)
     
     // Populate sidebar instances for the new interface
-    if (typeof populateSidebarInstances === 'function') {
-        populateSidebarInstances()
-    }
+    console.log('[UIBINDER] onDistroRefresh - calling populateSidebarInstances()...')
+    populateSidebarInstances()
 }
 
 /**
