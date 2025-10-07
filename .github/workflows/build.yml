@@ -95,8 +95,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Tailwind CSS
-        run: npm run build-css
 
       - name: Build Application
         env:
