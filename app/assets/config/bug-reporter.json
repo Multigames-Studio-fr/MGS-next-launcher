@@ -1,0 +1,11 @@
+{
+  "discord": {
+    "webhookUrl": "https://discord.com/api/webhooks/1425202414314586227/oy-Q5BiSmN10jFmvcDZW2fyPAzx8pBfUccMNOG_7BtuD-RCsNqHyrspXyzQ02H9fk47R",
+    "enabled": true
+  },
+  "logs": {
+    "maxLogLength": 1024,
+    "includeSystemInfo": true,
+    "includeLauncherVersion": true
+  }
+}
