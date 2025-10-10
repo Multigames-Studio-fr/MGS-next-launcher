@@ -270,6 +270,24 @@ function updateSelectedServer(serv){
 
 // Make function globally accessible
 window.updateSelectedServer = updateSelectedServer
+
+/**
+ * Set the selected instance (for modpack card compatibility)
+ */
+function setSelectedInstance(instance) {
+    console.log('[INSTANCE] setSelectedInstance called with:', instance)
+    
+    if (!instance || !instance.server) {
+        console.error('[INSTANCE] Invalid instance or missing server reference')
+        return
+    }
+    
+    // Use the existing updateSelectedServer function
+    updateSelectedServer(instance.server)
+}
+
+// Make function globally accessible
+window.setSelectedInstance = setSelectedInstance
 // Real text is set in uibinder.js on distributionIndexDone.
 server_selection_button.innerHTML = '&#8226; ' + Lang.queryJS('landing.selectedServer.loading')
 server_selection_button.onclick = async e => {
@@ -1166,19 +1184,11 @@ async function loadNews(){
 }
 
 /**
- * Populate the sidebar with server instances
- * NOTE: This function has been moved to uibinder.js for better availability
- * Keeping this as a reference/fallback
+ * Populate the sidebar with server instances using modpack cards
  */
 
 async function populateSidebarInstances() {
     console.log('[SIDEBAR] populateSidebarInstances() called')
-    
-    const sidebarContainer = document.getElementById('sidebar-instances')
-    if (!sidebarContainer) {
-        console.error('[SIDEBAR] Sidebar container not found!')
-        return
-    }
     
     try {
         console.log('[SIDEBAR] Fetching distribution...')
@@ -1186,7 +1196,11 @@ async function populateSidebarInstances() {
         
         if (!distro) {
             console.error('[SIDEBAR] Distribution is null or undefined!')
-            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: distribution non chargée</li>'
+            // Fallback pour l'ancien système
+            const sidebarContainer = document.getElementById('sidebar-instances')
+            if (sidebarContainer) {
+                sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: distribution non chargée</li>'
+            }
             return
         }
         
@@ -1201,54 +1215,152 @@ async function populateSidebarInstances() {
         
         if (!servers || servers.length === 0) {
             console.warn('[SIDEBAR] No servers found in distribution')
-            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Aucune instance disponible</li>'
+            // Fallback pour l'ancien système
+            const sidebarContainer = document.getElementById('sidebar-instances')
+            if (sidebarContainer) {
+                sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Aucune instance disponible</li>'
+            }
             return
         }
         
-        let htmlString = ''
-        
-        for (let i = 0; i < servers.length; i++) {
-            const serv = servers[i]
-            console.log('[SIDEBAR] Processing server #' + i + ':', serv)
+        // Convertir les serveurs en instances pour les cartes modpack
+        const instances = servers.map(serv => {
+            if (!serv || !serv.rawServer) return null
             
-            if (!serv || !serv.rawServer) {
-                console.warn('[SIDEBAR] Server #' + i + ' has invalid structure, skipping')
-                continue
+            return {
+                id: serv.rawServer.id,
+                rawServerId: serv.rawServer.id,
+                name: serv.rawServer.name || 'Instance',
+                displayName: serv.rawServer.name || 'Instance',
+                type: serv.rawServer.type || 'MODPACK',
+                icon: serv.rawServer.icon || './assets/images/minecraft.ico',
+                version: serv.rawServer.minecraftVersion,
+                loader: serv.rawServer.loader,
+                description: serv.rawServer.description,
+                server: serv // Référence au serveur complet
             }
-            
-            const serverId = serv.rawServer.id
-            const serverName = serv.rawServer.name || 'Instance ' + (i + 1)
-            const isSelected = serverId === selectedServerId
-            const iconUrl = serv.rawServer.icon || 'assets/images/SealCircle.png'
-            
-            console.log('[SIDEBAR] Server details - ID:', serverId, 'Name:', serverName, 'Selected:', isSelected, 'Icon:', iconUrl)
-            
-            htmlString += `
-                <li class="server-instance-item">
-                    <button class="server-instance-btn ${isSelected ? 'selected' : ''}" 
-                            data-server-id="${serverId}"
-                            title="${serverName}">
-                        <img src="${iconUrl}" 
-                             alt="${serverName}"
-                             class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl object-cover border-2 ${isSelected ? 'border-[#F8BA59]' : 'border-white/20'} hover:border-[#F8BA59] transition-all duration-200" 
-                             onerror="this.src='assets/images/SealCircle.png'" />
-                    </button>
-                </li>
-            `
+        }).filter(instance => instance !== null)
+        
+        console.log('[SIDEBAR] Converted instances:', instances)
+        
+        // Vérifier si le conteneur modpack existe
+        const modpackContainer = document.getElementById('sidebar-instances-cards') || document.getElementById('modpack-instances-container')
+        console.log('[SIDEBAR] Modpack container found:', !!modpackContainer)
+        
+        // Utiliser la nouvelle fonction de création de cartes modpack si disponible
+        if (typeof window.populateModpackInstances === 'function' && modpackContainer) {
+            console.log('[SIDEBAR] Using new modpack card system')
+            try {
+                window.populateModpackInstances(instances, selectedServerId)
+                console.log('[SIDEBAR] Modpack cards populated successfully')
+            } catch (error) {
+                console.error('[SIDEBAR] Error populating modpack cards:', error)
+                // Fallback vers l'ancien système en cas d'erreur
+                populateFallbackSidebar(instances, selectedServerId)
+            }
+        } else {
+            console.warn('[SIDEBAR] Modpack card system not available, using fallback')
+            populateFallbackSidebar(instances, selectedServerId)
         }
         
-        console.log('[SIDEBAR] Generated HTML:', htmlString)
-        sidebarContainer.innerHTML = htmlString
-        
-        // Bind click events to server instance buttons
-        bindSidebarInstanceEvents()
-        
-        console.log('[SIDEBAR] Populated sidebar with ' + servers.length + ' server instances')
+        console.log('[SIDEBAR] Populated sidebar with ' + instances.length + ' server instances')
         
     } catch (error) {
         console.error('[SIDEBAR] Error populating sidebar instances:', error)
-        sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: ' + error.message + '</li>'
+        const sidebarContainer = document.getElementById('sidebar-instances')
+        if (sidebarContainer) {
+            sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: ' + error.message + '</li>'
+        }
     }
+}
+
+/**
+ * Populate fallback sidebar with old system
+ */
+function populateFallbackSidebar(instances, selectedServerId) {
+    const sidebarContainer = document.getElementById('sidebar-instances')
+    if (!sidebarContainer) {
+        console.error('[SIDEBAR] Sidebar container not found!')
+        return
+    }
+    
+    let htmlString = ''
+    
+    for (let i = 0; i < instances.length; i++) {
+        const instance = instances[i]
+        const isSelected = instance.id === selectedServerId
+        
+        htmlString += `
+// ...existing code...
+<li class="server-instance-item group relative">
+    <div class="server-instance-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 backdrop-blur-sm border border-gray-700/50 hover:border-[#F8BA59]/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#F8BA59]/20">
+        <!-- Background gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30"></div>
+        
+        <!-- Glow effect on hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#F8BA59]/0 via-[#F8BA59]/5 to-[#F8BA59]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <button class="server-instance-btn w-full h-full p-4 relative z-10 ${isSelected ? 'selected' : ''}" 
+                data-server-id="${instance.id}"
+                title="${instance.name}">
+            
+            <!-- Status indicator -->
+            <div class="absolute top-3 right-3 w-3 h-3 rounded-full ${isSelected ? 'bg-[#F8BA59] shadow-lg shadow-[#F8BA59]/50' : 'bg-gray-500'} transition-all duration-300"></div>
+            
+            <!-- Main content container -->
+            <div class="flex flex-col items-center space-y-3">
+                <!-- Icon container with enhanced styling -->
+                <div class="relative group-hover:scale-110 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-[#F8BA59] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+                    <img src="${instance.icon}" 
+                         alt="${instance.name}"
+                         class="relative w-16 h-16 rounded-2xl object-cover border-2 ${isSelected ? 'border-[#F8BA59] shadow-lg shadow-[#F8BA59]/30' : 'border-gray-600 group-hover:border-[#F8BA59]/70'} transition-all duration-300" 
+                         onerror="this.src='./assets/images/minecraft.ico'" />
+                    
+                    <!-- Shine effect -->
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                <!-- Instance info -->
+                <div class="text-center space-y-1">
+                    <h3 class="server-instance-name text-white font-semibold text-sm leading-tight group-hover:text-[#F8BA59] transition-colors duration-300 max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.name}">
+                        ${instance.name}
+                    </h3>
+                    
+                    <!-- Version/Type badge -->
+                    <div class="flex items-center justify-center space-x-2">
+                        <span class="px-2 py-1 text-xs rounded-full bg-gray-700/80 text-gray-300 border border-gray-600/50 max-w-20 overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.version || 'Unknown'}">
+                            ${instance.version || 'Unknown'}
+                        </span>
+                        ${instance.type ? `
+                        <span class="px-2 py-1 text-xs rounded-full ${instance.type === 'STAFF' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'} max-w-16 overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.type}">
+                            ${instance.type}
+                        </span>
+                        ` : ''}
+                    </div>
+                </div>
+               
+            </div>
+            
+            <!-- Selection indicator -->
+            ${isSelected ? `
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#F8BA59] to-yellow-400"></div>
+            ` : ''}
+        </button>
+        
+        <!-- Animated border on hover -->
+        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#F8BA59]/0 via-[#F8BA59]/50 to-[#F8BA59]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="padding: 1px;">
+            <div class="w-full h-full rounded-2xl bg-gray-800/90"></div>
+        </div>
+    </div>
+</li>
+// ...existing code...
+        `
+    }
+    
+    sidebarContainer.innerHTML = htmlString
+    bindSidebarInstanceEvents()
+    console.log('[SIDEBAR] Fallback sidebar populated')
 }
 
 // Make function globally accessible
@@ -1344,7 +1456,52 @@ function initNewInterface() {
         sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center animate-pulse">En attente de la distribution...</li>'
     }
     
+    // Check if modpack container exists and functions are available
+    const modpackContainer = document.getElementById('sidebar-instances-cards') || document.getElementById('modpack-instances-container')
+    if (modpackContainer) {
+        console.log('[INIT] Modpack container found:', modpackContainer.id)
+        modpackContainer.innerHTML = '<div class="text-white/50 text-sm text-center py-4">Chargement des instances...</div>'
+        
+        // Try to populate sidebar with retry mechanism
+        setTimeout(() => {
+            populateSidebarInstancesWithRetry(3)
+        }, 1000)
+    } else {
+        console.warn('[INIT] Modpack container not found, will use fallback')
+    }
+    
     console.log('[INIT] New interface initialized')
+}
+
+/**
+ * Populate sidebar with retry mechanism
+ */
+async function populateSidebarInstancesWithRetry(maxRetries = 3) {
+    let retries = 0
+    
+    const tryPopulate = async () => {
+        try {
+            await populateSidebarInstances()
+            console.log('[RETRY] Sidebar population succeeded')
+        } catch (error) {
+            retries++
+            console.error(`[RETRY] Attempt ${retries} failed:`, error)
+            
+            if (retries < maxRetries) {
+                console.log(`[RETRY] Retrying in ${retries * 500}ms...`)
+                setTimeout(tryPopulate, retries * 500)
+            } else {
+                console.error('[RETRY] Max retries reached, using fallback')
+                // Force fallback population
+                const sidebarContainer = document.getElementById('sidebar-instances')
+                if (sidebarContainer) {
+                    sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur de chargement</li>'
+                }
+            }
+        }
+    }
+    
+    tryPopulate()
 }
 
 // Initialize new interface when DOM is ready
@@ -1358,9 +1515,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sidebarContainer) {
             sidebarContainer.addEventListener('click', () => {
                 console.log('Sidebar clicked - forcing population...')
-                populateSidebarInstances()
+                populateSidebarInstancesWithRetry(1)
             })
             console.log('Debug click handler added to sidebar')
+        }
+        
+        // Add debug click handler to modpack container
+        const modpackContainer = document.getElementById('sidebar-instances-cards') || document.getElementById('modpack-instances-container')
+        if (modpackContainer) {
+            modpackContainer.addEventListener('click', () => {
+                console.log('Modpack container clicked - forcing population...')
+                populateSidebarInstancesWithRetry(1)
+            })
+            console.log('Debug click handler added to modpack container:', modpackContainer.id)
         }
         
         // Trigger sidebar population if uibinder is waiting
@@ -1368,6 +1535,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[LANDING] Triggering sidebar population...')
             window.triggerSidebarPopulation()
         }
+        
+        // Force population after some delay
+        setTimeout(() => {
+            console.log('[LANDING] Force triggering sidebar population...')
+            populateSidebarInstancesWithRetry(3)
+        }, 2000)
     }, 500)
 })
 
@@ -1377,6 +1550,31 @@ if (document.readyState === 'loading') {
 } else {
     console.log('DOM is ready, initializing immediately...')
     setTimeout(initNewInterface, 100)
+}
+
+// Make functions globally accessible for debugging
+window.populateSidebarInstancesDebug = populateSidebarInstances
+window.populateSidebarInstancesWithRetry = populateSidebarInstancesWithRetry
+
+// Add a simple test function
+window.testModpackCards = function() {
+    console.log('Testing modpack card system...')
+    console.log('populateModpackInstances available:', typeof window.populateModpackInstances)
+    console.log('createModpackCard available:', typeof window.createModpackCard)
+    console.log('sidebar-instances-cards exists:', !!document.getElementById('sidebar-instances-cards'))
+    console.log('modpack-instances-container exists:', !!document.getElementById('modpack-instances-container'))
+    
+    // Test with dummy data
+    if (typeof window.populateModpackInstances === 'function') {
+        const testInstances = [
+            { id: 'test1', name: 'Test Modpack 1', type: 'STAFF', icon: './assets/images/minecraft.ico' },
+            { id: 'test2', name: 'Test Modpack 2', type: 'PUBLIC', icon: './assets/images/minecraft.ico' }
+        ]
+        window.populateModpackInstances(testInstances, 'test1')
+        console.log('Test data populated')
+    } else {
+        console.error('populateModpackInstances not available')
+    }
 }
 }
 

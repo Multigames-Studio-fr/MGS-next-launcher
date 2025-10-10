@@ -64,18 +64,30 @@ async function populateSidebarInstances() {
             const isSelected = serverId === selectedServerId
             const iconUrl = serv.rawServer.icon || 'assets/images/SealCircle.png'
             
+               
             htmlString += `
-                <li class="server-instance-item">
-                    <button class="server-instance-btn ${isSelected ? 'selected' : ''}" 
-                            data-server-id="${serverId}"
-                            title="${serverName}">
+                <li class="server-instance-item group  transition-all duration-200  p-4  rounded-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}  hover:border-[#F8BA59]/70">
+                    <button class="server-instance-btn ${isSelected ? 'w-64' : 'w-32'}  " 
+                        data-server-id="${serverId}"
+                        title="${serverName}">
+                        
+                        <!-- Icon -->
                         <img src="${iconUrl}" 
                              alt="${serverName}"
-                             class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl object-cover border-2 ${isSelected ? 'border-[#F8BA59]' : 'border-white/20'} hover:border-[#F8BA59] transition-all duration-200" 
+                             class="w-14 h-14 rounded-xl"
                              onerror="this.src='assets/images/SealCircle.png'" />
+                        
+                        <!-- Content -->
+                        <div class="flex flex-col justify-center min-w-0">
+                            <!-- Badge STAFF -->
+                            <span class="block  font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
+                                ${serverName}
+                            </span>
+                        </div>
                     </button>
                 </li>
             `
+               
         }
         
         sidebarContainer.innerHTML = htmlString

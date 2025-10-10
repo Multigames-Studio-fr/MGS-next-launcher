@@ -20,7 +20,21 @@
             font-optical-sizing: auto;
             /*background: url('assets/images/backgrounds/<%=bkid%>.jpg') no-repeat center center fixed;*/
         }
-
+        @import url('http://multigames-studio.fr/font/fs-mojang-studios-2.otf');
+        @font-face {
+            font-family: 'Mojang';
+            src: url('http://multigames-studio.fr/font/fs-mojang-studios-2.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }   
+        .font-mojang {
+            font-family: 'Mojang', sans-serif;
+            font-weight: 41px;
+            font-style: normal;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+        }
         #main {
             display: none;
             height: calc(100% - 22px);

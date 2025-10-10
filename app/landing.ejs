@@ -6,7 +6,7 @@
         <!-- Overlay sombre global -->
         <div class="absolute inset-0 bg-black/60 z-0"></div>
         <!-- Overlay glassmorphism global -->
-        <div class="absolute inset-0 z-0" style="backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"></div>
+       
         <style>
             :root {
                 --primary: #451F21;
@@ -15,25 +15,12 @@
                 --white: #FFFFFF;
             }
 
-            /* Glassmorphism global */
-            .glass-global {
-                background: rgba(24, 24, 24, 0.30);
-                border-radius: 2rem;
-                box-shadow: 0 8px 32px 0 #00000033;
-                border: 1px solid rgba(255, 255, 255, 0.10);
-                backdrop-filter: blur(18px);
-                -webkit-backdrop-filter: blur(18px);
-            }
+
 
             /* Ajoute ce bloc dans un <style> existant ou nouveau */
-            .glass-sidebar {
-                transition: transform 0.18s cubic-bezier(.4, 0, .2, 1), box-shadow 0.18s;
-            }
+            .glass-sidebar {}
 
-            .glass-sidebar:hover {
-                transform: translateY(-4px) scale(1.04);
-                box-shadow: 0 8px 32px 0 #F8BA5977;
-            }
+            .glass-sidebar:hover {}
 
             /* Sidebar instances styling */
             .server-instance-item {
@@ -47,41 +34,42 @@
                 border: none;
                 padding: 0;
                 cursor: pointer;
-                transition: all 0.2s ease;
                 border-radius: 0.75rem;
                 display: flex;
                 align-items: center;
-                justify-content: center;
+              
             }
 
-            .server-instance-btn:hover {
-                transform: scale(1.1) translateY(-2px);
-            }
+            .server-instance-btn:hover {}
 
-            .server-instance-btn.selected {
-                transform: scale(1.05);
-            }
+            .server-instance-btn.selected {}
 
-            .server-instance-btn img {
-                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-            }
+            .server-instance-btn img {}
 
-            .server-instance-btn:hover img {
-                filter: drop-shadow(0 6px 12px rgba(248, 186, 89, 0.4));
-            }
+            .server-instance-btn:hover img {}
         </style>
-     
+
 
         <!-- Main content glassmorphism -->
-        <main class="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-8 md:px-12 lg:px-20 xl:px-32 fade-in glass-main-content"
-            style="margin: 1.5rem 1rem 1.5rem 0; border-radius: 0 2rem 2rem 0; padding: 2rem 1.5rem; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.08);">
-            <div class="max-w-3xl space-y-6">
+        <main
+            class="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-8 md:px-12 lg:px-20 xl:px-32 glass-main-content"
+            style=" ">
+            
+            <div class="absolute top-0 left-0 z-40 p-6">
+                <img src="./assets/images/logoup.png" class="h-30 " alt="Logo" >
+            </div>
+           
+            <div style="padding-top: 150px;" class="max-w-3xl space-y-6">
+
                 <span
                     class="inline-block px-3 py-1 bg-white/10 text-[#F8BA59] font-semibold rounded-full text-xs sm:text-sm mb-3 sm:mb-4 tracking-widest">LE
                     PLUS POPULAIRE</span>
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-2 font-mojang server-title"> Veuillez
+                <h1
+                    class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-2 font-mojang server-title">
+                    Veuillez
                     sélectionner une instance</h1>
-                <p class="text-base sm:text-lg text-white/90 font-medium mb-2 server-desc"> Aucune instance sélectionnée.<br>Choisissez
+                <p class="text-base sm:text-lg text-white/90 font-medium mb-2 server-desc"> Aucune instance
+                    sélectionnée.<br>Choisissez
                     une instance pour voir ses informations.</p>
                 <div class="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 text-sm sm:text-base">
                     <span class="text-white/70 text-sm">Version :</span>
@@ -100,8 +88,8 @@
                     <button id="settingsMediaButton"
                         class="settings-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-[#181818] hover:bg-[#F8BA59]/80 text-white transition shadow-lg">
 
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white"fill=" currentColor" class="bi bi-gear"
-                            viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white"
+                            fill=" currentColor" class="bi bi-gear" viewBox="0 0 16 16">
                             <path
                                 d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
                             <path
@@ -110,25 +98,33 @@
                     </button>
 
                 </div>
-        <br> <br>
+                <br> <br>
                 <!-- Remplace tout le bloc .play-instance par le bloc .info-starting-game ci-dessous -->
-                <div id="launch_details" class="info-starting-game hidden game-launch-overlay h-20 z-50 pointer-events-none">
+                <div id="launch_details"
+                    class="info-starting-game hidden game-launch-overlay h-20 z-50 pointer-events-none">
                     <br>
                     <div class="flex flex-col  justify-center w-full pb-12 gap-3">
                         <div class="flex items-center gap-3">
                             <span class="inline-flex ">
-                                <svg class="w-6 h-6 text-[#F8BA59]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10" stroke-opacity=".4"/>
-                                    <path d="M12 6v6l3.5 3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg class="w-6 h-6 text-[#F8BA59]" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" stroke-opacity=".4" />
+                                    <path d="M12 6v6l3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
-                            <div id="launch_details_text" class="info-starting-game-text text-white text-xl font-bold tracking-wide" aria-live="polite">Préparation du jeu...</div>
+                            <div id="launch_details_text"
+                                class="info-starting-game-text text-white text-xl font-bold tracking-wide"
+                                aria-live="polite">Préparation du jeu...</div>
                         </div>
                         <div class=" max-w-xl flex flex-col gap-2">
-                            <div class="relative h-4 rounded-lg overflow-hidden bg-white/15 backdrop-blur-sm border border-white/10">
-                                <div id="launch_progress_bar" class="progress-bar-inner h-full w-0 bg-gradient-to-r from-[#FF6A1A] via-[#F8BA59] to-[#FF6A1A]
+                            <div
+                                class="relative h-4 rounded-lg overflow-hidden bg-white/15 backdrop-blur-sm border border-white/10">
+                                <div id="launch_progress_bar"
+                                    class="progress-bar-inner h-full w-0 bg-gradient-to-r from-[#FF6A1A] via-[#F8BA59] to-[#FF6A1A]
                                             shadow-[0_0_0_1px_#00000055_inset] transition-[width] duration-300 ease-out"></div>
-                                <div class="absolute inset-0 bg-[linear-gradient(120deg,#ffffff22_25%,transparent_25%,transparent_50%,#ffffff22_50%,#ffffff22_75%,transparent_75%,transparent)] bg-[length:200%_100%] animate-[shine_2.2s_linear_infinite] pointer-events-none mix-blend-overlay"></div>
+                                <div
+                                    class="absolute inset-0 bg-[linear-gradient(120deg,#ffffff22_25%,transparent_25%,transparent_50%,#ffffff22_50%,#ffffff22_75%,transparent_75%,transparent)] bg-[length:200%_100%] animate-[shine_2.2s_linear_infinite] pointer-events-none mix-blend-overlay">
+                                </div>
                                 <progress id="launch_progress" style="display: none;" value="22" max="100"></progress>
                             </div>
                             <div class="flex justify-between text-xs font-semibold text-white/70 tabular-nums">
@@ -137,8 +133,8 @@
                             </div>
                         </div>
                         <button type="button"
-                                class="cancel-launch pointer-events-auto mt-1 px-4 py-1.5 text-sm font-semibold rounded-md bg-white/10 hover:bg-white/20 text-white border border-white/15 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display:none;">
+                            class="cancel-launch pointer-events-auto mt-1 px-4 py-1.5 text-sm font-semibold rounded-md bg-white/10 hover:bg-white/20 text-white border border-white/15 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                            style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display:none;">
                             Annuler
                         </button>
                     </div>
@@ -151,27 +147,22 @@
                         <!-- JS: injecte les options ici -->
                     </select>
                 </div>
-                <!-- Statut serveur -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-2" id="server_status_wrapper">
-                    <div class="flex items-center gap-2">
-                        <span class="server-status-dot w-3 h-3 rounded-full bg-green-400"></span>
-                        <span class="text-white font-semibold text-base sm:text-lg server-status-name">Multigames-Studio.fr</span>
-                    </div>
-                    <span class="text-white/70 text-sm sm:text-base server-status-text">Opérationnel • <span
-                            class="font-bold text-[#F8BA59]" id="player_count">0</span> <span id="landingPlayerLabel">joueurs</span></span>
-                </div>
+
 
                 <!-- Section News -->
                 <section class="mt-8 sm:mt-10 md:mt-12" id="newsContainer" style="display: none;">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                        <span class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl bg-[#F8BA59]/15 border border-[#F8BA59]/30 text-[#F8BA59]">
+                    <h2
+                        class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                        <span
+                            class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl bg-[#F8BA59]/15 border border-[#F8BA59]/30 text-[#F8BA59]">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2"
-                                 viewBox="0 0 24 24">
+                                viewBox="0 0 24 24">
                                 <path d="M4 6h16M4 12h10M4 18h16"></path>
                             </svg>
                         </span>
                         <span>Actualités</span>
-                        <button class="refresh-news text-xs sm:text-sm ml-0 sm:ml-4 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg bg-[#181818]/70 hover:bg-[#F8BA59]/80 hover:text-[#181818] text-white border border-white/10 transition shadow">
+                        <button
+                            class="refresh-news text-xs sm:text-sm ml-0 sm:ml-4 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg bg-[#181818]/70 hover:bg-[#F8BA59]/80 hover:text-[#181818] text-white border border-white/10 transition shadow">
                             Rafraîchir
                         </button>
                     </h2>
@@ -197,8 +188,10 @@
                                 <div id="newsNavigationContainer">
                                     <button id="newsButtonl">
                                         <div id="newsButtonAlert" style="display: none;"></div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                            fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd"
+                                                d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5" />
                                         </svg>
                                     </button>
                                     <button id="newsNavigateLeft">
@@ -213,13 +206,11 @@
                                                     }
                                                 </style>
                                             </defs>
-                                            <polyline
-                                                class="arrowLine"
-                                                points="0.71 13.26 12.56 1.41 24.16 13.02"
-                                            />
+                                            <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02" />
                                         </svg>
                                     </button>
-                                    <span id="newsNavigationStatus"><%- lang('landing.newsNavigationStatus', { currentPage: 1, totalPages: 1 }) %></span>
+                                    <span id="newsNavigationStatus"><%- lang('landing.newsNavigationStatus', {
+                                            currentPage: 1, totalPages: 1 }) %></span>
                                     <button id="newsNavigateRight">
                                         <svg id="newsNavigationRightSVG" viewBox="0 0 24.87 13.97">
                                             <defs>
@@ -232,10 +223,7 @@
                                                     }
                                                 </style>
                                             </defs>
-                                            <polyline
-                                                class="arrowLine"
-                                                points="0.71 13.26 12.56 1.41 24.16 13.02"
-                                            />
+                                            <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02" />
                                         </svg>
                                     </button>
                                 </div>
@@ -253,18 +241,25 @@
                         <template id="news-card-template">
                             <article class="news-card glass-global relative overflow-hidden" role="article">
                                 <div class="news-image absolute inset-0 bg-cover bg-center"></div>
-                                <div class="news-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div
+                                    class="news-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                                </div>
                                 <div class="news-badges absolute left-4 top-4 flex gap-2"></div>
                                 <div class="news-content absolute left-4 bottom-4 right-4 text-left text-white">
                                     <div class="news-title-stacked font-extrabold text-xl leading-tight"></div>
                                     <div class="news-excerpt-stacked mt-1 text-sm text-white/80"></div>
                                     <div class="flex items-center justify-between mt-2 text-xs text-white/70">
-                                        <div class="news-date"><span class="news-date-day font-semibold"></span> <span class="news-date-month ml-1"></span></div>
+                                        <div class="news-date"><span class="news-date-day font-semibold"></span> <span
+                                                class="news-date-month ml-1"></span></div>
                                         <button class="news-open-button glass-btn px-3 py-1 font-semibold">Voir</button>
                                     </div>
                                 </div>
-                                <button class="news-play absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
-                                    <svg class="w-16 h-16 text-white drop-shadow-xl" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                <button
+                                    class="news-play absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+                                    <svg class="w-16 h-16 text-white drop-shadow-xl" viewBox="0 0 24 24"
+                                        fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
                                 </button>
                             </article>
                         </template>
@@ -273,49 +268,87 @@
                     <!-- News Error Container -->
                     <div id="newsErrorContainer">
                         <div id="newsErrorLoading">
-                            <span id="nELoadSpan" class="newsErrorContent text-white"><%- lang('landing.newsErrorLoadSpan') %></span>
+                            <span id="nELoadSpan" class="newsErrorContent text-white"><%-
+                                    lang('landing.newsErrorLoadSpan') %></span>
                         </div>
                         <div id="newsErrorFailed" style="display: none">
-                            <span id="nEFailedSpan" class="newsErrorContent text-white"><%- lang('landing.newsErrorFailedSpan') %></span>
-                            <button id="newsErrorRetry" class="bg-[#F8BA59] hover:bg-[#EB843B] text-white px-3 py-1 rounded text-sm">
+                            <span id="nEFailedSpan" class="newsErrorContent text-white"><%-
+                                    lang('landing.newsErrorFailedSpan') %></span>
+                            <button id="newsErrorRetry"
+                                class="bg-[#F8BA59] hover:bg-[#EB843B] text-white px-3 py-1 rounded text-sm">
                                 <%- lang('landing.newsErrorRetryButton') %>
                             </button>
                         </div>
                         <div id="newsErrorNone" style="display: none">
-                            <span id="nENoneSpan" class="newsErrorContent text-white"><%- lang('landing.newsErrorNoneSpan') %></span>
+                            <span id="nENoneSpan" class="newsErrorContent text-white"><%-
+                                    lang('landing.newsErrorNoneSpan') %></span>
                         </div>
                     </div>
                 </section>
             </div>
         </main>
-           <!-- Sidebar verticale Multigames style -->
-        <aside class="relative z-10 flex flex-col justify-between items-center py-4 sm:py-6 md:py-8 w-20 sm:w-24 md:w-32 min-h-screen fade-in ">
+        <!-- Sidebar verticale Multigames style -->
+        <aside class="relative z-10 flex flex-col justify-between py-4 sm:py-6 md:py-8  min-h-screen items-end">
             <!-- Filtre noir sur la sidebar -->
-            
+
             <!-- Contenu de la sidebar -->
-            <div class="flex flex-col items-center gap-6 sm:gap-8 md:gap-10 relative z-10">
-                <div class="relative">
-                    <div class="glass-sidebar bg-[#181818]/60 rounded-2xl sm:rounded-3xl py-1 sm:py-2 px-1 sm:px-2 flex flex-col gap-4 sm:gap-6 shadow-2xl border border-white/10"
-                        style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
-                        <div id="avatarContainer" alt="Profil"
-                            class="player-head flex flex-col gap-6 sm:gap-8 items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-2xl sm:rounded-3xl border-2 border-[#181818] shadow-lg object-cover bg-white">
-                        </div>
-                    </div>
+            <!-- Contenu de la sidebar -->
+               
+            <div class="flex flex-col justify-between h-full min-h-screen w-full px-4">
+                <!-- Haut : Avatar -->
                    
-                    <span style="border-radius:5px"
-                        class="absolute top-0 right-0 sm:top-1 sm:right-1 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-green-400 border-1 sm:border-2 border-white "></span>
+                <div class="relative mb-4">
+                    <div
+                        class="glass-sidebar bg-[#181818]/60 rounded-2xl sm:rounded-3xl py-3 px-3 flex  gap-3 border border-white/10">
+                        <div id="avatarContainer" class="player-head w-16 h-16 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+                            
+                        </div>
+                        <!-- Ajout du pseudo ici -->
+                        <div id="sidebar-username" class="mt-4 text-white text-2xl font-semibold ">Pedro33210</div>
+                    </div>
+
+                    <span class="absolute top-0 right-0 w-4 h-4 rounded-full bg-green-400 border-2 border-white"></span>
+
+                    <script>
+                        <!-- username/avatar init removed (centralized later) -->
+                    </script>
                 </div>
-                <!-- Bloc glassmorphism arrondi pour les instances -->
-                <div class="flex flex-col items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 md:mt-10 ">
-                    <div class="glass-sidebar bg-[#181818]/60 hover:bg-[#F8BA59]/30 rounded-2xl sm:rounded-3xl py-2 sm:py-3 md:py-4 px-2 sm:px-3 md:px-4 flex flex-col gap-4 sm:gap-6 shadow-2xl border border-white/10"
-                        style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
-                        <ul id="sidebar-instances" class="flex flex-col gap-4 sm:gap-6 md:gap-8 items-center justify-center">
+                   
+
+                <!-- Milieu : Liste des serveurs centrée -->
+                <div class="flex flex-col gap-3 mt-6 sm:mt-8 md:mt-10 w-full max-w-sm mx-auto">
+                    <div>
+                        <ul id="sidebar-instances" class="flex flex-col gap-4 sm:gap-6 md:gap-8 items-end">
                             <!-- JS: injecte dynamiquement les boutons d'instances ici -->
                             <li class="text-white/50 text-xs text-center">Chargement...</li>
                         </ul>
                     </div>
                 </div>
+
+                <!-- Bas : Réseaux sociaux -->
+                <div class="flex flex-row gap-4 justify-center mt-8 mb-4">
+                    <a href="https://discord.gg/tonserveur" target="_blank" title="Discord"
+                        class="text-white hover:text-[#F8BA59] transition">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M..." />
+                        </svg>
+                    </a>
+                    <a href="https://twitter.com/tonserveur" target="_blank" title="Twitter"
+                        class="text-white hover:text-[#F8BA59] transition">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M..." />
+                        </svg>
+                    </a>
+                    <a href="https://facebook.com/tonserveur" target="_blank" title="Facebook"
+                        class="text-white hover:text-[#F8BA59] transition">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M..." />
+                        </svg>
+                    </a>
+                    <!-- Ajoute d'autres réseaux si besoin -->
+                </div>
             </div>
+               
 
 
 
@@ -349,64 +382,33 @@
 
     <!-- Styles et scripts pour la nouvelle interface -->
     <style>
-        /* Apparition douce du contenu principal */
-        main .max-w-2xl {
-            animation: fadeInUp 0.7s cubic-bezier(.4, 0, .2, 1);
-        }
+    /* Apparition douce du contenu principal */
+    main .max-w-2xl { min-height: 1px; }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(32px);
-            }
+    .fade-in { opacity: 0; transform: translateY(4px); }
 
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        /* Apparition douce de la sidebar */
-        aside {
-            animation: fadeInLeft 0.7s cubic-bezier(.4, 0, .2, 1);
-        }
-
-        @keyframes fadeInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-32px);
-            }
-
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        /* Animation d'apparition générique */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(32px);
-            animation: fadeInUp 0.7s cubic-bezier(.4, 0, .2, 1) forwards;
-        }
         /* Right-aligned news grid */
-        .news-list { display:flex; justify-content:flex-end; }
+        .news-list {
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .news-grid {
-            width: 100%; 
+            width: 100%;
             max-width: 820px;
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
             align-items: start;
         }
-        
+
         @media (min-width: 768px) {
             .news-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 18px;
             }
         }
-        
+
         .news-card {
             height: 140px;
             border-radius: 12px;
@@ -414,91 +416,134 @@
             position: relative;
             background: #00000033;
         }
-        
+
         @media (min-width: 768px) {
             .news-card {
                 height: 160px;
             }
         }
-        .news-image { width: 100%; height: 100%; }
-        .news-overlay { pointer-events: none; }
-        .news-badges { pointer-events: none; }
-        .news-content { pointer-events: auto; }
-        .news-title-stacked { font-size: 1.05rem; }
-        .news-excerpt-stacked { font-size: 0.95rem; }
-        .news-open-button { white-space: nowrap; }
-        .news-play { pointer-events: none; }
-        .news-card:hover .news-play { opacity: 1; pointer-events: none; }
-        /* Boutons principaux : effet de survol doux et léger */
-        .play-btn,
-        .settings-btn,
-        .w-14.h-14 {
-            transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
-            will-change: transform, box-shadow;
+
+        .news-image {
+            width: 100%;
+            height: 100%;
         }
+
+        .news-overlay {
+            pointer-events: none;
+        }
+
+        .news-badges {
+            pointer-events: none;
+        }
+
+        .news-content {
+            pointer-events: auto;
+        }
+
+        .news-title-stacked {
+            font-size: 1.05rem;
+        }
+
+        .news-excerpt-stacked {
+            font-size: 0.95rem;
+        }
+
+        .news-open-button {
+            white-space: nowrap;
+        }
+
+        .news-play {
+            pointer-events: none;
+        }
+
+        .news-card:hover .news-play {
+            opacity: 1;
+            pointer-events: none;
+        }
+
+    /* Boutons principaux : effet de survol doux et léger */
+    .play-btn,
+    .settings-btn,
+    .w-14.h-14 { display: inline-flex; align-items: center; justify-content: center; }
 
         .play-btn:hover {
             background: #F8BA59;
             color: #181818;
-            box-shadow: 0 6px 24px 0 #F8BA5977;
-            transform: translateY(-2px) scale(1.04);
         }
 
         .settings-btn:hover,
         .w-14.h-14:hover {
             background: #F8BA59;
             color: #181818;
-            box-shadow: 0 4px 16px 0 #F8BA5977;
-            transform: scale(1.06);
         }
 
-        /* Animation sur le select d'instance */
-        .instance-select {
-            transition: box-shadow 0.16s, border 0.16s;
-        }
+    /* Animation sur le select d'instance */
+    .instance-select { min-width: 1px; }
 
         .instance-select:focus {
-            box-shadow: 0 0 0 2px #F8BA59cc;
             border-color: #F8BA59;
         }
 
-        /* Animation sur le dot de statut serveur */
-        .server-status-dot {
-            animation: pulse 1.4s cubic-bezier(.4, 0, .2, 1) infinite alternate;
-        }
-
-        @keyframes pulse {
-            from {
-                box-shadow: 0 0 0 0 #4ade80aa;
-            }
-
-            to {
-                box-shadow: 0 0 0 10px #4ade8000;
-            }
-        }
+    /* Animation sur le dot de statut serveur */
+    .server-status-dot { width: 8px; height: 8px; display: inline-block; border-radius: 9999px; }
 
         /* Button glass style */
         .glass-btn {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
             color: #FFFFFF;
             border-radius: 10px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: transform .12s ease, background .12s ease;
         }
-        .glass-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.10); }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        /* Modpack cards styles */
+        .modpack-card {
+            cursor: pointer;
+        }
+
+        .modpack-card:hover {
+            opacity: 1 !important;
+        }
+
+        .modpack-card.selected {
+            background: linear-gradient(to right, #f97316, #ea580c) !important;
+        }
+
+        .modpack-avatar {
+            background: #92400e;
+        }
 
         /* Latest news specific styling */
-        .news-card.glass-global { background: rgba(24,24,24,0.36); border-radius:12px; padding:12px; display:flex; align-items:center; gap:12px; }
-        .news-thumb { width:140px; height:84px; background-size:cover; background-position:center; border-radius:8px; flex-shrink:0; }
-        .news-title { margin:0; }
-        .news-excerpt { margin:0; }
-
-        @keyframes shine {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        .news-card.glass-global {
+            background: rgba(24, 24, 24, 0.36);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
+
+        .news-thumb {
+            width: 140px;
+            height: 84px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .news-title {
+            margin: 0;
+        }
+
+        .news-excerpt {
+            margin: 0;
+        }
+
+        @keyframes shine {}
 
         /* Responsive adjustments */
         @media (max-width: 1280px) {
@@ -524,7 +569,7 @@
                 margin-bottom: 0.5rem !important;
                 margin-right: 0.5rem !important;
             }
-            
+
             .server-title {
                 font-size: 2rem !important;
                 line-height: 2.25rem !important;
@@ -540,11 +585,6 @@
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.fade-in').forEach((el, i) => {
-                setTimeout(() => {
-                    el.classList.remove('fade-in');
-                }, 150 + i * 80);
-            });
         });
 
         // Hook bouton refresh news
@@ -564,6 +604,42 @@
     </script>
 
     <script>
+        // Safely set sidebar username when AuthManager is available.
+        (function () {
+            function setSidebarUsername() {
+                try {
+                    const usernameEl = document.getElementById('sidebar-username');
+                    const avatarContainer = document.getElementById('avatarContainer');
+                    const acc = (window.AuthManager && typeof window.AuthManager.getCurrentAccount === 'function') ? window.AuthManager.getCurrentAccount() : null;
+                    if (usernameEl) {
+                        usernameEl.textContent = (acc && acc.username) ? acc.username : usernameEl.textContent || 'Pseudo';
+                    }
+                    // If we have an avatar url or uuid, set it as the background of avatarContainer
+                    if (avatarContainer && acc) {
+                        if (acc.avatarUrl) {
+                            avatarContainer.style.backgroundImage = `url('${acc.avatarUrl}')`;
+                            avatarContainer.style.backgroundSize = 'cover';
+                            avatarContainer.style.backgroundPosition = 'center';
+                        } else if (acc.uuid) {
+                            // Use mc-heads service to fetch a small avatar
+                            avatarContainer.style.backgroundImage = `url('https://mc-heads.net/avatar/${acc.uuid}/40')`;
+                            avatarContainer.style.backgroundSize = 'cover';
+                            avatarContainer.style.backgroundPosition = 'center';
+                        }
+                    }
+                } catch (e) {
+                    // Don't break the rest of the scripts if AuthManager isn't present or throws
+                    console.warn('Failed to set sidebar username/avatar', e);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setSidebarUsername);
+            } else {
+                setSidebarUsername();
+            }
+        })();
+
         // Progress bar handler compatible avec le code existant
         (function () {
             const root = document.querySelector('.game-launch-overlay');
@@ -596,7 +672,7 @@
 
             // Override des fonctions existantes pour la compatibilité
             window.oldToggleLaunchArea = window.toggleLaunchArea;
-            window.toggleLaunchArea = function(loading) {
+            window.toggleLaunchArea = function (loading) {
                 if (loading) {
                     root.classList.remove('hidden');
                     document.querySelector('.play-instance').style.display = 'none';
@@ -607,7 +683,7 @@
             };
 
             window.oldSetLaunchPercentage = window.setLaunchPercentage;
-            window.setLaunchPercentage = function(percent) {
+            window.setLaunchPercentage = function (percent) {
                 if (bar) bar.style.width = percent + '%';
                 if (valueEl) valueEl.textContent = percent + '%';
                 // Garde l'ancienne progress bar cachée mais mise à jour
@@ -618,7 +694,7 @@
             };
 
             window.oldSetLaunchDetails = window.setLaunchDetails;
-            window.setLaunchDetails = function(details) {
+            window.setLaunchDetails = function (details) {
                 if (labelEl) labelEl.textContent = details;
             };
         })();
@@ -692,6 +768,99 @@
             grid.innerHTML = '';
             const card = window.renderNewsCard(data);
             if (card) grid.appendChild(card);
+        };
+
+        // Helper: create modpack instance cards
+        window.createModpackCard = function (instance, isSelected = false) {
+            const card = document.createElement('div');
+            card.className = `modpack-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer ${isSelected
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                : 'bg-gradient-to-r from-gray-700 to-gray-800 opacity-80 hover:opacity-100'
+                }`;
+            card.setAttribute('data-instance-id', instance.id || instance.rawServerId);
+
+            const avatar = document.createElement('div');
+            avatar.className = 'modpack-avatar w-12 h-12 bg-amber-800 rounded-xl flex items-center justify-center';
+
+            const avatarIcon = document.createElement('div');
+            avatarIcon.className = 'w-8 h-8 bg-cover bg-center rounded-lg';
+            if (instance.icon) {
+                avatarIcon.style.backgroundImage = `url('${instance.icon}')`;
+            } else {
+                avatarIcon.style.backgroundImage = "url('./assets/images/minecraft.ico')";
+            }
+            avatar.appendChild(avatarIcon);
+
+            const content = document.createElement('div');
+            content.className = 'flex-1';
+
+            const badgeContainer = document.createElement('div');
+            badgeContainer.className = 'flex items-center gap-2 mb-1';
+
+            // Badge pour le type d'instance
+            const badge = document.createElement('span');
+            badge.className = 'bg-white/20 text-white text-xs px-2 py-1 rounded-full font-semibold';
+            badge.textContent = instance.type || 'MODPACK';
+            badgeContainer.appendChild(badge);
+
+            const title = document.createElement('h3');
+            title.className = 'text-white font-bold text-lg';
+            title.textContent = instance.name || instance.displayName || 'Modpack';
+
+            content.appendChild(badgeContainer);
+            content.appendChild(title);
+
+            card.appendChild(avatar);
+            card.appendChild(content);
+
+            // Ajouter l'événement de clic
+            card.addEventListener('click', () => {
+                // Désélectionner toutes les autres cartes
+                document.querySelectorAll('.modpack-card').forEach(c => {
+                    c.className = c.className.replace('selected', '').replace('bg-gradient-to-r from-orange-500 to-orange-600', 'bg-gradient-to-r from-gray-700 to-gray-800 opacity-80 hover:opacity-100');
+                });
+
+                // Sélectionner cette carte
+                card.className = 'modpack-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer selected bg-gradient-to-r from-orange-500 to-orange-600';
+
+                // Trigger l'événement de sélection d'instance (compatible avec le code existant)
+                if (window.setSelectedInstance) {
+                    window.setSelectedInstance(instance);
+                }
+            });
+
+            return card;
+        };
+
+        // Fonction pour populer les instances modpack
+        window.populateModpackInstances = function (instances, selectedInstanceId = null) {
+            // Utiliser le nouveau conteneur de cartes
+            const container = document.getElementById('sidebar-instances-cards') || document.getElementById('modpack-instances-container');
+            if (!container) {
+                console.error('Aucun conteneur trouvé pour les cartes modpack');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!instances || instances.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'text-white/50 text-sm text-center py-4';
+                placeholder.textContent = 'Aucune instance disponible';
+                container.appendChild(placeholder);
+                return;
+            }
+
+            instances.forEach((instance, index) => {
+                const isSelected = selectedInstanceId ?
+                    (instance.id === selectedInstanceId || instance.rawServerId === selectedInstanceId) :
+                    index === 0; // Première instance sélectionnée par défaut
+
+                const card = window.createModpackCard(instance, isSelected);
+                container.appendChild(card);
+            });
+
+            console.log(`Populated ${instances.length} modpack cards in`, container.id);
         };
     </script>
 
