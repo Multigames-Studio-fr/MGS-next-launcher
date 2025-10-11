@@ -7,7 +7,8 @@ const autoUpdater                       = require('electron-updater').autoUpdate
 // Logging for auto-updater events
 const log = require('electron-log')
 autoUpdater.logger = log
-autoUpdater.logger.transports.file.level = 'info'
+// Use debug level for more diagnostic information about updater behavior.
+autoUpdater.logger.transports.file.level = 'debug'
 const ejse                              = require('ejs-electron')
 const fs                                = require('fs')
 const isDev                             = require('./app/assets/js/isdev')
@@ -52,20 +53,43 @@ function initAutoUpdater(event, data) {
         // If autoDownload is disabled (or if we haven't started download yet),
         // start download and forward download progress to renderer.
         try {
-            if (!global.__autoUpdaterDownloading) {
+                if (!global.__autoUpdaterDownloading) {
                 // If autoDownload is false, explicitly call downloadUpdate(). If true,
                 // electron-updater will already be downloading; calling downloadUpdate()
                 // again is unnecessary but safe-guarded by the flag.
                 global.__autoUpdaterDownloading = true
                 log.info('[AutoUpdater] initiating downloadUpdate()')
+                    // Start a watchdog timer in case download stalls without emitting progress
+                    try {
+                        if (global.__autoUpdaterDownloadWatchdog) {
+                            clearTimeout(global.__autoUpdaterDownloadWatchdog)
+                        }
+                        // 5 minutes watchdog
+                        global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
+                            try {
+                                if (global.__autoUpdaterDownloading) {
+                                    log.warn('[AutoUpdater] download watchdog triggered - download appears stalled')
+                                    // Notify renderer so UI doesn't stay stuck in 'downloading' state.
+                                    try { event.sender.send('autoUpdateNotification', 'realerror', { message: 'Download timed out' }) } catch (e) { /* best-effort */ }
+                                    global.__autoUpdaterDownloading = false
+                                }
+                            } catch (e) {
+                                // ignore watchdog errors
+                            }
+                        }, 5 * 60 * 1000)
+                    } catch (e) {
+                        // ignore
+                    }
                 autoUpdater.downloadUpdate()
                     .then(() => {
                         log.info('[AutoUpdater] downloadUpdate() completed')
+                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
                     })
                     .catch((err) => {
                         log.error('[AutoUpdater] downloadUpdate() failed', err && err.message)
                         event.sender.send('autoUpdateNotification', 'realerror', err)
                         global.__autoUpdaterDownloading = false
+                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
                     })
             } else {
                 log.info('[AutoUpdater] download already in progress, skipping downloadUpdate()')
@@ -82,6 +106,23 @@ function initAutoUpdater(event, data) {
             log.info('[AutoUpdater] download-progress', JSON.stringify(progress))
         } catch (e) {
             log.info('[AutoUpdater] download-progress')
+        }
+        // Reset watchdog when progress is observed
+        try {
+            if (global.__autoUpdaterDownloadWatchdog) {
+                clearTimeout(global.__autoUpdaterDownloadWatchdog)
+                global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
+                    try {
+                        if (global.__autoUpdaterDownloading) {
+                            log.warn('[AutoUpdater] download watchdog triggered after progress reset - download appears stalled')
+                            try { event.sender.send('autoUpdateNotification', 'realerror', { message: 'Download timed out' }) } catch (e) { }
+                            global.__autoUpdaterDownloading = false
+                        }
+                    } catch (e) { }
+                }, 5 * 60 * 1000)
+            }
+        } catch (e) {
+            // ignore watchdog errors
         }
         // Broadcast to all renderer windows if event not present in closure.
         try {
