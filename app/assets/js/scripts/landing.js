@@ -178,6 +178,7 @@ function updateSelectedAccount(authUser){
     let username = Lang.queryJS('landing.selectedAccount.noAccountSelected')
     const userTextElement = document.getElementById('user_text')
     const avatarContainer = document.getElementById('avatarContainer')
+    const visibleUsername = document.getElementById('username') // visible in landing.ejs sidebar
     
     if(authUser != null){
         if(authUser.displayName != null){
@@ -192,6 +193,8 @@ function updateSelectedAccount(authUser){
         }
     }
     if (userTextElement) userTextElement.innerHTML = username
+    // Also set the visible sidebar username element (landing.ejs uses #username)
+    if (visibleUsername) visibleUsername.innerHTML = username
 }
 updateSelectedAccount(ConfigManager.getSelectedAccount())
 
@@ -1224,9 +1227,45 @@ async function populateSidebarInstances() {
         }
         
         // Convertir les serveurs en instances pour les cartes modpack
+        // Si un serveur a une whitelist active, n'afficher que s'il contient l'utilisateur sélectionné
+        const selectedAcc = ConfigManager.getSelectedAccount()
+        const selectedUUID = selectedAcc && selectedAcc.uuid ? selectedAcc.uuid.toLowerCase() : null
+
         const instances = servers.map(serv => {
             if (!serv || !serv.rawServer) return null
-            
+
+            // Si whitelist active, vérifier la présence de l'utilisateur sélectionné
+            try {
+                const wl = serv.rawServer.whitelist
+                if (wl && wl.active) {
+                    // Pas d'utilisateur sélectionné => ne pas afficher
+                    if (!selectedUUID) {
+                        console.log('[SIDEBAR] Server', serv.rawServer.id, 'has an active whitelist but no account is selected; hiding')
+                        return null
+                    }
+
+                    const players = Array.isArray(wl.players) ? wl.players : []
+                    const matched = players.some(p => {
+                        if (!p) return false
+                        // comparer par uuid si disponible, sinon par nom
+                        if (p.uuid) {
+                            return p.uuid.toLowerCase() === selectedUUID
+                        }
+                        if (p.name && selectedAcc.displayName) {
+                            return p.name === selectedAcc.displayName
+                        }
+                        return false
+                    })
+
+                    if (!matched) {
+                        console.log('[SIDEBAR] Selected account not in whitelist for server', serv.rawServer.id, '; hiding')
+                        return null
+                    }
+                }
+            } catch (e) {
+                console.warn('[SIDEBAR] Error while checking whitelist for server', serv && serv.rawServer && serv.rawServer.id, e)
+            }
+
             return {
                 id: serv.rawServer.id,
                 rawServerId: serv.rawServer.id,
@@ -1577,19 +1616,3 @@ window.testModpackCards = function() {
     }
 }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

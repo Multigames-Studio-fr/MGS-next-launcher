@@ -1,72 +1,64 @@
 
-<div id="loginOptionsContainer" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center px-4 py-8">
-    
-    <div id="loginOptionsContent" class="w-full max-w-md mx-auto">
-        <div class="bg-gray-800 border border-gray-600 rounded-lg p-8 text-white shadow-xl">
-            
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <div class="mb-6">
-                    <img src="assets/images/multigames-logo.webp" class="mx-auto w-20 h-20">
+<div id="loginOptionsContainer" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6">
+
+    <!-- Modal card styled like landing -->
+    <div id="loginOptionsContent" class="w-full max-w-2xl mx-auto bg-[#0b0b0b]/80 border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative">
+
+        <div class="relative p-8 md:p-10 lg:p-12 flex flex-col md:flex-row gap-6 items-center">
+            <!-- Left: Branding / illustration -->
+            <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+                <img src="./assets/images/logoup.png" alt="Logo" class="h-20 mb-4">
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-2"><%- lang('loginOptions.loginOptionsTitle') %></h2>
+                <p class="text-white/80 mb-4">Connectez-vous pour accéder à MultiGames</p>
+
+                <div class="flex items-center gap-3">
+                    <span class="inline-block px-3 py-1 bg-white/10 text-[#F8BA59] font-semibold rounded-full text-xs tracking-widest">Compte</span>
                 </div>
-                <h1 class="text-2xl font-semibold mb-3">
-                    <%- lang('loginOptions.loginOptionsTitle') %>
-                </h1>
-                <p class="text-gray-400 text-sm">Connectez-vous pour accéder à MultiGames</p>
             </div>
 
-            <!-- Options de connexion -->
-            <div class="space-y-4">
-                <!-- Bouton Microsoft -->
-                <button id="loginOptionMicrosoft" class="w-full bg-brand-primary hover:bg-brand-light text-white py-4 px-6 rounded-lg font-medium flex items-center justify-center gap-3 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 23 23">
-                        <path fill="#f35325" d="M1 1h10v10H1z" />
-                        <path fill="#81bc06" d="M12 1h10v10H12z" />
-                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                        <path fill="#ffba08" d="M12 12h10v10H12z" />
-                    </svg>
-                    <span><%- lang('loginOptions.loginWithMicrosoft') %></span>
-                </button>
-                
-                <!-- Statut de connexion Microsoft -->
-                <div id="loginStatusMicrosoft" class="hidden text-center">
-                    <div class="text-sm text-blue-400">
+            <!-- Right: Buttons and status -->
+            <div class="w-full md:w-96 flex-shrink-0">
+                <div class="bg-[#0f0f0f]/60  rounded-xl p-6">
+                    <!-- Bouton Microsoft (conserver ID) -->
+                    <button id="loginOptionMicrosoft" class="w-full flex items-center justify-center gap-3 bg-[#FF6A1A] hover:bg-[#F8BA59] text-white font-bold py-3 px-4 rounded-xl transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 23 23" class="inline-block">
+                            <path fill="#f35325" d="M1 1h10v10H1z" />
+                            <path fill="#81bc06" d="M12 1h10v10H12z" />
+                            <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                            <path fill="#ffba08" d="M12 12h10v10H12z" />
+                        </svg>
+                        <span><%- lang('loginOptions.loginWithMicrosoft') %></span>
+                    </button>
+
+                    <!-- Statut de connexion Microsoft (conserver ID) -->
+                    <div id="loginStatusMicrosoft" class="hidden text-center mt-3 text-sm text-blue-300">
                         <span>Connexion en cours...</span>
+                    </div>
+
+
+
+                    <!-- Cancel button container (keep IDs) -->
+                    <div id="loginOptionCancelContainer" class="mt-2">
+                        <button id="loginOptionCancelButton" class="w-full bg-white/6 hover:bg-white/10 text-white py-2 px-3 rounded-lg font-semibold transition">
+                            <%- lang('loginOptions.cancelButton') %>
+                        </button>
+                    </div>
+
+                    <!-- Status and error blocks (preserve IDs) -->
+                    <div class="mt-4">
+                        <div id="loginStatus" class="hidden bg-white/3 border border-white/6 text-sm text-white rounded-lg py-2 px-3">
+                            <span id="loginStatusText">Connexion en cours...</span>
+                        </div>
+
+                        <div id="loginError" class="hidden mt-2 bg-red-900 border border-red-700 text-sm text-red-300 rounded-lg py-2 px-3">
+                            <span id="loginErrorText">Erreur de connexion</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Bouton d'annulation -->
-            <div id="loginOptionCancelContainer" class="hidden mt-6">
-                <button id="loginOptionCancelButton" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
-                    <%- lang('loginOptions.cancelButton') %>
-                </button>
-            </div>
-
-            <!-- Footer -->
-            <div class="mt-8 text-center border-t border-gray-700 pt-6">
-                <p class="text-xs text-gray-500 leading-relaxed">
-                    En vous connectant, vous acceptez nos 
-                    <a href="#" class="text-blue-400 hover:text-blue-300 underline">conditions d'utilisation</a>
-                    et notre
-                    <a href="#" class="text-blue-400 hover:text-blue-300 underline">politique de confidentialité</a>
-                </p>
-            </div>
         </div>
 
-        <!-- Messages de statut -->
-        <div class="mt-6 text-center">
-            <div id="loginStatus" class="hidden bg-gray-800 border border-gray-600 text-sm text-white rounded-lg py-3 px-4 shadow-lg">
-                <span id="loginStatusText">Connexion en cours...</span>
-            </div>
-        </div>
-
-        <!-- Messages d'erreur -->
-        <div class="mt-4 text-center">
-            <div id="loginError" class="hidden bg-red-900 border border-red-700 text-sm text-red-300 rounded-lg py-3 px-4 shadow-lg">
-                <span id="loginErrorText">Erreur de connexion</span>
-            </div>
-        </div>
+    
     </div>
 
     <script src="./assets/js/scripts/loginOptions.js"></script>

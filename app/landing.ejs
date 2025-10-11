@@ -1,4 +1,4 @@
-<div id="landingContainer" class="no-scroll" style="display: none;">
+<div id="landingContainer" class="" style="display: none;">
     <link rel="stylesheet" href="./assets/css/output.css">
 
     <div class="flex min-h-screen w-full relative fit-content"
@@ -32,7 +32,7 @@
             .server-instance-btn {
                 background: none;
                 border: none;
-                padding: 0;
+               
                 cursor: pointer;
                 border-radius: 0.75rem;
                 display: flex;
@@ -61,9 +61,6 @@
            
             <div style="padding-top: 150px;" class="max-w-3xl space-y-6">
 
-                <span
-                    class="inline-block px-3 py-1 bg-white/10 text-[#F8BA59] font-semibold rounded-full text-xs sm:text-sm mb-3 sm:mb-4 tracking-widest">LE
-                    PLUS POPULAIRE</span>
                 <h1
                     class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg mb-2 font-mojang server-title">
                     Veuillez
@@ -294,24 +291,22 @@
             <!-- Contenu de la sidebar -->
             <!-- Contenu de la sidebar -->
                
-            <div class="flex flex-col justify-between h-full min-h-screen w-full px-4">
+            <div class="flex flex-col justify-between h-full min-h-screen w-full ">
                 <!-- Haut : Avatar -->
                    
-                <div class="relative mb-4">
+                <div class="relative mb-4 ">
                     <div
-                        class="glass-sidebar bg-[#181818]/60 rounded-2xl sm:rounded-3xl py-3 px-3 flex  gap-3 border border-white/10">
+                        class="glass-sidebar bg-[#181818]/60 rounded-l-2xl sm:rounded-l-3xl py-3 px-3 flex  gap-3 border border-white/10">
                         <div id="avatarContainer" class="player-head w-16 h-16 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
                             
                         </div>
                         <!-- Ajout du pseudo ici -->
-                        <div id="sidebar-username" class="mt-4 text-white text-2xl font-semibold ">Pedro33210</div>
+                        <div id="username" class="mt-4 text-white text-2xl font-semibold "></div>
                     </div>
 
                     <span class="absolute top-0 right-0 w-4 h-4 rounded-full bg-green-400 border-2 border-white"></span>
 
-                    <script>
-                        <!-- username/avatar init removed (centralized later) -->
-                    </script>
+                    <!-- username/avatar init removed (centralized later) -->
                 </div>
                    
 
@@ -330,19 +325,19 @@
                     <a href="https://discord.gg/tonserveur" target="_blank" title="Discord"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M..." />
+                            <path d="M0 0" />
                         </svg>
                     </a>
                     <a href="https://twitter.com/tonserveur" target="_blank" title="Twitter"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M..." />
+                            <path d="M0 0" />
                         </svg>
                     </a>
                     <a href="https://facebook.com/tonserveur" target="_blank" title="Facebook"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M..." />
+                            <path d="M0 0" />
                         </svg>
                     </a>
                     <!-- Ajoute d'autres réseaux si besoin -->
@@ -545,324 +540,106 @@
 
         @keyframes shine {}
 
-        /* Responsive adjustments */
-        @media (max-width: 1280px) {
-            main {
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
+        /* --- ADDED: Animations CSS utilities --- */
+        /* Place these rules near the other styles */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(18px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(.96) translateY(4px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-fade {
+            animation: fadeUp 520ms cubic-bezier(.2,.9,.2,1) both;
+        }
+        .animate-slide-right {
+            animation: slideRight 420ms cubic-bezier(.2,.9,.2,1) both;
+        }
+        .animated-pop {
+            animation: popIn 420ms cubic-bezier(.2,.9,.2,1) both;
+        }
+
+        /* --- ADDED: Extra animations & polish --- */
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,106,26,0); transform: scale(1); }
+            50% { box-shadow: 0 0 30px 8px rgba(248,186,89,0.06); transform: scale(1.01); }
+            100% { box-shadow: 0 0 0 0 rgba(255,106,26,0); transform: scale(1); }
+        }
+        @keyframes progressShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes wobble {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Logo float */
+        .logo-float { animation: float 6s ease-in-out infinite; will-change: transform; }
+
+        /* Button hover pulse (non-intrusive) */
+        .button-pulse { animation: pulse 1.6s ease-in-out infinite; }
+
+        /* News card 3D tilt + hover lift */
+        .news-card {
+            transform-origin: center;
+            transform-style: preserve-3d;
+            transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s ease;
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+        .news-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+        }
+
+        /* progress bar shimmer overlay */
+        #launch_progress_bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.05) 100%);
+            background-size: 300% 100%;
+            pointer-events: none;
+            animation: progressShimmer 2.2s linear infinite;
+            mix-blend-mode: overlay;
+        }
+
+        /* small floating micro-anim for sidebar status dot */
+        .glass-sidebar .status-dot-pulse {
+            display: inline-block;
+            animation: wobble 3s ease-in-out infinite;
+        }
+
+        /* stagger reveal utilities (intersection-based) */
+        [data-reveal] { opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; }
+        [data-reveal].revealed { opacity: 1; transform: translateY(0); }
+
+        /* accessibility: respect reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade, .animate-slide-right, .animated-pop, .logo-float, .button-pulse, .news-card, #launch_progress_bar::after {
+                animation: none !important;
+                transition: none !important;
+                transform: none !important;
             }
         }
 
-        @media (max-width: 1024px) {
-            main {
-                padding-left: 1.5rem !important;
-                padding-right: 1.5rem !important;
-                margin-right: 0.5rem !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            main {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-                margin-top: 0.5rem !important;
-                margin-bottom: 0.5rem !important;
-                margin-right: 0.5rem !important;
-            }
-
-            .server-title {
-                font-size: 2rem !important;
-                line-height: 2.25rem !important;
-            }
-        }
-
-        @media (max-width: 640px) {
-            main {
-                border-radius: 0 1rem 1rem 0 !important;
-            }
-        }
+    /* ...existing code... */
     </style>
 
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-        });
-
-        // Hook bouton refresh news
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.querySelector('.refresh-news');
-            if (btn && typeof initNews === 'function') {
-                btn.addEventListener('click', () => {
-                    btn.disabled = true;
-                    btn.classList.add('opacity-60');
-                    initNews().finally(() => {
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-60');
-                    });
-                });
-            }
-        });
-    </script>
-
-    <script>
-        // Safely set sidebar username when AuthManager is available.
-        (function () {
-            function setSidebarUsername() {
-                try {
-                    const usernameEl = document.getElementById('sidebar-username');
-                    const avatarContainer = document.getElementById('avatarContainer');
-                    const acc = (window.AuthManager && typeof window.AuthManager.getCurrentAccount === 'function') ? window.AuthManager.getCurrentAccount() : null;
-                    if (usernameEl) {
-                        usernameEl.textContent = (acc && acc.username) ? acc.username : usernameEl.textContent || 'Pseudo';
-                    }
-                    // If we have an avatar url or uuid, set it as the background of avatarContainer
-                    if (avatarContainer && acc) {
-                        if (acc.avatarUrl) {
-                            avatarContainer.style.backgroundImage = `url('${acc.avatarUrl}')`;
-                            avatarContainer.style.backgroundSize = 'cover';
-                            avatarContainer.style.backgroundPosition = 'center';
-                        } else if (acc.uuid) {
-                            // Use mc-heads service to fetch a small avatar
-                            avatarContainer.style.backgroundImage = `url('https://mc-heads.net/avatar/${acc.uuid}/40')`;
-                            avatarContainer.style.backgroundSize = 'cover';
-                            avatarContainer.style.backgroundPosition = 'center';
-                        }
-                    }
-                } catch (e) {
-                    // Don't break the rest of the scripts if AuthManager isn't present or throws
-                    console.warn('Failed to set sidebar username/avatar', e);
-                }
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setSidebarUsername);
-            } else {
-                setSidebarUsername();
-            }
-        })();
-
-        // Progress bar handler compatible avec le code existant
-        (function () {
-            const root = document.querySelector('.game-launch-overlay');
-            if (!root) return;
-            const bar = root.querySelector('#launch_progress_bar');
-            const valueEl = root.querySelector('#launch_progress_label');
-            const labelEl = root.querySelector('#launch_details_text');
-
-            window.gameLaunchUI = {
-                show(label = 'Préparation du jeu...') {
-                    if (labelEl) labelEl.textContent = label;
-                    root.classList.remove('hidden');
-                    requestAnimationFrame(() => root.classList.add('active'));
-                },
-                hide() {
-                    root.classList.remove('active');
-                    setTimeout(() => root.classList.add('hidden'), 380);
-                },
-                progress(pct, label) {
-                    if (pct < 0) pct = 0;
-                    if (pct > 100) pct = 100;
-                    if (bar) bar.style.width = pct + '%';
-                    if (valueEl) valueEl.textContent = pct.toFixed(0) + '%';
-                    if (label && labelEl) labelEl.textContent = label;
-                },
-                reset() {
-                    this.progress(0, 'Initialisation...');
-                }
-            };
-
-            // Override des fonctions existantes pour la compatibilité
-            window.oldToggleLaunchArea = window.toggleLaunchArea;
-            window.toggleLaunchArea = function (loading) {
-                if (loading) {
-                    root.classList.remove('hidden');
-                    document.querySelector('.play-instance').style.display = 'none';
-                } else {
-                    root.classList.add('hidden');
-                    document.querySelector('.play-instance').style.display = 'flex';
-                }
-            };
-
-            window.oldSetLaunchPercentage = window.setLaunchPercentage;
-            window.setLaunchPercentage = function (percent) {
-                if (bar) bar.style.width = percent + '%';
-                if (valueEl) valueEl.textContent = percent + '%';
-                // Garde l'ancienne progress bar cachée mais mise à jour
-                const oldProgress = document.getElementById('launch_progress');
-                if (oldProgress) {
-                    oldProgress.setAttribute('value', percent);
-                }
-            };
-
-            window.oldSetLaunchDetails = window.setLaunchDetails;
-            window.setLaunchDetails = function (details) {
-                if (labelEl) labelEl.textContent = details;
-            };
-        })();
-    </script>
-
-    <script>
-        // Helper: create a news card from data and inject into .news-list
-        window.renderNewsCard = function (data) {
-            const tpl = document.getElementById('news-card-template');
-            if (!tpl) return null;
-            const el = tpl.content.firstElementChild.cloneNode(true);
-            const imgEl = el.querySelector('.news-image');
-            const badgesEl = el.querySelector('.news-badges');
-            const title = el.querySelector('.news-title-stacked');
-            const excerpt = el.querySelector('.news-excerpt-stacked');
-            const dateDay = el.querySelector('.news-date-day');
-            const dateMonth = el.querySelector('.news-date-month');
-            const openBtn = el.querySelector('.news-open-button');
-            const playBtn = el.querySelector('.news-play');
-
-            if (data.thumb) imgEl.style.backgroundImage = `url('${data.thumb}')`;
-            if (data.title) title.textContent = data.title;
-            if (data.excerpt) excerpt.textContent = data.excerpt;
-            if (data.link) el.setAttribute('data-link', data.link);
-
-            // badges (array of text or HTML snippets)
-            badgesEl.innerHTML = '';
-            if (Array.isArray(data.badges)) {
-                data.badges.forEach(b => {
-                    const span = document.createElement('span');
-                    span.className = 'inline-block px-2 py-1 bg-white/10 text-xs rounded font-semibold';
-                    span.textContent = b;
-                    badgesEl.appendChild(span);
-                });
-            }
-
-            // date support
-            if (data.date) {
-                if (typeof data.date === 'string') {
-                    const d = new Date(data.date);
-                    if (!isNaN(d)) {
-                        if (dateDay) dateDay.textContent = d.getDate();
-                        if (dateMonth) dateMonth.textContent = d.toLocaleString('default', { month: 'short' });
-                    }
-                } else if (typeof data.date === 'object') {
-                    if (dateDay) dateDay.textContent = data.date.day || '';
-                    if (dateMonth) dateMonth.textContent = data.date.month || '';
-                }
-            }
-
-            // show play overlay when data.play === true
-            if (data.play) {
-                playBtn.style.opacity = '1';
-                playBtn.style.pointerEvents = 'none';
-            }
-
-            if (openBtn) {
-                openBtn.addEventListener('click', () => {
-                    const link = el.getAttribute('data-link');
-                    if (link) window.open(link, '_blank');
-                });
-            }
-
-            return el;
-        };
-
-        // Set the latest news content into news grid
-        window.setLatestNews = function (data) {
-            const grid = document.querySelector('.news-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-            const card = window.renderNewsCard(data);
-            if (card) grid.appendChild(card);
-        };
-
-        // Helper: create modpack instance cards
-        window.createModpackCard = function (instance, isSelected = false) {
-            const card = document.createElement('div');
-            card.className = `modpack-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer ${isSelected
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
-                : 'bg-gradient-to-r from-gray-700 to-gray-800 opacity-80 hover:opacity-100'
-                }`;
-            card.setAttribute('data-instance-id', instance.id || instance.rawServerId);
-
-            const avatar = document.createElement('div');
-            avatar.className = 'modpack-avatar w-12 h-12 bg-amber-800 rounded-xl flex items-center justify-center';
-
-            const avatarIcon = document.createElement('div');
-            avatarIcon.className = 'w-8 h-8 bg-cover bg-center rounded-lg';
-            if (instance.icon) {
-                avatarIcon.style.backgroundImage = `url('${instance.icon}')`;
-            } else {
-                avatarIcon.style.backgroundImage = "url('./assets/images/minecraft.ico')";
-            }
-            avatar.appendChild(avatarIcon);
-
-            const content = document.createElement('div');
-            content.className = 'flex-1';
-
-            const badgeContainer = document.createElement('div');
-            badgeContainer.className = 'flex items-center gap-2 mb-1';
-
-            // Badge pour le type d'instance
-            const badge = document.createElement('span');
-            badge.className = 'bg-white/20 text-white text-xs px-2 py-1 rounded-full font-semibold';
-            badge.textContent = instance.type || 'MODPACK';
-            badgeContainer.appendChild(badge);
-
-            const title = document.createElement('h3');
-            title.className = 'text-white font-bold text-lg';
-            title.textContent = instance.name || instance.displayName || 'Modpack';
-
-            content.appendChild(badgeContainer);
-            content.appendChild(title);
-
-            card.appendChild(avatar);
-            card.appendChild(content);
-
-            // Ajouter l'événement de clic
-            card.addEventListener('click', () => {
-                // Désélectionner toutes les autres cartes
-                document.querySelectorAll('.modpack-card').forEach(c => {
-                    c.className = c.className.replace('selected', '').replace('bg-gradient-to-r from-orange-500 to-orange-600', 'bg-gradient-to-r from-gray-700 to-gray-800 opacity-80 hover:opacity-100');
-                });
-
-                // Sélectionner cette carte
-                card.className = 'modpack-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer selected bg-gradient-to-r from-orange-500 to-orange-600';
-
-                // Trigger l'événement de sélection d'instance (compatible avec le code existant)
-                if (window.setSelectedInstance) {
-                    window.setSelectedInstance(instance);
-                }
-            });
-
-            return card;
-        };
-
-        // Fonction pour populer les instances modpack
-        window.populateModpackInstances = function (instances, selectedInstanceId = null) {
-            // Utiliser le nouveau conteneur de cartes
-            const container = document.getElementById('sidebar-instances-cards') || document.getElementById('modpack-instances-container');
-            if (!container) {
-                console.error('Aucun conteneur trouvé pour les cartes modpack');
-                return;
-            }
-
-            container.innerHTML = '';
-
-            if (!instances || instances.length === 0) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'text-white/50 text-sm text-center py-4';
-                placeholder.textContent = 'Aucune instance disponible';
-                container.appendChild(placeholder);
-                return;
-            }
-
-            instances.forEach((instance, index) => {
-                const isSelected = selectedInstanceId ?
-                    (instance.id === selectedInstanceId || instance.rawServerId === selectedInstanceId) :
-                    index === 0; // Première instance sélectionnée par défaut
-
-                const card = window.createModpackCard(instance, isSelected);
-                container.appendChild(card);
-            });
-
-            console.log(`Populated ${instances.length} modpack cards in`, container.id);
-        };
-    </script>
-
+    <script src="./assets/js/scripts/landing-inline.js"></script>
     <script src="./assets/js/scripts/landing.js"></script>
 </div>

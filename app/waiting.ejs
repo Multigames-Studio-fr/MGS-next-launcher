@@ -1,8 +1,15 @@
-<div id="waitingContainer" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
-    <div id="waitingContent" class="flex flex-col items-center justify-center text-center bg-gray-800 border border-gray-600 rounded-lg p-8 shadow-lg">
-        <div class="w-12 h-12 border-2 border-gray-600 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+<div id="waitingContainer" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+    <div id="waitingContent" class="w-full max-w-md bg-[#0b0b0b]/88 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center shadow-2xl mx-auto">
+        <!-- Spinner -->
+        <div class="w-14 h-14 rounded-full border-4 border-white/10 border-t-[#F8BA59] animate-spin mb-4"></div>
+
+        <!-- Texte d'attente (conserver ID) -->
         <div id="waitingTextContainer">
-            <h2 class="text-lg font-medium text-white"><%- lang('waiting.waitingText') %></h2>
+            <h2 class="text-lg md:text-xl font-semibold text-white mb-1"><%- lang('waiting.waitingText') %></h2>
+            <p class="text-sm text-white/70">Veuillez patienter pendant la préparation...</p>
         </div>
+
+        <!-- Optionnel: petit footer ou hint -->
+        <div class="mt-4 text-xs text-white/50">Si cela prend trop de temps, vérifiez votre connexion ou relancez le launcher.</div>
     </div>
 </div>

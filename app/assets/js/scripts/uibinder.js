@@ -51,6 +51,10 @@ async function populateSidebarInstances() {
         
         let htmlString = ''
         
+    const selectedAcc = ConfigManager.getSelectedAccount()
+    const selectedUUID = selectedAcc && selectedAcc.uuid ? selectedAcc.uuid.toLowerCase() : null
+    const selectedUUIDNoDash = selectedUUID ? selectedUUID.replace(/-/g, '') : null
+
         for (let i = 0; i < servers.length; i++) {
             const serv = servers[i]
             
@@ -63,11 +67,55 @@ async function populateSidebarInstances() {
             const serverName = serv.rawServer.name || 'Instance ' + (i + 1)
             const isSelected = serverId === selectedServerId
             const iconUrl = serv.rawServer.icon || 'assets/images/SealCircle.png'
+            // Whitelist handling: if whitelist active, mark allowed or not (show but disabled if not allowed)
+            let whitelistAllowed = true
+            let whitelistTooltip = ''
+            try {
+                const wl = serv.rawServer.whitelist
+                if (wl && wl.active) {
+                    const players = Array.isArray(wl.players) ? wl.players : []
+                    console.debug('[UIBINDER] Whitelist active for server', serverId, 'playersCount=', players.length, 'selectedUUID=', selectedUUID)
+                    if (!selectedUUID) {
+                        whitelistAllowed = false
+                        whitelistTooltip = 'Whitelist active — connectez-vous pour vérifier si vous êtes autorisé.'
+                        console.log('[UIBINDER] Server', serverId, 'has an active whitelist but no account selected; marking restricted')
+                    } else {
+                        const matched = players.some(p => {
+                            if (!p) return false
+                            if (p.uuid) {
+                                const pUuid = String(p.uuid).toLowerCase()
+                                const pUuidNoDash = pUuid.replace(/-/g, '')
+                                if (pUuid === selectedUUID) return true
+                                if (pUuidNoDash === selectedUUIDNoDash) return true
+                                return false
+                            }
+                            if (p.name && selectedAcc && selectedAcc.displayName) {
+                                return String(p.name).toLowerCase() === String(selectedAcc.displayName).toLowerCase()
+                            }
+                            return false
+                        })
+                        console.debug('[UIBINDER] Whitelist match for server', serverId, matched)
+                        if (!matched) {
+                            whitelistAllowed = false
+                            whitelistTooltip = 'Whitelist active — votre compte n\'est pas autorisé.'
+                            console.log('[UIBINDER] Selected account not in whitelist for server', serverId, '; marking restricted')
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[UIBINDER] Error checking whitelist for server', serv && serv.rawServer && serv.rawServer.id, e)
+            }
             
                
+            // If whitelist disallows the selected account, skip the server (don't show it)
+            if (!whitelistAllowed) {
+                console.log('[UIBINDER] Skipping server', serverId, 'because whitelist disallows current account')
+                continue
+            }
+
             htmlString += `
-                <li class="server-instance-item group  transition-all duration-200  p-4  rounded-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}  hover:border-[#F8BA59]/70">
-                    <button class="server-instance-btn ${isSelected ? 'w-64' : 'w-32'}  " 
+                <li class="server-instance-item group  transition-all duration-200  p-4  rounded-l-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}" title="${serverName}">
+                    <button class="py-2 pl-3 server-instance-btn ${isSelected ? 'w-64' : 'w-20'}" 
                         data-server-id="${serverId}"
                         title="${serverName}">
                         
@@ -78,9 +126,9 @@ async function populateSidebarInstances() {
                              onerror="this.src='assets/images/SealCircle.png'" />
                         
                         <!-- Content -->
-                        <div class="flex flex-col justify-center min-w-0">
+                        <div class="flex flex-col justify-center pl-2 min-w-0">
                             <!-- Badge STAFF -->
-                            <span class="block  font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
+                            <span class="${isSelected ? 'block' : 'hidden'}  font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
                                 ${serverName}
                             </span>
                         </div>
@@ -112,7 +160,18 @@ function bindSidebarInstanceEvents() {
     instanceButtons.forEach(button => {
         button.addEventListener('click', async (e) => {
             e.preventDefault()
-            e.target.closest('button').blur()
+            const btn = e.target.closest('button')
+            if (!btn) return
+            // If button is disabled (whitelist restricted), ignore click
+            if (btn.disabled) {
+                // Optionally show an overlay explaining whitelist
+                const title = btn.getAttribute('title') || ''
+                setOverlayContent('Accès restreint', title, 'OK')
+                setOverlayHandler(() => { toggleOverlay(false) })
+                toggleOverlay(true)
+                return
+            }
+            btn.blur()
             
             const serverId = button.getAttribute('data-server-id')
             

@@ -227,9 +227,11 @@ let win
 function createWindow() {
 
     win = new BrowserWindow({
-        width: 980,
-        height: 552,
+        width: 1280,
+        height: 752,
         icon: getPlatformIcon('multigames-logo'),
+        minWidth: 1280,
+        minHeight: 752,
 
         webPreferences: {
             preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
@@ -257,7 +259,86 @@ function createWindow() {
     win.on('closed', () => {
         win = null
     })
+
+    // Restore original bounds after unminimize if we changed them during animation
+    win.on('restore', () => {
+        try {
+            if (win && win._originalBounds) {
+                win.setBounds(win._originalBounds)
+                delete win._originalBounds
+            }
+        } catch (e) {
+            // ignore
+        }
+    })
 }
+
+// Animate a small "shrink" effect then minimize the window.
+// Trigger from renderer with: ipcRenderer.send('animate-minimize', { duration: 250 })
+ipcMain.on('animate-minimize', (event, options = {}) => {
+    if (!win || win.isDestroyed()) return
+
+    // Prevent concurrent animations
+    if (win._isAnimatingMinimize) return
+    win._isAnimatingMinimize = true
+
+    const duration = typeof options.duration === 'number' ? options.duration : 220 // ms
+    const fps = 60
+    const steps = Math.max(4, Math.round((duration / 1000) * fps))
+
+    const startBounds = win.getBounds()
+    const startWidth = startBounds.width
+    const startHeight = startBounds.height
+
+    // Target shrink to 20% of original but not smaller than reasonable limits
+    const targetWidth = Math.max(220, Math.round(startWidth * 0.2))
+    const targetHeight = Math.max(120, Math.round(startHeight * 0.2))
+
+    const deltaW = startWidth - targetWidth
+    const deltaH = startHeight - targetHeight
+    const center = { x: startBounds.x + Math.floor(startWidth / 2), y: startBounds.y + Math.floor(startHeight / 2) }
+
+    let step = 0
+    const interval = Math.max(8, Math.round(duration / steps))
+
+    // Keep original bounds so we can restore after unminimize
+    win._originalBounds = startBounds
+
+    const anim = setInterval(() => {
+        if (!win || win.isDestroyed()) {
+            clearInterval(anim)
+            win && (win._isAnimatingMinimize = false)
+            return
+        }
+
+        step++
+        const progress = Math.min(1, step / steps)
+        // ease-out cubic
+        const ease = 1 - Math.pow(1 - progress, 3)
+
+        const w = Math.round(startWidth - deltaW * ease)
+        const h = Math.round(startHeight - deltaH * ease)
+        const x = Math.round(center.x - w / 2)
+        const y = Math.round(center.y - h / 2)
+
+        try {
+            win.setBounds({ x, y, width: w, height: h }, true)
+        } catch (e) {
+            // ignore errors during animation
+        }
+
+        if (progress >= 1) {
+            clearInterval(anim)
+            try {
+                // minimize after animation
+                win.minimize()
+            } catch (e) {
+                // ignore
+            }
+            win._isAnimatingMinimize = false
+        }
+    }, interval)
+})
 
 function createMenu() {
     

@@ -2583,6 +2583,7 @@ input:checked + .toggleSwitchSlider:before {
 }
 
 /* Update action button styles. */
+
 #settingsUpdateActionButton {
   display: flex;
   flex-direction: column;
@@ -3488,9 +3489,10 @@ input:checked + .toggleSwitchSlider:before {
 #mojangStatusTooltip:after {
   content: " ";
   position: absolute;
-  left: 50%;
-  top: 100%;
-  margin-left: -5px;
+  top: 50%;
+  right: 100%;
+  /* To the left of the tooltip */
+  margin-top: -5px;
   border-width: 5px;
   border-style: solid;
   border-color: rgba(0, 0, 0, 0.75) transparent transparent transparent;
@@ -4305,4 +4307,37 @@ input:checked + .toggleSwitchSlider:before {
 /* Class which is applied when the spinner image is spinning. */
 .rotating {
   animation: rotating 10s linear infinite;
+}
+
+/* --- ADDED: animation when changing selected server --- */
+@keyframes serverChange {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.995);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.002);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.server-change-anim {
+  animation-name: serverChange;
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(.2,.9,.2,1);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+  /* small shadow flourish */
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .server-change-anim {
+    animation: none !important;
+    transition: none !important;
+  }
 }

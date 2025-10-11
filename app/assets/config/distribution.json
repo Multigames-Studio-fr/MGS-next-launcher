@@ -1,37 +1,270 @@
 {
   "version": "1.0.0",
-  "rss": "<LINK TO RSS FEED>",
+  "rss": "https://multigames-studio.fr/api/news/rss.xml",
   "discord": {
-    "clientId": "<FILL IN OR REMOVE DISCORD OBJECT>",
-    "smallImageText": "<FILL IN OR REMOVE DISCORD OBJECT>",
-    "smallImageKey": "<FILL IN OR REMOVE DISCORD OBJECT>"
+    "clientId": "771444716109430856",
+    "smallImageText": "Multigames-studio.fr",
+    "smallImageKey": "logo"
   },
   "servers": [
     {
-      "id": "mgs-1.21.4",
-      "name": "MULTIGAMES STUDIO",
-      "description": "Serveur officiel Multigames Studio. Rejoignez l'aventure ! (NeoForge v21.4.154)",
-      "icon": "https://multigames-studio.fr/distribution/img/logo.png",
-      "version": "1.0.0",
-      "address": "play.multigames-studio.fr:25565",
+      "id": "MGS-1.21.4",
+      "name": "MGS",
+      "description": "MGS Running Minecraft 1.21.4 (Fabric v0.17.2)",
+      "icon": "https://multigames-studio.fr/mgs.png",
+      "version": "2.0.0",
+      "address": "play.multigames-studio.fr",
       "minecraftVersion": "1.21.4",
       "discord": {
         "shortId": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageText": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageKey": "<FILL IN OR REMOVE DISCORD OBJECT>"
+        "largeImageText": "MGS Modpack",
+        "largeImageKey": "mgs"
       },
-      "mainServer": true,
+      
+      "mainServer": false,
       "autoconnect": false,
       "modules": [
         {
-          "id": "craftpresence.json",
-          "name": "craftpresence.json",
+          "id": "net.fabricmc:fabric-loader:0.17.2",
+          "name": "Fabric (fabric-loader)",
+          "type": "Fabric",
+          "artifact": {
+            "size": 1915305,
+            "MD5": "72dd698d701202d46303fc913cfcbf23",
+            "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/fabric-loader/0.17.2/fabric-loader-0.17.2.jar"
+          },
+          "subModules": [
+            {
+              "id": "1.21.4-fabric-0.17.2",
+              "name": "Fabric (version.json)",
+              "type": "VersionManifest",
+              "artifact": {
+                "size": 2847,
+                "MD5": "53139c891ca2126ab3285d6dd9093b0e",
+                "url": "https://multigames-studio.fr/repo/versions/1.21.4-fabric-0.17.2/1.21.4-fabric-0.17.2.json"
+              }
+            },
+            {
+              "id": "org.ow2.asm:asm:9.8",
+              "name": "Fabric (asm)",
+              "type": "Library",
+              "artifact": {
+                "size": 126113,
+                "MD5": "f5adf3bfc54fb3d2cd8e3a1f275084bc",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm/9.8/asm-9.8.jar"
+              }
+            },
+            {
+              "id": "org.ow2.asm:asm-analysis:9.8",
+              "name": "Fabric (asm-analysis)",
+              "type": "Library",
+              "artifact": {
+                "size": 35151,
+                "MD5": "3d63508405f5610fc2ea673ff5471553",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar"
+              }
+            },
+            {
+              "id": "org.ow2.asm:asm-commons:9.8",
+              "name": "Fabric (asm-commons)",
+              "type": "Library",
+              "artifact": {
+                "size": 73498,
+                "MD5": "c8c3d9ccf240144e74d94ff658b024c9",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar"
+              }
+            },
+            {
+              "id": "org.ow2.asm:asm-tree:9.8",
+              "name": "Fabric (asm-tree)",
+              "type": "Library",
+              "artifact": {
+                "size": 51934,
+                "MD5": "4ab1aaec43c77a2d9b56e6d6d496f705",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar"
+              }
+            },
+            {
+              "id": "org.ow2.asm:asm-util:9.8",
+              "name": "Fabric (asm-util)",
+              "type": "Library",
+              "artifact": {
+                "size": 94559,
+                "MD5": "62498ef324bdab15f407d703f7d78d19",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar"
+              }
+            },
+            {
+              "id": "net.fabricmc:sponge-mixin:0.16.3+mixin.0.8.7",
+              "name": "Fabric (sponge-mixin)",
+              "type": "Library",
+              "artifact": {
+                "size": 1504156,
+                "MD5": "aa4a43d5b0e9abf4fcb57520ffeb0019",
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/sponge-mixin/0.16.3+mixin.0.8.7/sponge-mixin-0.16.3+mixin.0.8.7.jar"
+              }
+            },
+            {
+              "id": "net.fabricmc:intermediary:1.21.4",
+              "name": "Fabric (intermediary)",
+              "type": "Library",
+              "artifact": {
+                "size": 701826,
+                "MD5": "d0f4187a62328d4a95f3428434efbd48",
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/intermediary/1.21.4/intermediary-1.21.4.jar"
+              }
+            }
+          ]
+        },
+        {
+          "id": "generated.fabricmod:cubes-without-borders:3.0.0+mc1.21.3@jar",
+          "name": "Cubes Without Borders",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 80793,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/cwb-fabric-3.0.0+mc1.21.3.jar",
+            "MD5": "4278e7e73cb1337e3a198f1c5b921887"
+          }
+        },
+        {
+          "id": "de.keksuccino:drippyloadingscreen:3.0.12@jar",
+          "name": "Drippy Loading Screen",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 229911,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/drippyloadingscreen_fabric_3.0.12_MC_1.21.4.jar",
+            "MD5": "43e9e29030206aaa00a244ae8b159948"
+          }
+        },
+        {
+          "id": "net.lostluma.dynamic_fps.impl.textile.compat:dynamic_fps:3.9.5@jar",
+          "name": "Dynamic FPS",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 191899,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar",
+            "MD5": "a018fcc8b46768ef5631e4af2a9b19a5"
+          }
+        },
+        {
+          "id": "generated.fabricmod:fabric-api:0.119.4+1.21.4@jar",
+          "name": "Fabric API",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 2149128,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/fabric-api-0.119.4+1.21.4.jar",
+            "MD5": "128a8d042180e7c92567342e21a21a6d"
+          }
+        },
+        {
+          "id": "generated.fabricmod:fabric-language-kotlin:1.13.6+kotlin.2.2.20@jar",
+          "name": "Fabric Language Kotlin",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 7479598,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/fabric-language-kotlin-1.13.6+kotlin.2.2.20.jar",
+            "MD5": "c1d19e5d8b325b55c11c767468005aa2"
+          }
+        },
+        {
+          "id": "it.crystalnest:fancy_entity_renderer:0.4.0@jar",
+          "name": "Fancy Entity Renderer",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 393219,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/fancy-entity-renderer-fabric-1.21.4-0.4.0.jar",
+            "MD5": "40436d28cf64fc81212323bdab9d8210"
+          }
+        },
+        {
+          "id": "de.keksuccino:fancymenu:3.7.1@jar",
+          "name": "FancyMenu",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 3890365,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/fancymenu_fabric_3.7.1_MC_1.21.4.jar",
+            "MD5": "0d403975b17065f1c16fa70e22ab5160"
+          }
+        },
+        {
+          "id": "generated.fabricmod:iris:1.8.8+mc1.21.4@jar",
+          "name": "Iris",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 2682702,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/iris-fabric-1.8.8+mc1.21.4.jar",
+            "MD5": "59d373e4874efbcb8fb426bdefa588d9"
+          }
+        },
+        {
+          "id": "de.keksuccino:konkrete:1.9.9@jar",
+          "name": "Konkrete",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 787890,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/konkrete_fabric_1.9.9_MC_1.21.4.jar",
+            "MD5": "7fdc8f1047e0aaad088fae4f0f0faa5e"
+          }
+        },
+        {
+          "id": "de.keksuccino:melody:1.0.10@jar",
+          "name": "Melody",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 188035,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/melody_fabric_1.0.10_MC_1.21.jar",
+            "MD5": "0f1bfbf2dd4fa047a1616fc448f3b856"
+          }
+        },
+        {
+          "id": "net.mehvahdjukaar:modelfix:1.21.3-1.10@jar",
+          "name": "Model Gap Fix",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 66412,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/modelfix-1.21.3-1.10-fabric.jar",
+            "MD5": "8e44b12c5c24a4303f45e73e40c162f2"
+          }
+        },
+        {
+          "id": "net.caffeinemc.mods:sodium:0.6.13+mc1.21.4@jar",
+          "name": "Sodium",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 1306799,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/sodium-fabric-0.6.13+mc1.21.4.jar",
+            "MD5": "28922a78d1876ee062e3265f10abcc46"
+          }
+        },
+        {
+          "id": "de.maxhenkel:vcinteraction:1.21.4-1.0.8@jar",
+          "name": "Voice Chat Interaction",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 463839,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/vcinteraction-fabric-1.21.4-1.0.8.jar",
+            "MD5": "4672e59b8e424daf66680ad563cbdb2c"
+          }
+        },
+        {
+          "id": "de.maxhenkel:voicechat:1.21.4-2.6.5@jar",
+          "name": "Simple Voice Chat",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 5346621,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/fabricmods/required/voicechat-fabric-1.21.4-2.6.5.jar",
+            "MD5": "81c56c2f12255d55991ef4d943f4f4cf"
+          }
+        },
+        {
+          "id": "options.txt",
+          "name": "options.txt",
           "type": "File",
           "artifact": {
-            "size": 4549,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/craftpresence.json",
-            "MD5": "e9ba9f9b1db53372795135b9b0675f1f",
-            "path": "config/craftpresence.json"
+            "size": 162,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/drippyloadingscreen/options.txt",
+            "MD5": "422b46098fc009b4e6a0b1b16c61e17c",
+            "path": "config/drippyloadingscreen/options.txt"
           }
         },
         {
@@ -40,9 +273,53 @@
           "type": "File",
           "artifact": {
             "size": 21548,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/bg.png",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/bg.png",
             "MD5": "50578d22cfcf27927cdc1b88dbc8c8f7",
             "path": "config/fancymenu/assets/bg.png"
+          }
+        },
+        {
+          "id": "bg3.png",
+          "name": "bg3.png",
+          "type": "File",
+          "artifact": {
+            "size": 3245836,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/bg3.png",
+            "MD5": "d0423643ae16a1b3dd258cf83fb0a199",
+            "path": "config/fancymenu/assets/bg3.png"
+          }
+        },
+        {
+          "id": "dd.png",
+          "name": "dd.png",
+          "type": "File",
+          "artifact": {
+            "size": 2578640,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/dd.png",
+            "MD5": "aeade019d2806c8992eec82113be2870",
+            "path": "config/fancymenu/assets/dd.png"
+          }
+        },
+        {
+          "id": "discorde.png",
+          "name": "discorde.png",
+          "type": "File",
+          "artifact": {
+            "size": 12452,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/discorde.png",
+            "MD5": "2823f83d9bc5e4f1a38b71963beb6932",
+            "path": "config/fancymenu/assets/discorde.png"
+          }
+        },
+        {
+          "id": "fg.gif",
+          "name": "fg.gif",
+          "type": "File",
+          "artifact": {
+            "size": 1165542,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/fg.gif",
+            "MD5": "b76029e7d69b69642c3cfc110a7adf76",
+            "path": "config/fancymenu/assets/fg.gif"
           }
         },
         {
@@ -50,9 +327,9 @@
           "name": "logo.icns",
           "type": "File",
           "artifact": {
-            "size": 100408,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/logo.icns",
-            "MD5": "ab2673c0d7a2f717ee9c1470f5d49142",
+            "size": 1066,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logo.icns",
+            "MD5": "c6ec2be44f3e5e86c1964d9e390a2cba",
             "path": "config/fancymenu/assets/logo.icns"
           }
         },
@@ -61,9 +338,9 @@
           "name": "logo.png",
           "type": "File",
           "artifact": {
-            "size": 67136,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/logo.png",
-            "MD5": "1f1b8056623840c39893d9cd3bc27fee",
+            "size": 137850,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logo.png",
+            "MD5": "260a5b42e49cb05597a43061e28f153d",
             "path": "config/fancymenu/assets/logo.png"
           }
         },
@@ -72,9 +349,9 @@
           "name": "logo16.png",
           "type": "File",
           "artifact": {
-            "size": 724,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/logo16.png",
-            "MD5": "02119292cb2168a6a06022e82d608a3e",
+            "size": 815,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logo16.png",
+            "MD5": "264314457ee5497b8b55b6ba2282fdcc",
             "path": "config/fancymenu/assets/logo16.png"
           }
         },
@@ -83,10 +360,32 @@
           "name": "logo32.png",
           "type": "File",
           "artifact": {
-            "size": 1694,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/logo32.png",
-            "MD5": "6c8f3a30175bbd1d371b3668882e0c07",
+            "size": 1805,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logo32.png",
+            "MD5": "8636d69fa585b04a9b99c4350ff65cc3",
             "path": "config/fancymenu/assets/logo32.png"
+          }
+        },
+        {
+          "id": "logol.png",
+          "name": "logol.png",
+          "type": "File",
+          "artifact": {
+            "size": 129619,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logol.png",
+            "MD5": "8ff8cbea8f7debf743072cbec18908f1",
+            "path": "config/fancymenu/assets/logol.png"
+          }
+        },
+        {
+          "id": "logos.png",
+          "name": "logos.png",
+          "type": "File",
+          "artifact": {
+            "size": 138742,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/logos.png",
+            "MD5": "14a06cd628bd31dfa3cfb3d8d33252f8",
+            "path": "config/fancymenu/assets/logos.png"
           }
         },
         {
@@ -95,9 +394,53 @@
           "type": "File",
           "artifact": {
             "size": 8632901,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/mg.apng",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/mg.apng",
             "MD5": "3d3f78350a1e5ea3f4c555ea154b5525",
             "path": "config/fancymenu/assets/mg.apng"
+          }
+        },
+        {
+          "id": "mgs.png",
+          "name": "mgs.png",
+          "type": "File",
+          "artifact": {
+            "size": 16734,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/mgs.png",
+            "MD5": "d9418f3a39f8579c4ad5e7be1074c4ee",
+            "path": "config/fancymenu/assets/mgs.png"
+          }
+        },
+        {
+          "id": "options_background.png",
+          "name": "options_background.png",
+          "type": "File",
+          "artifact": {
+            "size": 135,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/options_background.png",
+            "MD5": "08983ce835f49c2089c627a8865f8af9",
+            "path": "config/fancymenu/assets/options_background.png"
+          }
+        },
+        {
+          "id": "output.apng",
+          "name": "output.apng",
+          "type": "File",
+          "artifact": {
+            "size": 8243239,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/output.apng",
+            "MD5": "05743d9c65f9ca9d8ef8baa5dab251ec",
+            "path": "config/fancymenu/assets/output.apng"
+          }
+        },
+        {
+          "id": "Sans_titre_194_20250912194748.png.url",
+          "name": "Sans_titre_194_20250912194748.png.url",
+          "type": "File",
+          "artifact": {
+            "size": 231,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/Sans_titre_194_20250912194748.png.url",
+            "MD5": "df9efdca97bd035800ce4514c7df7813",
+            "path": "config/fancymenu/assets/Sans_titre_194_20250912194748.png.url"
           }
         },
         {
@@ -105,9 +448,9 @@
           "name": "slider.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/slider.png",
-            "MD5": "d1c67dcb23a03fa84893bdffa0e37341",
+            "size": 193,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/slider.png",
+            "MD5": "227978a8b2ac0d1a10e2a01a6ab77bb2",
             "path": "config/fancymenu/assets/slider.png"
           }
         },
@@ -116,9 +459,9 @@
           "name": "slider2.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/slider2.png",
-            "MD5": "911701f3cdbd01cc6439fc5103198d90",
+            "size": 172,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/slider2.png",
+            "MD5": "373514ab7965b3243cb7602741624ec4",
             "path": "config/fancymenu/assets/slider2.png"
           }
         },
@@ -127,10 +470,54 @@
           "name": "slider3.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/assets/slider3.png",
-            "MD5": "a7caf2d65d88f23df166aad6050d40e6",
+            "size": 196,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/slider3.png",
+            "MD5": "0e3c7158a9961d421803acf12f8a3ece",
             "path": "config/fancymenu/assets/slider3.png"
+          }
+        },
+        {
+          "id": "slider4.png",
+          "name": "slider4.png",
+          "type": "File",
+          "artifact": {
+            "size": 197,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/slider4.png",
+            "MD5": "5dc36b4a041110a12c823f3d3a3c9df0",
+            "path": "config/fancymenu/assets/slider4.png"
+          }
+        },
+        {
+          "id": "tic-tac.png",
+          "name": "tic-tac.png",
+          "type": "File",
+          "artifact": {
+            "size": 10005,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/tic-tac.png",
+            "MD5": "be8a5b88f2802ed3c461afe1b17322db",
+            "path": "config/fancymenu/assets/tic-tac.png"
+          }
+        },
+        {
+          "id": "youtube.png",
+          "name": "youtube.png",
+          "type": "File",
+          "artifact": {
+            "size": 7770,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/youtube.png",
+            "MD5": "811a673704ddaabd253e9b3a5dc53d17",
+            "path": "config/fancymenu/assets/youtube.png"
+          }
+        },
+        {
+          "id": "zozo.png",
+          "name": "zozo.png",
+          "type": "File",
+          "artifact": {
+            "size": 76623,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/assets/zozo.png",
+            "MD5": "89402d521658664fd45c7e3e7ac92ab0",
+            "path": "config/fancymenu/assets/zozo.png"
           }
         },
         {
@@ -138,10 +525,98 @@
           "name": "customizablemenus.txt",
           "type": "File",
           "artifact": {
-            "size": 76,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/customizablemenus.txt",
-            "MD5": "8cd335741f1acd023a5203836fb9b944",
+            "size": 506,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customizablemenus.txt",
+            "MD5": "12cee487e48a548f82d7b2b817d98a78",
             "path": "config/fancymenu/customizablemenus.txt"
+          }
+        },
+        {
+          "id": "drippy_loading_overlay_layout.txt",
+          "name": "drippy_loading_overlay_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 6465,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/drippy_loading_overlay_layout.txt",
+            "MD5": "9de82dcba6515aa80f25235bbfc6a59b",
+            "path": "config/fancymenu/customization/drippy_loading_overlay_layout.txt"
+          }
+        },
+        {
+          "id": "inventory_screen_layout.txt",
+          "name": "inventory_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 4122,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/inventory_screen_layout.txt",
+            "MD5": "d7c8d6cab7ba2624f3fd20abd18e0cb5",
+            "path": "config/fancymenu/customization/inventory_screen_layout.txt"
+          }
+        },
+        {
+          "id": "join_multiplayer_screen_layout.txt",
+          "name": "join_multiplayer_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 22894,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/join_multiplayer_screen_layout.txt",
+            "MD5": "4a74563b94f10aeee06ac54db3afe6e1",
+            "path": "config/fancymenu/customization/join_multiplayer_screen_layout.txt"
+          }
+        },
+        {
+          "id": "language_select_screen_layout.txt",
+          "name": "language_select_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 9258,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/language_select_screen_layout.txt",
+            "MD5": "b388427af04f5136205ac09db1b01c39",
+            "path": "config/fancymenu/customization/language_select_screen_layout.txt"
+          }
+        },
+        {
+          "id": "options_screen_layout.txt",
+          "name": "options_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 31378,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/options_screen_layout.txt",
+            "MD5": "fbb733e7bc953e354fb24757f65373b9",
+            "path": "config/fancymenu/customization/options_screen_layout.txt"
+          }
+        },
+        {
+          "id": "pack_selection_screen_layout.txt",
+          "name": "pack_selection_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 9252,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/pack_selection_screen_layout.txt",
+            "MD5": "3d5121852311a5d8eab14435c135323d",
+            "path": "config/fancymenu/customization/pack_selection_screen_layout.txt"
+          }
+        },
+        {
+          "id": "pause_screen_layout.txt",
+          "name": "pause_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 30854,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/pause_screen_layout.txt",
+            "MD5": "f801de0c0df75d6a15665f14a657c86e",
+            "path": "config/fancymenu/customization/pause_screen_layout.txt"
+          }
+        },
+        {
+          "id": "progress_screen_layout.txt",
+          "name": "progress_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 5189,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/progress_screen_layout.txt",
+            "MD5": "656dec02724bf7ad1453ff8eb59d3314",
+            "path": "config/fancymenu/customization/progress_screen_layout.txt"
           }
         },
         {
@@ -149,10 +624,32 @@
           "name": "title_screen_layout.txt",
           "type": "File",
           "artifact": {
-            "size": 31870,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/customization/title_screen_layout.txt",
-            "MD5": "3a5d9843eff01426208c7aeb71db4be3",
+            "size": 30961,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/title_screen_layout.txt",
+            "MD5": "35e3e566d353b8edf7cb7e6e1fb81361",
             "path": "config/fancymenu/customization/title_screen_layout.txt"
+          }
+        },
+        {
+          "id": "universal_layout.txt",
+          "name": "universal_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 921,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization/universal_layout.txt",
+            "MD5": "63800964de693d7b4125512c97b2756f",
+            "path": "config/fancymenu/customization/universal_layout.txt"
+          }
+        },
+        {
+          "id": "customization.properties",
+          "name": "customization.properties",
+          "type": "File",
+          "artifact": {
+            "size": 84,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/customization.properties",
+            "MD5": "f96a4413d65583e49531f2acc8aa02b7",
+            "path": "config/fancymenu/customization.properties"
           }
         },
         {
@@ -161,7 +658,7 @@
           "type": "File",
           "artifact": {
             "size": 51,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/custom_gui_screens.txt",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/custom_gui_screens.txt",
             "MD5": "106e52948415f0879c53304f50783b28",
             "path": "config/fancymenu/custom_gui_screens.txt"
           }
@@ -172,7 +669,7 @@
           "type": "File",
           "artifact": {
             "size": 198,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/layout_editor/widgets/element_layer_control.lewidget",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/layout_editor/widgets/element_layer_control.lewidget",
             "MD5": "43a5ab1a30249caf7dafc2f7ad4b0ed9",
             "path": "config/fancymenu/layout_editor/widgets/element_layer_control.lewidget"
           }
@@ -183,9 +680,20 @@
           "type": "File",
           "artifact": {
             "size": 42,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/legacy_checklist.txt",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/legacy_checklist.txt",
             "MD5": "bc03e01c4f1bf1e24e9b86591baa512b",
             "path": "config/fancymenu/legacy_checklist.txt"
+          }
+        },
+        {
+          "id": "normalized_scroll_screens.json",
+          "name": "normalized_scroll_screens.json",
+          "type": "File",
+          "artifact": {
+            "size": 36,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/normalized_scroll_screens.json",
+            "MD5": "a37bfaa12c0f6e1ce5ce3a3bf423b254",
+            "path": "config/fancymenu/normalized_scroll_screens.json"
           }
         },
         {
@@ -193,9 +701,9 @@
           "name": "options.txt",
           "type": "File",
           "artifact": {
-            "size": 2101,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/options.txt",
-            "MD5": "8a55f5df9e8d78c151ddb97793060de6",
+            "size": 2168,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/options.txt",
+            "MD5": "b1e337eb9ec6cdb82733f870e9155474",
             "path": "config/fancymenu/options.txt"
           }
         },
@@ -205,7 +713,7 @@
           "type": "File",
           "artifact": {
             "size": 4133,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/ui_themes/dark.json",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/ui_themes/dark.json",
             "MD5": "3981f37966b00a80e31aac89169be280",
             "path": "config/fancymenu/ui_themes/dark.json"
           }
@@ -216,7 +724,7 @@
           "type": "File",
           "artifact": {
             "size": 4135,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/ui_themes/light.json",
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/ui_themes/light.json",
             "MD5": "adfba137b3d62c50a5186a4f6523a72a",
             "path": "config/fancymenu/ui_themes/light.json"
           }
@@ -226,217 +734,41 @@
           "name": "user_variables.db",
           "type": "File",
           "artifact": {
-            "size": 23,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/config/fancymenu/user_variables.db",
-            "MD5": "458e4f3f673e3fea22fb92bf76fcf912",
+            "size": 88,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/user_variables.db",
+            "MD5": "77317ac3eec79c189012a836cb63a3b9",
             "path": "config/fancymenu/user_variables.db"
           }
         },
         {
-          "id": "authme-neoforge-9.0.1+1.21.4.jar",
-          "name": "authme-neoforge-9.0.1+1.21.4.jar",
-          "type": "ForgeMod",
-          "artifact": {
-            "size": 373236,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/authme-neoforge-9.0.1+1.21.4.jar",
-            "MD5": "2d0b7fe6d394e1bdf41456343bf47637",
-            "path": "mods/authme-neoforge-9.0.1+1.21.4.jar"
-          }
-        },
-        {
-          "id": "CraftPresence-2.6.2+1.21.4-neoforge.jar",
-          "name": "CraftPresence-2.6.2+1.21.4-neoforge.jar",
-          "type": "ForgeMod",
-          "artifact": {
-            "size": 2054787,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/CraftPresence-2.6.2+1.21.4-neoforge.jar",
-            "MD5": "727cc6cf25e4c07162f3763786ab6368",
-            "path": "mods/CraftPresence-2.6.2+1.21.4-neoforge.jar"
-          }
-        },
-        {
-          "id": "dynamic-fps-3.9.5+minecraft-1.21.2-neoforge.jar",
-          "name": "dynamic-fps-3.9.5+minecraft-1.21.2-neoforge.jar",
-          "type": "ForgeMod",
-          "artifact": {
-            "size": 193728,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/dynamic-fps-3.9.5+minecraft-1.21.2-neoforge.jar",
-            "MD5": "ab5e5b207df31bf80632297481813f75",
-            "path": "mods/dynamic-fps-3.9.5+minecraft-1.21.2-neoforge.jar"
-          }
-        },
-        {
-          "id": "entityculling-neoforge-1.8.2-mc1.21.4.jar",
-          "name": "entityculling-neoforge-1.8.2-mc1.21.4.jar",
+          "id": "video_element_controller_metas.json",
+          "name": "video_element_controller_metas.json",
           "type": "File",
           "artifact": {
-            "size": 475650,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/entityculling-neoforge-1.8.2-mc1.21.4.jar",
-            "MD5": "f88399779363676fdc7e526db0a4609b",
-            "path": "mods/entityculling-neoforge-1.8.2-mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "ezvcsurvival-neoforge-1.21.4-1.0.0.jar",
-          "name": "ezvcsurvival-neoforge-1.21.4-1.0.0.jar",
-          "type": "File",
-          "artifact": {
-            "size": 42210,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/ezvcsurvival-neoforge-1.21.4-1.0.0.jar",
-            "MD5": "c23ed3d72996d2bd39a03b918b9097c5",
-            "path": "mods/ezvcsurvival-neoforge-1.21.4-1.0.0.jar"
-          }
-        },
-        {
-          "id": "fancymenu_neoforge_3.6.4_MC_1.21.4.jar",
-          "name": "fancymenu_neoforge_3.6.4_MC_1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3430813,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/fancymenu_neoforge_3.6.4_MC_1.21.4.jar",
-            "MD5": "8d89e40abe9fc692c8fcda20004c0353",
-            "path": "mods/fancymenu_neoforge_3.6.4_MC_1.21.4.jar"
-          }
-        },
-        {
-          "id": "ferritecore-7.1.2-neoforge.jar",
-          "name": "ferritecore-7.1.2-neoforge.jar",
-          "type": "File",
-          "artifact": {
-            "size": 105336,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/ferritecore-7.1.2-neoforge.jar",
-            "MD5": "45858ffb3cf1ea22de8f3f21db8ff531",
-            "path": "mods/ferritecore-7.1.2-neoforge.jar"
-          }
-        },
-        {
-          "id": "ImmediatelyFast-NeoForge-1.8.1+1.21.4.jar",
-          "name": "ImmediatelyFast-NeoForge-1.8.1+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 249990,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/ImmediatelyFast-NeoForge-1.8.1+1.21.4.jar",
-            "MD5": "fd160b970325689adfb8d9b417aa4232",
-            "path": "mods/ImmediatelyFast-NeoForge-1.8.1+1.21.4.jar"
-          }
-        },
-        {
-          "id": "iris-neoforge-1.8.8+mc1.21.4.jar",
-          "name": "iris-neoforge-1.8.8+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2622578,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/iris-neoforge-1.8.8+mc1.21.4.jar",
-            "MD5": "3d56bb785c4c269a5cc4af00ba8272a1",
-            "path": "mods/iris-neoforge-1.8.8+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "konkrete_neoforge_1.9.9_MC_1.21.4.jar",
-          "name": "konkrete_neoforge_1.9.9_MC_1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 620095,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/konkrete_neoforge_1.9.9_MC_1.21.4.jar",
-            "MD5": "e87c58d6494c879eac414281210eec85",
-            "path": "mods/konkrete_neoforge_1.9.9_MC_1.21.4.jar"
-          }
-        },
-        {
-          "id": "lithium-neoforge-0.15.3+mc1.21.4.jar",
-          "name": "lithium-neoforge-0.15.3+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 774741,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/lithium-neoforge-0.15.3+mc1.21.4.jar",
-            "MD5": "7d7a1b17e5c5eaa6cf64e3757909e463",
-            "path": "mods/lithium-neoforge-0.15.3+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "melody_neoforge_1.0.10_MC_1.21.jar",
-          "name": "melody_neoforge_1.0.10_MC_1.21.jar",
-          "type": "File",
-          "artifact": {
-            "size": 36096,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/melody_neoforge_1.0.10_MC_1.21.jar",
-            "MD5": "875f4a68f2cd7ee2cc135904653c93d4",
-            "path": "mods/melody_neoforge_1.0.10_MC_1.21.jar"
-          }
-        },
-        {
-          "id": "modernfix-neoforge-5.20.3+mc1.21.4.jar",
-          "name": "modernfix-neoforge-5.20.3+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 470519,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/modernfix-neoforge-5.20.3+mc1.21.4.jar",
-            "MD5": "5c4f410f706f85267914d321a3ddd0dc",
-            "path": "mods/modernfix-neoforge-5.20.3+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "NoChatReports-NEOFORGE-1.21.4-v2.11.0.jar",
-          "name": "NoChatReports-NEOFORGE-1.21.4-v2.11.0.jar",
-          "type": "File",
-          "artifact": {
-            "size": 318509,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/NoChatReports-NEOFORGE-1.21.4-v2.11.0.jar",
-            "MD5": "ef21aae76a2c5c1336e6099c8eb16eac",
-            "path": "mods/NoChatReports-NEOFORGE-1.21.4-v2.11.0.jar"
-          }
-        },
-        {
-          "id": "sodium-neoforge-0.6.13+mc1.21.4.jar",
-          "name": "sodium-neoforge-0.6.13+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1161460,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/sodium-neoforge-0.6.13+mc1.21.4.jar",
-            "MD5": "97dd733bf0057fe83d9f35b1a0cf010d",
-            "path": "mods/sodium-neoforge-0.6.13+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "UniLib-1.1.1+1.21.4-neoforge.jar",
-          "name": "UniLib-1.1.1+1.21.4-neoforge.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1557775,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/UniLib-1.1.1+1.21.4-neoforge.jar",
-            "MD5": "d78b5f53e13629f2dc3f644d5fa74ef7",
-            "path": "mods/UniLib-1.1.1+1.21.4-neoforge.jar"
-          }
-        },
-        {
-          "id": "voicechat-neoforge-1.21.4-2.5.36.jar",
-          "name": "voicechat-neoforge-1.21.4-2.5.36.jar",
-          "type": "File",
-          "artifact": {
-            "size": 6480280,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-1.21.4/files/mods/voicechat-neoforge-1.21.4-2.5.36.jar",
-            "MD5": "1579641b226dee37fd8a37a086b0fb94",
-            "path": "mods/voicechat-neoforge-1.21.4-2.5.36.jar"
+            "size": 258,
+            "url": "https://multigames-studio.fr/servers/MGS-1.21.4/files/config/fancymenu/video_element_controller_metas.json",
+            "MD5": "4064668ecf6f08f6c1218d4ed3335470",
+            "path": "config/fancymenu/video_element_controller_metas.json"
           }
         }
       ]
     },
     {
-      "id": "mgs-build-1.21.4",
-      "name": "MULTIGAMES STUDIO BUILD",
-      "description": "Version pour la Build (Fabric v0.16.9)",
-      "icon": "https://multigames-studio.fr/distribution/img/logo.png",
+      "id": "MGS-Build-1.21.4",
+      "name": "MGS Builder",
+      "description": "MGS Builder Running Minecraft 1.21.4 (Fabric v0.17.2)",
+      "icon": "https://multigames-studio.fr/msgbuilder.png",
       "version": "1.0.0",
-      "address": "play.multigames-studio.fr:25565",
+      "address": "play.multigames-studio.fr",
       "minecraftVersion": "1.21.4",
       "discord": {
         "shortId": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageText": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageKey": "<FILL IN OR REMOVE DISCORD OBJECT>"
+        "largeImageText": "MGS Builder",
+        "largeImageKey": "msgbuilder"
       },
       "mainServer": false,
       "autoconnect": false,
-      "whitelist": {
+            "whitelist": {
         "active": true,
         "players": [
           {
@@ -477,83 +809,83 @@
       },
       "modules": [
         {
-          "id": "net.fabricmc:fabric-loader:0.16.9",
+          "id": "net.fabricmc:fabric-loader:0.17.2",
           "name": "Fabric (fabric-loader)",
           "type": "Fabric",
           "artifact": {
-            "size": 1387357,
-            "MD5": "27a6ef87676ce6316c777d81c1cd2962",
-            "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/fabric-loader/0.16.9/fabric-loader-0.16.9.jar"
+            "size": 1915305,
+            "MD5": "72dd698d701202d46303fc913cfcbf23",
+            "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/fabric-loader/0.17.2/fabric-loader-0.17.2.jar"
           },
           "subModules": [
             {
-              "id": "1.21.4-fabric-0.16.9",
+              "id": "1.21.4-fabric-0.17.2",
               "name": "Fabric (version.json)",
               "type": "VersionManifest",
               "artifact": {
-                "size": 2857,
-                "MD5": "37c2e8d1263c931f4ea7d887f1bbce4e",
-                "url": "https://multigames-studio.fr/distribution/repo/versions/1.21.4-fabric-0.16.9/1.21.4-fabric-0.16.9.json"
+                "size": 2847,
+                "MD5": "53139c891ca2126ab3285d6dd9093b0e",
+                "url": "https://multigames-studio.fr/repo/versions/1.21.4-fabric-0.17.2/1.21.4-fabric-0.17.2.json"
               }
             },
             {
-              "id": "org.ow2.asm:asm:9.7.1",
+              "id": "org.ow2.asm:asm:9.8",
               "name": "Fabric (asm)",
               "type": "Library",
               "artifact": {
-                "size": 126093,
-                "MD5": "e2cdd32d198ad31427d298eee9d39d8d",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar"
+                "size": 126113,
+                "MD5": "f5adf3bfc54fb3d2cd8e3a1f275084bc",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm/9.8/asm-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-analysis:9.7.1",
+              "id": "org.ow2.asm:asm-analysis:9.8",
               "name": "Fabric (asm-analysis)",
               "type": "Library",
               "artifact": {
-                "size": 35126,
-                "MD5": "4cd9e7178dfb85371bba3077e40cd514",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-analysis/9.7.1/asm-analysis-9.7.1.jar"
+                "size": 35151,
+                "MD5": "3d63508405f5610fc2ea673ff5471553",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-commons:9.7.1",
+              "id": "org.ow2.asm:asm-commons:9.8",
               "name": "Fabric (asm-commons)",
               "type": "Library",
               "artifact": {
-                "size": 73459,
-                "MD5": "8344aea3c8b7d707e9d35a62710e77c9",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-commons/9.7.1/asm-commons-9.7.1.jar"
+                "size": 73498,
+                "MD5": "c8c3d9ccf240144e74d94ff658b024c9",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-tree:9.7.1",
+              "id": "org.ow2.asm:asm-tree:9.8",
               "name": "Fabric (asm-tree)",
               "type": "Library",
               "artifact": {
-                "size": 51939,
-                "MD5": "e85029f613b6469989cc7cf53fe06b74",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-tree/9.7.1/asm-tree-9.7.1.jar"
+                "size": 51934,
+                "MD5": "4ab1aaec43c77a2d9b56e6d6d496f705",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-util:9.7.1",
+              "id": "org.ow2.asm:asm-util:9.8",
               "name": "Fabric (asm-util)",
               "type": "Library",
               "artifact": {
-                "size": 94519,
-                "MD5": "36d373a9cd6cad9b35db9f984c6b4bbb",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-util/9.7.1/asm-util-9.7.1.jar"
+                "size": 94559,
+                "MD5": "62498ef324bdab15f407d703f7d78d19",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar"
               }
             },
             {
-              "id": "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7",
+              "id": "net.fabricmc:sponge-mixin:0.16.3+mixin.0.8.7",
               "name": "Fabric (sponge-mixin)",
               "type": "Library",
               "artifact": {
-                "size": 1494834,
-                "MD5": "991ca8be2c408fe19eb64014d8a18243",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/sponge-mixin-0.15.4+mixin.0.8.7.jar"
+                "size": 1504156,
+                "MD5": "aa4a43d5b0e9abf4fcb57520ffeb0019",
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/sponge-mixin/0.16.3+mixin.0.8.7/sponge-mixin-0.16.3+mixin.0.8.7.jar"
               }
             },
             {
@@ -563,20 +895,340 @@
               "artifact": {
                 "size": 701826,
                 "MD5": "d0f4187a62328d4a95f3428434efbd48",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/intermediary/1.21.4/intermediary-1.21.4.jar"
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/intermediary/1.21.4/intermediary-1.21.4.jar"
               }
             }
           ]
         },
         {
-          "id": "craftpresence.json",
-          "name": "craftpresence.json",
+          "id": "com.moulberry:axiom:5.1.1@jar",
+          "name": "Axiom",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 42732846,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/Axiom-5.1.1-for-MC1.21.4.jar",
+            "MD5": "86f4e1b3c1a18691d33bffeb646c0a66"
+          }
+        },
+        {
+          "id": "de.johni0702.minecraft:bobby:5.2.6+mc1.21.4@jar",
+          "name": "Bobby",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 867333,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/bobby-5.2.6+mc1.21.4.jar",
+            "MD5": "b2b5f9dcee366c326dc5643e796cc2dc"
+          }
+        },
+        {
+          "id": "org.popcraft:chunky:1.4.27@jar",
+          "name": "Chunky",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 346516,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/Chunky-Fabric-1.4.27.jar",
+            "MD5": "8932a247283866b9ad172d7e12b0a5fe"
+          }
+        },
+        {
+          "id": "me.shedaniel.autoconfig.example:cloth-config:17.0.144@jar",
+          "name": "Cloth Config v17",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 1152857,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/cloth-config-17.0.144-fabric.jar",
+            "MD5": "07b7d5bc15bdc7387cf8890d0c460b54"
+          }
+        },
+        {
+          "id": "generated.fabricmod:controlling:22.0.5@jar",
+          "name": "Controlling",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 83814,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/Controlling-fabric-1.21.4-22.0.5.jar",
+            "MD5": "bdc91123dd7ea4bff8f7cb29b976546c"
+          }
+        },
+        {
+          "id": "net.villagerzock:cus:1.1-21.4@jar",
+          "name": "ClientUpdateSuppressor [CUS]",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 18825,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/cus-1.1-21.4.jar",
+            "MD5": "b1544587ffceb2a59372c61786655c75"
+          }
+        },
+        {
+          "id": "generated.fabricmod:cubes-without-borders:3.0.0+mc1.21.3@jar",
+          "name": "Cubes Without Borders",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 80793,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/cwb-fabric-3.0.0+mc1.21.3.jar",
+            "MD5": "4278e7e73cb1337e3a198f1c5b921887"
+          }
+        },
+        {
+          "id": "com.seibel:distanthorizons:2.3.4-b@jar",
+          "name": "Distant Horizons",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 18018015,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/DistantHorizons-2.3.4-b-1.21.4-fabric-neoforge.jar",
+            "MD5": "209473cc9b7c2cfa3092c22bf3aaee1e"
+          }
+        },
+        {
+          "id": "de.keksuccino:drippyloadingscreen:3.0.12@jar",
+          "name": "Drippy Loading Screen",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 229911,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/drippyloadingscreen_fabric_3.0.12_MC_1.21.4.jar",
+            "MD5": "43e9e29030206aaa00a244ae8b159948"
+          }
+        },
+        {
+          "id": "net.lostluma.dynamic_fps.impl.textile.compat:dynamic_fps:3.9.5@jar",
+          "name": "Dynamic FPS",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 191899,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar",
+            "MD5": "a018fcc8b46768ef5631e4af2a9b19a5"
+          }
+        },
+        {
+          "id": "generated.fabricmod:fabric-api:0.119.4+1.21.4@jar",
+          "name": "Fabric API",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 2149128,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/fabric-api-0.119.4+1.21.4.jar",
+            "MD5": "128a8d042180e7c92567342e21a21a6d"
+          }
+        },
+        {
+          "id": "de.keksuccino:fancymenu:3.7.1@jar",
+          "name": "FancyMenu",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 3890365,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/fancymenu_fabric_3.7.1_MC_1.21.4.jar",
+            "MD5": "0d403975b17065f1c16fa70e22ab5160"
+          }
+        },
+        {
+          "id": "fuzs.forgeconfigapiport.fabric.impl:forgeconfigapiport:21.4.2@jar",
+          "name": "Forge Config API Port",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 643937,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/ForgeConfigAPIPort-v21.4.2-1.21.4-Fabric.jar",
+            "MD5": "b81bf610651715f000db7aa520c33187"
+          }
+        },
+        {
+          "id": "io.github.thevoidblock:headbrowser:1.0-Beta.2+1.21.4@jar",
+          "name": "HeadBrowser",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 75474,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/headbrowser-1.0-Beta.2+1.21.4.jar",
+            "MD5": "cb676dab1b016003433eb72c2a80e46d"
+          }
+        },
+        {
+          "id": "generated.fabricmod:immediatelyfast:1.8.2+1.21.4@jar",
+          "name": "ImmediatelyFast",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 224777,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/ImmediatelyFast-Fabric-1.8.2+1.21.4.jar",
+            "MD5": "b92cb33742351dda9bc136960a9c4f1a"
+          }
+        },
+        {
+          "id": "de.maxhenkel:enhancedgroups:1.21.4-1.7.0@jar",
+          "name": "Simple Voice Chat Enhanced Groups",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 499278,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/instantgroup-fabric-1.21.4-1.7.0.jar",
+            "MD5": "9dd2f20ae0f91e8e2e84581285942c80"
+          }
+        },
+        {
+          "id": "generated.fabricmod:iris:1.8.8+mc1.21.4@jar",
+          "name": "Iris",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 2682702,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/iris-fabric-1.8.8+mc1.21.4.jar",
+            "MD5": "59d373e4874efbcb8fb426bdefa588d9"
+          }
+        },
+        {
+          "id": "journeymap:journeymap:1.21.4-6.0.0-beta.47@jar",
+          "name": "Journeymap",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 3514383,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/journeymap-fabric-1.21.4-6.0.0-beta.47.jar",
+            "MD5": "8b092f8cca0a96d80eb8eeea24b5ebfd"
+          }
+        },
+        {
+          "id": "de.keksuccino:konkrete:1.9.9@jar",
+          "name": "Konkrete",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 787890,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/konkrete_fabric_1.9.9_MC_1.21.4.jar",
+            "MD5": "7fdc8f1047e0aaad088fae4f0f0faa5e"
+          }
+        },
+        {
+          "id": "net.caffeinemc.mods:lithium:0.15.3+mc1.21.4@jar",
+          "name": "Lithium",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 797555,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/lithium-fabric-0.15.3+mc1.21.4.jar",
+            "MD5": "7a3a807eed9c4868fbe14cecd8bb082d"
+          }
+        },
+        {
+          "id": "games.alejandrocoria:mapfrontiers:2.7.0-beta.17@jar",
+          "name": "MapFrontiers",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 753380,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/MapFrontiers-1.21.4-2.7.0-beta.17-fabric.jar",
+            "MD5": "10d79bfce924e4ed2d3bd5778bba4df3"
+          }
+        },
+        {
+          "id": "de.keksuccino:melody:1.0.10@jar",
+          "name": "Melody",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 188035,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/melody_fabric_1.0.10_MC_1.21.jar",
+            "MD5": "0f1bfbf2dd4fa047a1616fc448f3b856"
+          }
+        },
+        {
+          "id": "net.mehvahdjukaar:modelfix:1.21.3-1.10@jar",
+          "name": "Model Gap Fix",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 66412,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/modelfix-1.21.3-1.10-fabric.jar",
+            "MD5": "8e44b12c5c24a4303f45e73e40c162f2"
+          }
+        },
+        {
+          "id": "com.terraformersmc:modmenu:13.0.3@jar",
+          "name": "Mod Menu",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 1050777,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/modmenu-13.0.3.jar",
+            "MD5": "e8884b37fe775f30a0121c4fbdfb32ac"
+          }
+        },
+        {
+          "id": "io.wispforest:owo:0.12.20+1.21.4@jar",
+          "name": "Oωo",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 1199998,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/owo-lib-0.12.20+1.21.4.jar",
+            "MD5": "8b1b0041383377305a4a01bc93d1503b"
+          }
+        },
+        {
+          "id": "generated.fabricmod:placeholder-api:2.5.2+1.21.3@jar",
+          "name": "Placeholder API",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 237288,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/placeholder-api-2.5.2+1.21.3.jar",
+            "MD5": "80b2dea3d99621d2b76db30a0582665d"
+          }
+        },
+        {
+          "id": "generated.fabricmod:searchables:1.0.5@jar",
+          "name": "Searchables",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 79812,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/Searchables-fabric-1.21.4-1.0.5.jar",
+            "MD5": "d115303ea7572b37c0596dac4e021dc4"
+          }
+        },
+        {
+          "id": "net.caffeinemc.mods:sodium:0.6.13+mc1.21.4@jar",
+          "name": "Sodium",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 1306799,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/sodium-fabric-0.6.13+mc1.21.4.jar",
+            "MD5": "28922a78d1876ee062e3265f10abcc46"
+          }
+        },
+        {
+          "id": "me.lucko:spark:1.10.121@jar",
+          "name": "Spark",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 3600052,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/spark-1.10.121-fabric.jar",
+            "MD5": "13ca2cf18ed503b9c00d6d99ba638d3e"
+          }
+        },
+        {
+          "id": "de.maxhenkel:vcinteraction:1.21.4-1.0.8@jar",
+          "name": "Voice Chat Interaction",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 463839,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/vcinteraction-fabric-1.21.4-1.0.8.jar",
+            "MD5": "4672e59b8e424daf66680ad563cbdb2c"
+          }
+        },
+        {
+          "id": "de.maxhenkel:voicechat:1.21.4-2.6.5@jar",
+          "name": "Simple Voice Chat",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 5346621,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/voicechat-fabric-1.21.4-2.6.5.jar",
+            "MD5": "81c56c2f12255d55991ef4d943f4f4cf"
+          }
+        },
+        {
+          "id": "org.enginehub:worldeditcui:1.21.4+01@jar",
+          "name": "WorldEditCUI",
+          "type": "FabricMod",
+          "artifact": {
+            "size": 674098,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/fabricmods/required/WorldEditCUI-1.21.4+01.jar",
+            "MD5": "f215499b7f1163cfbab9c2dabe4f8c0d"
+          }
+        },
+        {
+          "id": "options.txt",
+          "name": "options.txt",
           "type": "File",
           "artifact": {
-            "size": 4549,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/craftpresence.json",
-            "MD5": "e9ba9f9b1db53372795135b9b0675f1f",
-            "path": "config/craftpresence.json"
+            "size": 161,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/drippyloadingscreen/options.txt",
+            "MD5": "713d05a891aae7dbaab416e9c82d0286",
+            "path": "config/drippyloadingscreen/options.txt"
           }
         },
         {
@@ -585,9 +1237,42 @@
           "type": "File",
           "artifact": {
             "size": 21548,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/bg.png",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/bg.png",
             "MD5": "50578d22cfcf27927cdc1b88dbc8c8f7",
             "path": "config/fancymenu/assets/bg.png"
+          }
+        },
+        {
+          "id": "bg3.png",
+          "name": "bg3.png",
+          "type": "File",
+          "artifact": {
+            "size": 3245836,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/bg3.png",
+            "MD5": "d0423643ae16a1b3dd258cf83fb0a199",
+            "path": "config/fancymenu/assets/bg3.png"
+          }
+        },
+        {
+          "id": "discorde.png",
+          "name": "discorde.png",
+          "type": "File",
+          "artifact": {
+            "size": 12452,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/discorde.png",
+            "MD5": "2823f83d9bc5e4f1a38b71963beb6932",
+            "path": "config/fancymenu/assets/discorde.png"
+          }
+        },
+        {
+          "id": "fg.gif",
+          "name": "fg.gif",
+          "type": "File",
+          "artifact": {
+            "size": 1165542,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/fg.gif",
+            "MD5": "b76029e7d69b69642c3cfc110a7adf76",
+            "path": "config/fancymenu/assets/fg.gif"
           }
         },
         {
@@ -595,9 +1280,9 @@
           "name": "logo.icns",
           "type": "File",
           "artifact": {
-            "size": 100408,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/logo.icns",
-            "MD5": "ab2673c0d7a2f717ee9c1470f5d49142",
+            "size": 915,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logo.icns",
+            "MD5": "21c73ce0736a5c25a876a9f25e73ef75",
             "path": "config/fancymenu/assets/logo.icns"
           }
         },
@@ -606,9 +1291,9 @@
           "name": "logo.png",
           "type": "File",
           "artifact": {
-            "size": 67136,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/logo.png",
-            "MD5": "1f1b8056623840c39893d9cd3bc27fee",
+            "size": 137850,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logo.png",
+            "MD5": "260a5b42e49cb05597a43061e28f153d",
             "path": "config/fancymenu/assets/logo.png"
           }
         },
@@ -617,9 +1302,9 @@
           "name": "logo16.png",
           "type": "File",
           "artifact": {
-            "size": 724,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/logo16.png",
-            "MD5": "02119292cb2168a6a06022e82d608a3e",
+            "size": 694,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logo16.png",
+            "MD5": "615b2a01ab3f0fef42d4334c1209ab94",
             "path": "config/fancymenu/assets/logo16.png"
           }
         },
@@ -628,10 +1313,32 @@
           "name": "logo32.png",
           "type": "File",
           "artifact": {
-            "size": 1694,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/logo32.png",
-            "MD5": "6c8f3a30175bbd1d371b3668882e0c07",
+            "size": 1499,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logo32.png",
+            "MD5": "4670adf56a6f97eaa45dd657f48bbf35",
             "path": "config/fancymenu/assets/logo32.png"
+          }
+        },
+        {
+          "id": "logol.png",
+          "name": "logol.png",
+          "type": "File",
+          "artifact": {
+            "size": 129619,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logol.png",
+            "MD5": "8ff8cbea8f7debf743072cbec18908f1",
+            "path": "config/fancymenu/assets/logol.png"
+          }
+        },
+        {
+          "id": "logos.png",
+          "name": "logos.png",
+          "type": "File",
+          "artifact": {
+            "size": 138742,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/logos.png",
+            "MD5": "14a06cd628bd31dfa3cfb3d8d33252f8",
+            "path": "config/fancymenu/assets/logos.png"
           }
         },
         {
@@ -640,9 +1347,53 @@
           "type": "File",
           "artifact": {
             "size": 8632901,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/mg.apng",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/mg.apng",
             "MD5": "3d3f78350a1e5ea3f4c555ea154b5525",
             "path": "config/fancymenu/assets/mg.apng"
+          }
+        },
+        {
+          "id": "msgbuilder.png",
+          "name": "msgbuilder.png",
+          "type": "File",
+          "artifact": {
+            "size": 31311,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/msgbuilder.png",
+            "MD5": "87680890cd61768de0a819b8861f3186",
+            "path": "config/fancymenu/assets/msgbuilder.png"
+          }
+        },
+        {
+          "id": "options_background.png",
+          "name": "options_background.png",
+          "type": "File",
+          "artifact": {
+            "size": 135,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/options_background.png",
+            "MD5": "08983ce835f49c2089c627a8865f8af9",
+            "path": "config/fancymenu/assets/options_background.png"
+          }
+        },
+        {
+          "id": "output.apng",
+          "name": "output.apng",
+          "type": "File",
+          "artifact": {
+            "size": 8243239,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/output.apng",
+            "MD5": "05743d9c65f9ca9d8ef8baa5dab251ec",
+            "path": "config/fancymenu/assets/output.apng"
+          }
+        },
+        {
+          "id": "Sans_titre_194_20250912194748.png.url",
+          "name": "Sans_titre_194_20250912194748.png.url",
+          "type": "File",
+          "artifact": {
+            "size": 231,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/Sans_titre_194_20250912194748.png.url",
+            "MD5": "df9efdca97bd035800ce4514c7df7813",
+            "path": "config/fancymenu/assets/Sans_titre_194_20250912194748.png.url"
           }
         },
         {
@@ -650,9 +1401,9 @@
           "name": "slider.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/slider.png",
-            "MD5": "d1c67dcb23a03fa84893bdffa0e37341",
+            "size": 193,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/slider.png",
+            "MD5": "227978a8b2ac0d1a10e2a01a6ab77bb2",
             "path": "config/fancymenu/assets/slider.png"
           }
         },
@@ -661,9 +1412,9 @@
           "name": "slider2.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/slider2.png",
-            "MD5": "911701f3cdbd01cc6439fc5103198d90",
+            "size": 172,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/slider2.png",
+            "MD5": "373514ab7965b3243cb7602741624ec4",
             "path": "config/fancymenu/assets/slider2.png"
           }
         },
@@ -672,10 +1423,54 @@
           "name": "slider3.png",
           "type": "File",
           "artifact": {
-            "size": 78149,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/assets/slider3.png",
-            "MD5": "a7caf2d65d88f23df166aad6050d40e6",
+            "size": 196,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/slider3.png",
+            "MD5": "0e3c7158a9961d421803acf12f8a3ece",
             "path": "config/fancymenu/assets/slider3.png"
+          }
+        },
+        {
+          "id": "slider4.png",
+          "name": "slider4.png",
+          "type": "File",
+          "artifact": {
+            "size": 197,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/slider4.png",
+            "MD5": "5dc36b4a041110a12c823f3d3a3c9df0",
+            "path": "config/fancymenu/assets/slider4.png"
+          }
+        },
+        {
+          "id": "tic-tac.png",
+          "name": "tic-tac.png",
+          "type": "File",
+          "artifact": {
+            "size": 10005,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/tic-tac.png",
+            "MD5": "be8a5b88f2802ed3c461afe1b17322db",
+            "path": "config/fancymenu/assets/tic-tac.png"
+          }
+        },
+        {
+          "id": "youtube.png",
+          "name": "youtube.png",
+          "type": "File",
+          "artifact": {
+            "size": 7770,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/youtube.png",
+            "MD5": "811a673704ddaabd253e9b3a5dc53d17",
+            "path": "config/fancymenu/assets/youtube.png"
+          }
+        },
+        {
+          "id": "zozo.png",
+          "name": "zozo.png",
+          "type": "File",
+          "artifact": {
+            "size": 76623,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/assets/zozo.png",
+            "MD5": "89402d521658664fd45c7e3e7ac92ab0",
+            "path": "config/fancymenu/assets/zozo.png"
           }
         },
         {
@@ -683,10 +1478,98 @@
           "name": "customizablemenus.txt",
           "type": "File",
           "artifact": {
-            "size": 76,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/customizablemenus.txt",
-            "MD5": "8cd335741f1acd023a5203836fb9b944",
+            "size": 506,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customizablemenus.txt",
+            "MD5": "12cee487e48a548f82d7b2b817d98a78",
             "path": "config/fancymenu/customizablemenus.txt"
+          }
+        },
+        {
+          "id": "drippy_loading_overlay_layout.txt",
+          "name": "drippy_loading_overlay_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 6465,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/drippy_loading_overlay_layout.txt",
+            "MD5": "9de82dcba6515aa80f25235bbfc6a59b",
+            "path": "config/fancymenu/customization/drippy_loading_overlay_layout.txt"
+          }
+        },
+        {
+          "id": "inventory_screen_layout.txt",
+          "name": "inventory_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 4122,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/inventory_screen_layout.txt",
+            "MD5": "d7c8d6cab7ba2624f3fd20abd18e0cb5",
+            "path": "config/fancymenu/customization/inventory_screen_layout.txt"
+          }
+        },
+        {
+          "id": "join_multiplayer_screen_layout.txt",
+          "name": "join_multiplayer_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 22894,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/join_multiplayer_screen_layout.txt",
+            "MD5": "4a74563b94f10aeee06ac54db3afe6e1",
+            "path": "config/fancymenu/customization/join_multiplayer_screen_layout.txt"
+          }
+        },
+        {
+          "id": "language_select_screen_layout.txt",
+          "name": "language_select_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 9258,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/language_select_screen_layout.txt",
+            "MD5": "b388427af04f5136205ac09db1b01c39",
+            "path": "config/fancymenu/customization/language_select_screen_layout.txt"
+          }
+        },
+        {
+          "id": "options_screen_layout.txt",
+          "name": "options_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 31378,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/options_screen_layout.txt",
+            "MD5": "fbb733e7bc953e354fb24757f65373b9",
+            "path": "config/fancymenu/customization/options_screen_layout.txt"
+          }
+        },
+        {
+          "id": "pack_selection_screen_layout.txt",
+          "name": "pack_selection_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 9252,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/pack_selection_screen_layout.txt",
+            "MD5": "3d5121852311a5d8eab14435c135323d",
+            "path": "config/fancymenu/customization/pack_selection_screen_layout.txt"
+          }
+        },
+        {
+          "id": "pause_screen_layout.txt",
+          "name": "pause_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 30854,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/pause_screen_layout.txt",
+            "MD5": "f801de0c0df75d6a15665f14a657c86e",
+            "path": "config/fancymenu/customization/pause_screen_layout.txt"
+          }
+        },
+        {
+          "id": "progress_screen_layout.txt",
+          "name": "progress_screen_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 5189,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/progress_screen_layout.txt",
+            "MD5": "656dec02724bf7ad1453ff8eb59d3314",
+            "path": "config/fancymenu/customization/progress_screen_layout.txt"
           }
         },
         {
@@ -694,10 +1577,32 @@
           "name": "title_screen_layout.txt",
           "type": "File",
           "artifact": {
-            "size": 31870,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/customization/title_screen_layout.txt",
-            "MD5": "3a5d9843eff01426208c7aeb71db4be3",
+            "size": 34980,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/title_screen_layout.txt",
+            "MD5": "95facf9162b1ad043235f74393293d76",
             "path": "config/fancymenu/customization/title_screen_layout.txt"
+          }
+        },
+        {
+          "id": "universal_layout.txt",
+          "name": "universal_layout.txt",
+          "type": "File",
+          "artifact": {
+            "size": 921,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization/universal_layout.txt",
+            "MD5": "63800964de693d7b4125512c97b2756f",
+            "path": "config/fancymenu/customization/universal_layout.txt"
+          }
+        },
+        {
+          "id": "customization.properties",
+          "name": "customization.properties",
+          "type": "File",
+          "artifact": {
+            "size": 84,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/customization.properties",
+            "MD5": "f96a4413d65583e49531f2acc8aa02b7",
+            "path": "config/fancymenu/customization.properties"
           }
         },
         {
@@ -706,7 +1611,7 @@
           "type": "File",
           "artifact": {
             "size": 51,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/custom_gui_screens.txt",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/custom_gui_screens.txt",
             "MD5": "106e52948415f0879c53304f50783b28",
             "path": "config/fancymenu/custom_gui_screens.txt"
           }
@@ -717,7 +1622,7 @@
           "type": "File",
           "artifact": {
             "size": 198,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/layout_editor/widgets/element_layer_control.lewidget",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/layout_editor/widgets/element_layer_control.lewidget",
             "MD5": "43a5ab1a30249caf7dafc2f7ad4b0ed9",
             "path": "config/fancymenu/layout_editor/widgets/element_layer_control.lewidget"
           }
@@ -728,9 +1633,20 @@
           "type": "File",
           "artifact": {
             "size": 42,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/legacy_checklist.txt",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/legacy_checklist.txt",
             "MD5": "bc03e01c4f1bf1e24e9b86591baa512b",
             "path": "config/fancymenu/legacy_checklist.txt"
+          }
+        },
+        {
+          "id": "normalized_scroll_screens.json",
+          "name": "normalized_scroll_screens.json",
+          "type": "File",
+          "artifact": {
+            "size": 36,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/normalized_scroll_screens.json",
+            "MD5": "a37bfaa12c0f6e1ce5ce3a3bf423b254",
+            "path": "config/fancymenu/normalized_scroll_screens.json"
           }
         },
         {
@@ -738,9 +1654,9 @@
           "name": "options.txt",
           "type": "File",
           "artifact": {
-            "size": 2101,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/options.txt",
-            "MD5": "8a55f5df9e8d78c151ddb97793060de6",
+            "size": 2168,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/options.txt",
+            "MD5": "4935a0b0c26331b74ec816628787b383",
             "path": "config/fancymenu/options.txt"
           }
         },
@@ -750,7 +1666,7 @@
           "type": "File",
           "artifact": {
             "size": 4133,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/ui_themes/dark.json",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/ui_themes/dark.json",
             "MD5": "3981f37966b00a80e31aac89169be280",
             "path": "config/fancymenu/ui_themes/dark.json"
           }
@@ -761,7 +1677,7 @@
           "type": "File",
           "artifact": {
             "size": 4135,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/ui_themes/light.json",
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/ui_themes/light.json",
             "MD5": "adfba137b3d62c50a5186a4f6523a72a",
             "path": "config/fancymenu/ui_themes/light.json"
           }
@@ -771,316 +1687,41 @@
           "name": "user_variables.db",
           "type": "File",
           "artifact": {
-            "size": 23,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/config/fancymenu/user_variables.db",
-            "MD5": "458e4f3f673e3fea22fb92bf76fcf912",
+            "size": 88,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/user_variables.db",
+            "MD5": "77317ac3eec79c189012a836cb63a3b9",
             "path": "config/fancymenu/user_variables.db"
           }
         },
         {
-          "id": "authme-fabric-9.0.1+1.21.4.jar",
-          "name": "authme-fabric-9.0.1+1.21.4.jar",
+          "id": "video_element_controller_metas.json",
+          "name": "video_element_controller_metas.json",
           "type": "File",
           "artifact": {
-            "size": 376047,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/authme-fabric-9.0.1+1.21.4.jar",
-            "MD5": "3c220399e5c34dae32224818c7acaa6c",
-            "path": "mods/authme-fabric-9.0.1+1.21.4.jar"
-          }
-        },
-        {
-          "id": "Axiom-5.0.1-for-MC1.21.4.jar",
-          "name": "Axiom-5.0.1-for-MC1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 42661384,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/Axiom-5.0.1-for-MC1.21.4.jar",
-            "MD5": "bbfef90ea35554d17a4027e5a7f2667e",
-            "path": "mods/Axiom-5.0.1-for-MC1.21.4.jar"
-          }
-        },
-        {
-          "id": "Chunky-Fabric-1.4.27.jar",
-          "name": "Chunky-Fabric-1.4.27.jar",
-          "type": "File",
-          "artifact": {
-            "size": 346516,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/Chunky-Fabric-1.4.27.jar",
-            "MD5": "8932a247283866b9ad172d7e12b0a5fe",
-            "path": "mods/Chunky-Fabric-1.4.27.jar"
-          }
-        },
-        {
-          "id": "Controlling-fabric-1.21.4-22.0.5.jar",
-          "name": "Controlling-fabric-1.21.4-22.0.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 83814,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/Controlling-fabric-1.21.4-22.0.5.jar",
-            "MD5": "bdc91123dd7ea4bff8f7cb29b976546c",
-            "path": "mods/Controlling-fabric-1.21.4-22.0.5.jar"
-          }
-        },
-        {
-          "id": "CraftPresence-2.6.2+1.21.4-fabric.jar",
-          "name": "CraftPresence-2.6.2+1.21.4-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2155255,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/CraftPresence-2.6.2+1.21.4-fabric.jar",
-            "MD5": "14111505bfa7ce21dd429b830c8d7f91",
-            "path": "mods/CraftPresence-2.6.2+1.21.4-fabric.jar"
-          }
-        },
-        {
-          "id": "dark-loading-screen-1.6.16.jar",
-          "name": "dark-loading-screen-1.6.16.jar",
-          "type": "File",
-          "artifact": {
-            "size": 44614,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/dark-loading-screen-1.6.16.jar",
-            "MD5": "e2755918a300192d1a69f8ef84fecb22",
-            "path": "mods/dark-loading-screen-1.6.16.jar"
-          }
-        },
-        {
-          "id": "DistantHorizons-2.3.4-b-1.21.4-fabric-neoforge.jar",
-          "name": "DistantHorizons-2.3.4-b-1.21.4-fabric-neoforge.jar",
-          "type": "File",
-          "artifact": {
-            "size": 18018015,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/DistantHorizons-2.3.4-b-1.21.4-fabric-neoforge.jar",
-            "MD5": "209473cc9b7c2cfa3092c22bf3aaee1e",
-            "path": "mods/DistantHorizons-2.3.4-b-1.21.4-fabric-neoforge.jar"
-          }
-        },
-        {
-          "id": "dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar",
-          "name": "dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 191899,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar",
-            "MD5": "a018fcc8b46768ef5631e4af2a9b19a5",
-            "path": "mods/dynamic-fps-3.9.5+minecraft-1.21.2-fabric.jar"
-          }
-        },
-        {
-          "id": "fabric-api-0.119.4+1.21.4.jar",
-          "name": "fabric-api-0.119.4+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2149128,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/fabric-api-0.119.4+1.21.4.jar",
-            "MD5": "128a8d042180e7c92567342e21a21a6d",
-            "path": "mods/fabric-api-0.119.4+1.21.4.jar"
-          }
-        },
-        {
-          "id": "fancymenu_fabric_3.6.4_MC_1.21.4.jar",
-          "name": "fancymenu_fabric_3.6.4_MC_1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3782727,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/fancymenu_fabric_3.6.4_MC_1.21.4.jar",
-            "MD5": "be967254d76649ad7dee1d72bb55ad05",
-            "path": "mods/fancymenu_fabric_3.6.4_MC_1.21.4.jar"
-          }
-        },
-        {
-          "id": "headbrowser-1.0-Beta.2+1.21.4.jar",
-          "name": "headbrowser-1.0-Beta.2+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 75474,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/headbrowser-1.0-Beta.2+1.21.4.jar",
-            "MD5": "cb676dab1b016003433eb72c2a80e46d",
-            "path": "mods/headbrowser-1.0-Beta.2+1.21.4.jar"
-          }
-        },
-        {
-          "id": "ImmediatelyFast-Fabric-1.8.1+1.21.4.jar",
-          "name": "ImmediatelyFast-Fabric-1.8.1+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 224739,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/ImmediatelyFast-Fabric-1.8.1+1.21.4.jar",
-            "MD5": "5e7300090f35d5b3f54c6ebeb536e649",
-            "path": "mods/ImmediatelyFast-Fabric-1.8.1+1.21.4.jar"
-          }
-        },
-        {
-          "id": "iris-fabric-1.8.8+mc1.21.4.jar",
-          "name": "iris-fabric-1.8.8+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2682702,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/iris-fabric-1.8.8+mc1.21.4.jar",
-            "MD5": "59d373e4874efbcb8fb426bdefa588d9",
-            "path": "mods/iris-fabric-1.8.8+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "journeymap-fabric-1.21.4-6.0.0-beta.47.jar",
-          "name": "journeymap-fabric-1.21.4-6.0.0-beta.47.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3514383,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/journeymap-fabric-1.21.4-6.0.0-beta.47.jar",
-            "MD5": "8b092f8cca0a96d80eb8eeea24b5ebfd",
-            "path": "mods/journeymap-fabric-1.21.4-6.0.0-beta.47.jar"
-          }
-        },
-        {
-          "id": "konkrete_fabric_1.9.9_MC_1.21.4.jar",
-          "name": "konkrete_fabric_1.9.9_MC_1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 787890,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/konkrete_fabric_1.9.9_MC_1.21.4.jar",
-            "MD5": "7fdc8f1047e0aaad088fae4f0f0faa5e",
-            "path": "mods/konkrete_fabric_1.9.9_MC_1.21.4.jar"
-          }
-        },
-        {
-          "id": "lithium-fabric-0.15.3+mc1.21.4.jar",
-          "name": "lithium-fabric-0.15.3+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 797555,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/lithium-fabric-0.15.3+mc1.21.4.jar",
-            "MD5": "7a3a807eed9c4868fbe14cecd8bb082d",
-            "path": "mods/lithium-fabric-0.15.3+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "melody_fabric_1.0.10_MC_1.21.jar",
-          "name": "melody_fabric_1.0.10_MC_1.21.jar",
-          "type": "File",
-          "artifact": {
-            "size": 188035,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/melody_fabric_1.0.10_MC_1.21.jar",
-            "MD5": "0f1bfbf2dd4fa047a1616fc448f3b856",
-            "path": "mods/melody_fabric_1.0.10_MC_1.21.jar"
-          }
-        },
-        {
-          "id": "NoChatReports-FABRIC-1.21.4-v2.11.0.jar",
-          "name": "NoChatReports-FABRIC-1.21.4-v2.11.0.jar",
-          "type": "File",
-          "artifact": {
-            "size": 321286,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/NoChatReports-FABRIC-1.21.4-v2.11.0.jar",
-            "MD5": "47bd3acbbaaf09dae1c5142dc5b3f41c",
-            "path": "mods/NoChatReports-FABRIC-1.21.4-v2.11.0.jar"
-          }
-        },
-        {
-          "id": "owo-lib-0.12.20+1.21.4.jar",
-          "name": "owo-lib-0.12.20+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1199998,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/owo-lib-0.12.20+1.21.4.jar",
-            "MD5": "8b1b0041383377305a4a01bc93d1503b",
-            "path": "mods/owo-lib-0.12.20+1.21.4.jar"
-          }
-        },
-        {
-          "id": "Searchables-fabric-1.21.4-1.0.4.jar",
-          "name": "Searchables-fabric-1.21.4-1.0.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 79810,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/Searchables-fabric-1.21.4-1.0.4.jar",
-            "MD5": "36cceb928d8666c8790beebdc016d7af",
-            "path": "mods/Searchables-fabric-1.21.4-1.0.4.jar"
-          }
-        },
-        {
-          "id": "sodium-fabric-0.6.13+mc1.21.4.jar",
-          "name": "sodium-fabric-0.6.13+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1306799,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/sodium-fabric-0.6.13+mc1.21.4.jar",
-            "MD5": "28922a78d1876ee062e3265f10abcc46",
-            "path": "mods/sodium-fabric-0.6.13+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "spark-1.10.121-fabric.jar",
-          "name": "spark-1.10.121-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3600052,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/spark-1.10.121-fabric.jar",
-            "MD5": "13ca2cf18ed503b9c00d6d99ba638d3e",
-            "path": "mods/spark-1.10.121-fabric.jar"
-          }
-        },
-        {
-          "id": "UniLib-1.1.1+1.21.4-fabric.jar",
-          "name": "UniLib-1.1.1+1.21.4-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1757270,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/UniLib-1.1.1+1.21.4-fabric.jar",
-            "MD5": "5943f4e21ea8da02c838cb0a25e6e879",
-            "path": "mods/UniLib-1.1.1+1.21.4-fabric.jar"
-          }
-        },
-        {
-          "id": "voicechat-fabric-1.21.4-2.5.36.jar",
-          "name": "voicechat-fabric-1.21.4-2.5.36.jar",
-          "type": "File",
-          "artifact": {
-            "size": 6946539,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/voicechat-fabric-1.21.4-2.5.36.jar",
-            "MD5": "a6b8de1f8b16ee40c754860c2ff9fe97",
-            "path": "mods/voicechat-fabric-1.21.4-2.5.36.jar"
-          }
-        },
-        {
-          "id": "WorldEditCUI-1.21.4+01.jar",
-          "name": "WorldEditCUI-1.21.4+01.jar",
-          "type": "File",
-          "artifact": {
-            "size": 674098,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/mods/WorldEditCUI-1.21.4+01.jar",
-            "MD5": "f215499b7f1163cfbab9c2dabe4f8c0d",
-            "path": "mods/WorldEditCUI-1.21.4+01.jar"
-          }
-        },
-        {
-          "id": "whitelist.json",
-          "name": "whitelist.json",
-          "type": "File",
-          "artifact": {
-            "size": 378,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-build-1.21.4/files/whitelist.json",
-            "MD5": "TEMPORAIRE",
-            "path": "whitelist.json"
+            "size": 258,
+            "url": "https://multigames-studio.fr/servers/MGS-Build-1.21.4/files/config/fancymenu/video_element_controller_metas.json",
+            "MD5": "4064668ecf6f08f6c1218d4ed3335470",
+            "path": "config/fancymenu/video_element_controller_metas.json"
           }
         }
       ]
     },
     {
-      "id": "mgs-com-1.21.5",
-      "name": "MULTIGAMES STUDIO COMMUNICATION",
-      "description": "Version pour la COM (Fabric v0.16.9)",
-      "icon": "https://multigames-studio.fr/distribution/img/logo.png",
+      "id": "MGS-Com-1.21.4",
+      "name": "MGS Communication",
+      "description": "MGS Communication Running Minecraft 1.21.4 (Fabric v0.17.2)",
+      "icon": "https://multigames-studio.fr/mgscom.png",
       "version": "1.0.0",
-      "address": "play.multigames-studio.fr:25565",
-      "minecraftVersion": "1.21.5",
+      "address": "play.multigames-studio.fr",
+      "minecraftVersion": "1.21.4",
       "discord": {
         "shortId": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageText": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageKey": "<FILL IN OR REMOVE DISCORD OBJECT>"
+        "largeImageText": "MGS Communication",
+        "largeImageKey": "mgscom"
       },
       "mainServer": false,
       "autoconnect": false,
-      "whitelist": {
+            "whitelist": {
         "active": true,
         "players": [
           {
@@ -1121,1633 +1762,98 @@
       },
       "modules": [
         {
-          "id": "net.fabricmc:fabric-loader:0.16.9",
+          "id": "net.fabricmc:fabric-loader:0.17.2",
           "name": "Fabric (fabric-loader)",
           "type": "Fabric",
           "artifact": {
-            "size": 1387357,
-            "MD5": "27a6ef87676ce6316c777d81c1cd2962",
-            "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/fabric-loader/0.16.9/fabric-loader-0.16.9.jar"
+            "size": 1915305,
+            "MD5": "72dd698d701202d46303fc913cfcbf23",
+            "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/fabric-loader/0.17.2/fabric-loader-0.17.2.jar"
           },
           "subModules": [
             {
-              "id": "1.21.5-fabric-0.16.9",
+              "id": "1.21.4-fabric-0.17.2",
               "name": "Fabric (version.json)",
               "type": "VersionManifest",
               "artifact": {
-                "size": 2857,
-                "MD5": "127cf4fbc8b7e6868c2631051f6c8cd0",
-                "url": "https://multigames-studio.fr/distribution/repo/versions/1.21.5-fabric-0.16.9/1.21.5-fabric-0.16.9.json"
+                "size": 2847,
+                "MD5": "53139c891ca2126ab3285d6dd9093b0e",
+                "url": "https://multigames-studio.fr/repo/versions/1.21.4-fabric-0.17.2/1.21.4-fabric-0.17.2.json"
               }
             },
             {
-              "id": "org.ow2.asm:asm:9.7.1",
+              "id": "org.ow2.asm:asm:9.8",
               "name": "Fabric (asm)",
               "type": "Library",
               "artifact": {
-                "size": 126093,
-                "MD5": "e2cdd32d198ad31427d298eee9d39d8d",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar"
+                "size": 126113,
+                "MD5": "f5adf3bfc54fb3d2cd8e3a1f275084bc",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm/9.8/asm-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-analysis:9.7.1",
+              "id": "org.ow2.asm:asm-analysis:9.8",
               "name": "Fabric (asm-analysis)",
               "type": "Library",
               "artifact": {
-                "size": 35126,
-                "MD5": "4cd9e7178dfb85371bba3077e40cd514",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-analysis/9.7.1/asm-analysis-9.7.1.jar"
+                "size": 35151,
+                "MD5": "3d63508405f5610fc2ea673ff5471553",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-commons:9.7.1",
+              "id": "org.ow2.asm:asm-commons:9.8",
               "name": "Fabric (asm-commons)",
               "type": "Library",
               "artifact": {
-                "size": 73459,
-                "MD5": "8344aea3c8b7d707e9d35a62710e77c9",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-commons/9.7.1/asm-commons-9.7.1.jar"
+                "size": 73498,
+                "MD5": "c8c3d9ccf240144e74d94ff658b024c9",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-tree:9.7.1",
+              "id": "org.ow2.asm:asm-tree:9.8",
               "name": "Fabric (asm-tree)",
               "type": "Library",
               "artifact": {
-                "size": 51939,
-                "MD5": "e85029f613b6469989cc7cf53fe06b74",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-tree/9.7.1/asm-tree-9.7.1.jar"
+                "size": 51934,
+                "MD5": "4ab1aaec43c77a2d9b56e6d6d496f705",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar"
               }
             },
             {
-              "id": "org.ow2.asm:asm-util:9.7.1",
+              "id": "org.ow2.asm:asm-util:9.8",
               "name": "Fabric (asm-util)",
               "type": "Library",
               "artifact": {
-                "size": 94519,
-                "MD5": "36d373a9cd6cad9b35db9f984c6b4bbb",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/org/ow2/asm/asm-util/9.7.1/asm-util-9.7.1.jar"
+                "size": 94559,
+                "MD5": "62498ef324bdab15f407d703f7d78d19",
+                "url": "https://multigames-studio.fr/repo/lib/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar"
               }
             },
             {
-              "id": "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7",
+              "id": "net.fabricmc:sponge-mixin:0.16.3+mixin.0.8.7",
               "name": "Fabric (sponge-mixin)",
               "type": "Library",
               "artifact": {
-                "size": 1494834,
-                "MD5": "991ca8be2c408fe19eb64014d8a18243",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/sponge-mixin/0.15.4+mixin.0.8.7/sponge-mixin-0.15.4+mixin.0.8.7.jar"
+                "size": 1504156,
+                "MD5": "aa4a43d5b0e9abf4fcb57520ffeb0019",
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/sponge-mixin/0.16.3+mixin.0.8.7/sponge-mixin-0.16.3+mixin.0.8.7.jar"
               }
             },
             {
-              "id": "net.fabricmc:intermediary:1.21.5",
+              "id": "net.fabricmc:intermediary:1.21.4",
               "name": "Fabric (intermediary)",
               "type": "Library",
               "artifact": {
-                "size": 724686,
-                "MD5": "115c92c48d79d3996f7b3faab1c6aeb1",
-                "url": "https://multigames-studio.fr/distribution/repo/lib/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar"
+                "size": 701826,
+                "MD5": "d0f4187a62328d4a95f3428434efbd48",
+                "url": "https://multigames-studio.fr/repo/lib/net/fabricmc/intermediary/1.21.4/intermediary-1.21.4.jar"
               }
             }
           ]
-        },
-        {
-          "id": "AmbientSounds_FABRIC_v6.1.9_mc1.21.5.jar",
-          "name": "AmbientSounds_FABRIC_v6.1.9_mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 84869062,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/AmbientSounds_FABRIC_v6.1.9_mc1.21.5.jar",
-            "MD5": "35a15d2c26eb5de111242e79dc92a1a1",
-            "path": "mods/AmbientSounds_FABRIC_v6.1.9_mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "architectury-16.1.4-fabric.jar",
-          "name": "architectury-16.1.4-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 589366,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/architectury-16.1.4-fabric.jar",
-            "MD5": "b716467b5448cb1d197200bf79263d99",
-            "path": "mods/architectury-16.1.4-fabric.jar"
-          }
-        },
-        {
-          "id": "authme-fabric-9.0.1+1.21.5.jar",
-          "name": "authme-fabric-9.0.1+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 377809,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/authme-fabric-9.0.1+1.21.5.jar",
-            "MD5": "dda4429c9638666c2cc7e11a02ccd7a7",
-            "path": "mods/authme-fabric-9.0.1+1.21.5.jar"
-          }
-        },
-        {
-          "id": "cave_dust-3.0.1.jar",
-          "name": "cave_dust-3.0.1.jar",
-          "type": "File",
-          "artifact": {
-            "size": 256553,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/cave_dust-3.0.1.jar",
-            "MD5": "5dc411d3c406b4c15bbb9e1f3d65dd83",
-            "path": "mods/cave_dust-3.0.1.jar"
-          }
-        },
-        {
-          "id": "Chunky-Fabric-1.4.36.jar",
-          "name": "Chunky-Fabric-1.4.36.jar",
-          "type": "File",
-          "artifact": {
-            "size": 349242,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/Chunky-Fabric-1.4.36.jar",
-            "MD5": "764bdf1c33ef26a23d7a53d975e8398d",
-            "path": "mods/Chunky-Fabric-1.4.36.jar"
-          }
-        },
-        {
-          "id": "cloth-config-18.0.145-fabric.jar",
-          "name": "cloth-config-18.0.145-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1152219,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/cloth-config-18.0.145-fabric.jar",
-            "MD5": "0c076206786120a179fde7295eea7060",
-            "path": "mods/cloth-config-18.0.145-fabric.jar"
-          }
-        },
-        {
-          "id": "continuity-3.0.1-test.4+1.21.5.jar",
-          "name": "continuity-3.0.1-test.4+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 996045,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/continuity-3.0.1-test.4+1.21.5.jar",
-            "MD5": "0136ee8419f9d41fe1fc39a117cc3743",
-            "path": "mods/continuity-3.0.1-test.4+1.21.5.jar"
-          }
-        },
-        {
-          "id": "Controlling-fabric-1.21.5-23.0.2.jar",
-          "name": "Controlling-fabric-1.21.5-23.0.2.jar",
-          "type": "File",
-          "artifact": {
-            "size": 83948,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/Controlling-fabric-1.21.5-23.0.2.jar",
-            "MD5": "f3ed89539b79a4a904b81d6cc7e207b9",
-            "path": "mods/Controlling-fabric-1.21.5-23.0.2.jar"
-          }
-        },
-        {
-          "id": "CraftPresence-2.6.1+1.21.5-fabric.jar",
-          "name": "CraftPresence-2.6.1+1.21.5-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2187747,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/CraftPresence-2.6.1+1.21.5-fabric.jar",
-            "MD5": "1b7d3557ba4a9a55ec6cda4b75c612a0",
-            "path": "mods/CraftPresence-2.6.1+1.21.5-fabric.jar"
-          }
-        },
-        {
-          "id": "CreativeCore_FABRIC_v2.13.2_mc1.21.5.jar",
-          "name": "CreativeCore_FABRIC_v2.13.2_mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1243979,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/CreativeCore_FABRIC_v2.13.2_mc1.21.5.jar",
-            "MD5": "6a2a97deabb8ad6842b5d1be9870d458",
-            "path": "mods/CreativeCore_FABRIC_v2.13.2_mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "DistantHorizons-neoforge-fabric-2.3.2-b-1.21.5.jar",
-          "name": "DistantHorizons-neoforge-fabric-2.3.2-b-1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 17935022,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/DistantHorizons-neoforge-fabric-2.3.2-b-1.21.5.jar",
-            "MD5": "1e50ad1fa94d6288eacbffc577371d3f",
-            "path": "mods/DistantHorizons-neoforge-fabric-2.3.2-b-1.21.5.jar"
-          }
-        },
-        {
-          "id": "emotecraft-fabric-for-MC1.21.5-2.6.0-b.build.98.jar",
-          "name": "emotecraft-fabric-for-MC1.21.5-2.6.0-b.build.98.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1353385,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/emotecraft-fabric-for-MC1.21.5-2.6.0-b.build.98.jar",
-            "MD5": "a5e54ad17c4e20cd452b9960f2ea17f2",
-            "path": "mods/emotecraft-fabric-for-MC1.21.5-2.6.0-b.build.98.jar"
-          }
-        },
-        {
-          "id": "emotecraft-fabric-for-MC1.21.5-2.6.1.jar",
-          "name": "emotecraft-fabric-for-MC1.21.5-2.6.1.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1355086,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/emotecraft-fabric-for-MC1.21.5-2.6.1.jar",
-            "MD5": "3c02a02e7b8608144c85e179cba00e88",
-            "path": "mods/emotecraft-fabric-for-MC1.21.5-2.6.1.jar"
-          }
-        },
-        {
-          "id": "emotecraft-flashback-addon-1.0+mc1.21.1.jar",
-          "name": "emotecraft-flashback-addon-1.0+mc1.21.1.jar",
-          "type": "File",
-          "artifact": {
-            "size": 31428,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/emotecraft-flashback-addon-1.0+mc1.21.1.jar",
-            "MD5": "55e71264d26a01bb27c43ae1e4c7ac8d",
-            "path": "mods/emotecraft-flashback-addon-1.0+mc1.21.1.jar"
-          }
-        },
-        {
-          "id": "entity_model_features_fabric_1.21.5-2.4.3.jar",
-          "name": "entity_model_features_fabric_1.21.5-2.4.3.jar",
-          "type": "File",
-          "artifact": {
-            "size": 448610,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/entity_model_features_fabric_1.21.5-2.4.3.jar",
-            "MD5": "1c988568219c19d0b92d1af91b9f9b2c",
-            "path": "mods/entity_model_features_fabric_1.21.5-2.4.3.jar"
-          }
-        },
-        {
-          "id": "entity_texture_features_fabric_1.21.5-6.2.13.jar",
-          "name": "entity_texture_features_fabric_1.21.5-6.2.13.jar",
-          "type": "File",
-          "artifact": {
-            "size": 651215,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/entity_texture_features_fabric_1.21.5-6.2.13.jar",
-            "MD5": "3b17d74bd968626f5563b12dbb2cefef",
-            "path": "mods/entity_texture_features_fabric_1.21.5-6.2.13.jar"
-          }
-        },
-        {
-          "id": "fabric-api-0.126.0+1.21.5.jar",
-          "name": "fabric-api-0.126.0+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2235523,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/fabric-api-0.126.0+1.21.5.jar",
-            "MD5": "4a392901e20767b652262fe6e555a6c4",
-            "path": "mods/fabric-api-0.126.0+1.21.5.jar"
-          }
-        },
-        {
-          "id": "fabric-language-kotlin-1.13.3+kotlin.2.1.21.jar",
-          "name": "fabric-language-kotlin-1.13.3+kotlin.2.1.21.jar",
-          "type": "File",
-          "artifact": {
-            "size": 7163558,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/fabric-language-kotlin-1.13.3+kotlin.2.1.21.jar",
-            "MD5": "3c186cee540e7f21d8327bed71dd9d6b",
-            "path": "mods/fabric-language-kotlin-1.13.3+kotlin.2.1.21.jar"
-          }
-        },
-        {
-          "id": "fastquit-3.0.0+1.21.4.jar",
-          "name": "fastquit-3.0.0+1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 59241,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/fastquit-3.0.0+1.21.4.jar",
-            "MD5": "62c945b46c98733edbd2488a4d967be2",
-            "path": "mods/fastquit-3.0.0+1.21.4.jar"
-          }
-        },
-        {
-          "id": "ferritecore-8.0.0-fabric.jar",
-          "name": "ferritecore-8.0.0-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 79653,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/ferritecore-8.0.0-fabric.jar",
-            "MD5": "f3edb2e06fd77f283a0f0f734e37bf13",
-            "path": "mods/ferritecore-8.0.0-fabric.jar"
-          }
-        },
-        {
-          "id": "Flashback-0.34.0-for-MC1.21.5.jar",
-          "name": "Flashback-0.34.0-for-MC1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 208014007,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/Flashback-0.34.0-for-MC1.21.5.jar",
-            "MD5": "25c3b588fea953a51ad7eedbc95434c2",
-            "path": "mods/Flashback-0.34.0-for-MC1.21.5.jar"
-          }
-        },
-        {
-          "id": "ForgeConfigAPIPort-v21.5.1-1.21.5-Fabric.jar",
-          "name": "ForgeConfigAPIPort-v21.5.1-1.21.5-Fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 630029,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/ForgeConfigAPIPort-v21.5.1-1.21.5-Fabric.jar",
-            "MD5": "32ba7ecf91d608280b9521ce67ede1f6",
-            "path": "mods/ForgeConfigAPIPort-v21.5.1-1.21.5-Fabric.jar"
-          }
-        },
-        {
-          "id": "Gamma-Utils-2.2.5+mc1.21.5.jar",
-          "name": "Gamma-Utils-2.2.5+mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 96207,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/Gamma-Utils-2.2.5+mc1.21.5.jar",
-            "MD5": "445cbc1aefb6783cd8641863bf5df245",
-            "path": "mods/Gamma-Utils-2.2.5+mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "ImmediatelyFast-Fabric-1.9.5+1.21.5.jar",
-          "name": "ImmediatelyFast-Fabric-1.9.5+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 227089,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/ImmediatelyFast-Fabric-1.9.5+1.21.5.jar",
-            "MD5": "5b92a1d454ce5b896da78b80f59124b1",
-            "path": "mods/ImmediatelyFast-Fabric-1.9.5+1.21.5.jar"
-          }
-        },
-        {
-          "id": "iris-fabric-1.8.11+mc1.21.5.jar",
-          "name": "iris-fabric-1.8.11+mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 2714605,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/iris-fabric-1.8.11+mc1.21.5.jar",
-            "MD5": "c08a1725cf3ae49482431e9f67054769",
-            "path": "mods/iris-fabric-1.8.11+mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "journeymap-fabric-1.21.5-6.0.0-beta.47.jar",
-          "name": "journeymap-fabric-1.21.5-6.0.0-beta.47.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3514911,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/journeymap-fabric-1.21.5-6.0.0-beta.47.jar",
-            "MD5": "f6fd51391ac444e005300e5e1596dd72",
-            "path": "mods/journeymap-fabric-1.21.5-6.0.0-beta.47.jar"
-          }
-        },
-        {
-          "id": "konkrete_fabric_1.9.11_MC_1.21.5.jar",
-          "name": "konkrete_fabric_1.9.11_MC_1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 665241,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/konkrete_fabric_1.9.11_MC_1.21.5.jar",
-            "MD5": "46a0407abe0886eba04d704492651aa9",
-            "path": "mods/konkrete_fabric_1.9.11_MC_1.21.5.jar"
-          }
-        },
-        {
-          "id": "lambdynamiclights-4.2.6+1.21.5.jar",
-          "name": "lambdynamiclights-4.2.6+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1025132,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/lambdynamiclights-4.2.6+1.21.5.jar",
-            "MD5": "813f312834528fa9b19d0cc12e110183",
-            "path": "mods/lambdynamiclights-4.2.6+1.21.5.jar"
-          }
-        },
-        {
-          "id": "language-reload-1.7.3+1.21.5.jar",
-          "name": "language-reload-1.7.3+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 73837,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/language-reload-1.7.3+1.21.5.jar",
-            "MD5": "1bd35b2d998fae5877d32736e913c6f8",
-            "path": "mods/language-reload-1.7.3+1.21.5.jar"
-          }
-        },
-        {
-          "id": "libIPN-fabric-1.21.5-6.5.0.jar",
-          "name": "libIPN-fabric-1.21.5-6.5.0.jar",
-          "type": "File",
-          "artifact": {
-            "size": 642430,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/libIPN-fabric-1.21.5-6.5.0.jar",
-            "MD5": "21f628364972518125bbea00e63f724c",
-            "path": "mods/libIPN-fabric-1.21.5-6.5.0.jar"
-          }
-        },
-        {
-          "id": "make_bubbles_pop-0.3.1-fabric-mc1.21.2-1.21.4.jar",
-          "name": "make_bubbles_pop-0.3.1-fabric-mc1.21.2-1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 28757,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/make_bubbles_pop-0.3.1-fabric-mc1.21.2-1.21.4.jar",
-            "MD5": "8738bbc233f4f359868cf306c1b20ec3",
-            "path": "mods/make_bubbles_pop-0.3.1-fabric-mc1.21.2-1.21.4.jar"
-          }
-        },
-        {
-          "id": "000003.log",
-          "name": "000003.log",
-          "type": "File",
-          "artifact": {
-            "size": 0,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/000003.log",
-            "MD5": "d41d8cd98f00b204e9800998ecf8427e",
-            "path": "mods/mcef-cache/000003.log"
-          }
-        },
-        {
-          "id": "CURRENT",
-          "name": "CURRENT",
-          "type": "File",
-          "artifact": {
-            "size": 16,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/CURRENT",
-            "MD5": "46295cac801e5d4857d09837238a6394",
-            "path": "mods/mcef-cache/CURRENT"
-          }
-        },
-        {
-          "id": "LocalPrefs.json",
-          "name": "LocalPrefs.json",
-          "type": "File",
-          "artifact": {
-            "size": 650,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/LocalPrefs.json",
-            "MD5": "345ca05a416e291d477135200e188526",
-            "path": "mods/mcef-cache/LocalPrefs.json"
-          }
-        },
-        {
-          "id": "LOCK",
-          "name": "LOCK",
-          "type": "File",
-          "artifact": {
-            "size": 0,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/LOCK",
-            "MD5": "d41d8cd98f00b204e9800998ecf8427e",
-            "path": "mods/mcef-cache/LOCK"
-          }
-        },
-        {
-          "id": "LOG",
-          "name": "LOG",
-          "type": "File",
-          "artifact": {
-            "size": 322,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/LOG",
-            "MD5": "48f7c14e5e56a5dde10cc1aa55bc4802",
-            "path": "mods/mcef-cache/LOG"
-          }
-        },
-        {
-          "id": "LOG.old",
-          "name": "LOG.old",
-          "type": "File",
-          "artifact": {
-            "size": 281,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/LOG.old",
-            "MD5": "3c0eb035268e31b4c6ed3ad42a586a7a",
-            "path": "mods/mcef-cache/LOG.old"
-          }
-        },
-        {
-          "id": "MANIFEST-000001",
-          "name": "MANIFEST-000001",
-          "type": "File",
-          "artifact": {
-            "size": 41,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/MANIFEST-000001",
-            "MD5": "5af87dfd673ba2115e2fcf5cfdb727ab",
-            "path": "mods/mcef-cache/MANIFEST-000001"
-          }
-        },
-        {
-          "id": "Visited Links",
-          "name": "Visited Links",
-          "type": "File",
-          "artifact": {
-            "size": 131072,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-cache/Visited%20Links",
-            "MD5": "dbe6f2194d8ab6efb13dc3feade372e3",
-            "path": "mods/mcef-cache/Visited Links"
-          }
-        },
-        {
-          "id": "chrome_100_percent.pak",
-          "name": "chrome_100_percent.pak",
-          "type": "File",
-          "artifact": {
-            "size": 641674,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/chrome_100_percent.pak",
-            "MD5": "54563e9a40deb9c8d545847b4b4064d4",
-            "path": "mods/mcef-libraries/windows_amd64/chrome_100_percent.pak"
-          }
-        },
-        {
-          "id": "chrome_200_percent.pak",
-          "name": "chrome_200_percent.pak",
-          "type": "File",
-          "artifact": {
-            "size": 987729,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/chrome_200_percent.pak",
-            "MD5": "33c6e196e50f93d6647baf3a08d21de1",
-            "path": "mods/mcef-libraries/windows_amd64/chrome_200_percent.pak"
-          }
-        },
-        {
-          "id": "chrome_elf.dll",
-          "name": "chrome_elf.dll",
-          "type": "File",
-          "artifact": {
-            "size": 1392128,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/chrome_elf.dll",
-            "MD5": "852be8ba8051e06d6744c4bf5da0d22d",
-            "path": "mods/mcef-libraries/windows_amd64/chrome_elf.dll"
-          }
-        },
-        {
-          "id": "d3dcompiler_47.dll",
-          "name": "d3dcompiler_47.dll",
-          "type": "File",
-          "artifact": {
-            "size": 4916728,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/d3dcompiler_47.dll",
-            "MD5": "03a60a6652caf4f49ea5912ce4e1b33c",
-            "path": "mods/mcef-libraries/windows_amd64/d3dcompiler_47.dll"
-          }
-        },
-        {
-          "id": "icudtl.dat",
-          "name": "icudtl.dat",
-          "type": "File",
-          "artifact": {
-            "size": 10631872,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/icudtl.dat",
-            "MD5": "62880b7d351a9f547b62b8da6c97ce25",
-            "path": "mods/mcef-libraries/windows_amd64/icudtl.dat"
-          }
-        },
-        {
-          "id": "jcef.dll",
-          "name": "jcef.dll",
-          "type": "File",
-          "artifact": {
-            "size": 917504,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/jcef.dll",
-            "MD5": "48d9a71ae4f9f7e310ee66921e512079",
-            "path": "mods/mcef-libraries/windows_amd64/jcef.dll"
-          }
-        },
-        {
-          "id": "jcef_helper.exe",
-          "name": "jcef_helper.exe",
-          "type": "File",
-          "artifact": {
-            "size": 585728,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/jcef_helper.exe",
-            "MD5": "834872a76a680ec4580d99014ed6a6b5",
-            "path": "mods/mcef-libraries/windows_amd64/jcef_helper.exe"
-          }
-        },
-        {
-          "id": "libcef.dll",
-          "name": "libcef.dll",
-          "type": "File",
-          "artifact": {
-            "size": 203074560,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/libcef.dll",
-            "MD5": "d07dfe69a58e1b0d6c1a336ebd716b09",
-            "path": "mods/mcef-libraries/windows_amd64/libcef.dll"
-          }
-        },
-        {
-          "id": "libEGL.dll",
-          "name": "libEGL.dll",
-          "type": "File",
-          "artifact": {
-            "size": 479744,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/libEGL.dll",
-            "MD5": "aabe9e398b4945ee49e3fca82e5ab7fb",
-            "path": "mods/mcef-libraries/windows_amd64/libEGL.dll"
-          }
-        },
-        {
-          "id": "libGLESv2.dll",
-          "name": "libGLESv2.dll",
-          "type": "File",
-          "artifact": {
-            "size": 7426048,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/libGLESv2.dll",
-            "MD5": "69d7d2c2a098b7d40e4f534ef6feb9e1",
-            "path": "mods/mcef-libraries/windows_amd64/libGLESv2.dll"
-          }
-        },
-        {
-          "id": "af.pak",
-          "name": "af.pak",
-          "type": "File",
-          "artifact": {
-            "size": 448548,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/af.pak",
-            "MD5": "b9a96905830c11164ecbe61a40927dc8",
-            "path": "mods/mcef-libraries/windows_amd64/locales/af.pak"
-          }
-        },
-        {
-          "id": "am.pak",
-          "name": "am.pak",
-          "type": "File",
-          "artifact": {
-            "size": 728556,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/am.pak",
-            "MD5": "26f2be8fddf06ca0fd59430b8515f269",
-            "path": "mods/mcef-libraries/windows_amd64/locales/am.pak"
-          }
-        },
-        {
-          "id": "ar.pak",
-          "name": "ar.pak",
-          "type": "File",
-          "artifact": {
-            "size": 801621,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ar.pak",
-            "MD5": "da392bd735cbd9cdb9e443a6f39278fd",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ar.pak"
-          }
-        },
-        {
-          "id": "bg.pak",
-          "name": "bg.pak",
-          "type": "File",
-          "artifact": {
-            "size": 828271,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/bg.pak",
-            "MD5": "de1c445aa9108e1a1f2660ed4d715b58",
-            "path": "mods/mcef-libraries/windows_amd64/locales/bg.pak"
-          }
-        },
-        {
-          "id": "bn.pak",
-          "name": "bn.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1067144,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/bn.pak",
-            "MD5": "20e0bffd7dfd47a8ed800edcedfb4685",
-            "path": "mods/mcef-libraries/windows_amd64/locales/bn.pak"
-          }
-        },
-        {
-          "id": "ca.pak",
-          "name": "ca.pak",
-          "type": "File",
-          "artifact": {
-            "size": 512687,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ca.pak",
-            "MD5": "fb49eda55e2895bc0f7b97790caf0187",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ca.pak"
-          }
-        },
-        {
-          "id": "cs.pak",
-          "name": "cs.pak",
-          "type": "File",
-          "artifact": {
-            "size": 520342,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/cs.pak",
-            "MD5": "441f7180892855958f5a84cea4be9e25",
-            "path": "mods/mcef-libraries/windows_amd64/locales/cs.pak"
-          }
-        },
-        {
-          "id": "da.pak",
-          "name": "da.pak",
-          "type": "File",
-          "artifact": {
-            "size": 473540,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/da.pak",
-            "MD5": "6de3d0c003302ab63f1cd4e4a8def111",
-            "path": "mods/mcef-libraries/windows_amd64/locales/da.pak"
-          }
-        },
-        {
-          "id": "de.pak",
-          "name": "de.pak",
-          "type": "File",
-          "artifact": {
-            "size": 510384,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/de.pak",
-            "MD5": "01fd82fbb7e9da70bd3a59d06c36b6e5",
-            "path": "mods/mcef-libraries/windows_amd64/locales/de.pak"
-          }
-        },
-        {
-          "id": "el.pak",
-          "name": "el.pak",
-          "type": "File",
-          "artifact": {
-            "size": 907221,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/el.pak",
-            "MD5": "63666b0ac1668920eac108970ffdfeda",
-            "path": "mods/mcef-libraries/windows_amd64/locales/el.pak"
-          }
-        },
-        {
-          "id": "en-GB.pak",
-          "name": "en-GB.pak",
-          "type": "File",
-          "artifact": {
-            "size": 410859,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/en-GB.pak",
-            "MD5": "c2974f708589c0c703ad06a7f8b7ada5",
-            "path": "mods/mcef-libraries/windows_amd64/locales/en-GB.pak"
-          }
-        },
-        {
-          "id": "en-US.pak",
-          "name": "en-US.pak",
-          "type": "File",
-          "artifact": {
-            "size": 414207,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/en-US.pak",
-            "MD5": "d35ff435ff91254246ae63984230e4bf",
-            "path": "mods/mcef-libraries/windows_amd64/locales/en-US.pak"
-          }
-        },
-        {
-          "id": "es-419.pak",
-          "name": "es-419.pak",
-          "type": "File",
-          "artifact": {
-            "size": 501322,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/es-419.pak",
-            "MD5": "fd177446be4f90ef7f1135181ed4f2d8",
-            "path": "mods/mcef-libraries/windows_amd64/locales/es-419.pak"
-          }
-        },
-        {
-          "id": "es.pak",
-          "name": "es.pak",
-          "type": "File",
-          "artifact": {
-            "size": 500213,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/es.pak",
-            "MD5": "51f43d5762c7c866d684439783eac5a7",
-            "path": "mods/mcef-libraries/windows_amd64/locales/es.pak"
-          }
-        },
-        {
-          "id": "et.pak",
-          "name": "et.pak",
-          "type": "File",
-          "artifact": {
-            "size": 453907,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/et.pak",
-            "MD5": "eb85e0d2eef0b6a72a77e00efc9fab8e",
-            "path": "mods/mcef-libraries/windows_amd64/locales/et.pak"
-          }
-        },
-        {
-          "id": "fa.pak",
-          "name": "fa.pak",
-          "type": "File",
-          "artifact": {
-            "size": 738014,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/fa.pak",
-            "MD5": "8a40f31b0382e38519f3205dd7dddf90",
-            "path": "mods/mcef-libraries/windows_amd64/locales/fa.pak"
-          }
-        },
-        {
-          "id": "fi.pak",
-          "name": "fi.pak",
-          "type": "File",
-          "artifact": {
-            "size": 461841,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/fi.pak",
-            "MD5": "dbc419045ea8da89e58be7ebab55a68f",
-            "path": "mods/mcef-libraries/windows_amd64/locales/fi.pak"
-          }
-        },
-        {
-          "id": "fil.pak",
-          "name": "fil.pak",
-          "type": "File",
-          "artifact": {
-            "size": 522071,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/fil.pak",
-            "MD5": "ce10b19b85a5249c47768b1020f980ad",
-            "path": "mods/mcef-libraries/windows_amd64/locales/fil.pak"
-          }
-        },
-        {
-          "id": "fr.pak",
-          "name": "fr.pak",
-          "type": "File",
-          "artifact": {
-            "size": 543412,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/fr.pak",
-            "MD5": "6937405e2d7c55849e8ff85221fe215e",
-            "path": "mods/mcef-libraries/windows_amd64/locales/fr.pak"
-          }
-        },
-        {
-          "id": "gu.pak",
-          "name": "gu.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1049353,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/gu.pak",
-            "MD5": "f9f1db3e1259ecfe25d761e9bdf9a210",
-            "path": "mods/mcef-libraries/windows_amd64/locales/gu.pak"
-          }
-        },
-        {
-          "id": "he.pak",
-          "name": "he.pak",
-          "type": "File",
-          "artifact": {
-            "size": 650852,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/he.pak",
-            "MD5": "cca0375b68cad99b4f07dc244f54cc70",
-            "path": "mods/mcef-libraries/windows_amd64/locales/he.pak"
-          }
-        },
-        {
-          "id": "hi.pak",
-          "name": "hi.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1111685,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/hi.pak",
-            "MD5": "c09688a22c35bed688c3a02e4aa6aa18",
-            "path": "mods/mcef-libraries/windows_amd64/locales/hi.pak"
-          }
-        },
-        {
-          "id": "hr.pak",
-          "name": "hr.pak",
-          "type": "File",
-          "artifact": {
-            "size": 503048,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/hr.pak",
-            "MD5": "ae6140c8fa3599f620463962f44fc728",
-            "path": "mods/mcef-libraries/windows_amd64/locales/hr.pak"
-          }
-        },
-        {
-          "id": "hu.pak",
-          "name": "hu.pak",
-          "type": "File",
-          "artifact": {
-            "size": 540966,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/hu.pak",
-            "MD5": "5392805f843b028a732afdfc1bd15a7b",
-            "path": "mods/mcef-libraries/windows_amd64/locales/hu.pak"
-          }
-        },
-        {
-          "id": "id.pak",
-          "name": "id.pak",
-          "type": "File",
-          "artifact": {
-            "size": 444814,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/id.pak",
-            "MD5": "d290d5df9236644d274a53ede2d871d7",
-            "path": "mods/mcef-libraries/windows_amd64/locales/id.pak"
-          }
-        },
-        {
-          "id": "it.pak",
-          "name": "it.pak",
-          "type": "File",
-          "artifact": {
-            "size": 499414,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/it.pak",
-            "MD5": "3fec1cb4a0c0ecef5110cfa4117d6578",
-            "path": "mods/mcef-libraries/windows_amd64/locales/it.pak"
-          }
-        },
-        {
-          "id": "ja.pak",
-          "name": "ja.pak",
-          "type": "File",
-          "artifact": {
-            "size": 605481,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ja.pak",
-            "MD5": "40c270febd3d880e9499602510448648",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ja.pak"
-          }
-        },
-        {
-          "id": "kn.pak",
-          "name": "kn.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1198747,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/kn.pak",
-            "MD5": "942cde9c28b2a6e885e75c0f0d6cef85",
-            "path": "mods/mcef-libraries/windows_amd64/locales/kn.pak"
-          }
-        },
-        {
-          "id": "ko.pak",
-          "name": "ko.pak",
-          "type": "File",
-          "artifact": {
-            "size": 508040,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ko.pak",
-            "MD5": "793c1e298d9947652470d7a16cec29a9",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ko.pak"
-          }
-        },
-        {
-          "id": "lt.pak",
-          "name": "lt.pak",
-          "type": "File",
-          "artifact": {
-            "size": 548104,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/lt.pak",
-            "MD5": "a0daf1bf2d193f91c38e1c0b4f257c69",
-            "path": "mods/mcef-libraries/windows_amd64/locales/lt.pak"
-          }
-        },
-        {
-          "id": "lv.pak",
-          "name": "lv.pak",
-          "type": "File",
-          "artifact": {
-            "size": 545749,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/lv.pak",
-            "MD5": "d6a610eda95d980ee2c4697e55249402",
-            "path": "mods/mcef-libraries/windows_amd64/locales/lv.pak"
-          }
-        },
-        {
-          "id": "ml.pak",
-          "name": "ml.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1245018,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ml.pak",
-            "MD5": "d10c9d4b7c74d35ce1f41c5a396557b0",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ml.pak"
-          }
-        },
-        {
-          "id": "mr.pak",
-          "name": "mr.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1022262,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/mr.pak",
-            "MD5": "a4e6ff02c9f7cef68b9a3e72f433432c",
-            "path": "mods/mcef-libraries/windows_amd64/locales/mr.pak"
-          }
-        },
-        {
-          "id": "ms.pak",
-          "name": "ms.pak",
-          "type": "File",
-          "artifact": {
-            "size": 466528,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ms.pak",
-            "MD5": "9c97190c4e2e50ca13f22855d801dee9",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ms.pak"
-          }
-        },
-        {
-          "id": "nb.pak",
-          "name": "nb.pak",
-          "type": "File",
-          "artifact": {
-            "size": 454065,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/nb.pak",
-            "MD5": "aabdf57827a360ea4ca38f3a17653453",
-            "path": "mods/mcef-libraries/windows_amd64/locales/nb.pak"
-          }
-        },
-        {
-          "id": "nl.pak",
-          "name": "nl.pak",
-          "type": "File",
-          "artifact": {
-            "size": 468584,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/nl.pak",
-            "MD5": "0828495f57ec3b1593235b16e143347c",
-            "path": "mods/mcef-libraries/windows_amd64/locales/nl.pak"
-          }
-        },
-        {
-          "id": "pl.pak",
-          "name": "pl.pak",
-          "type": "File",
-          "artifact": {
-            "size": 525363,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/pl.pak",
-            "MD5": "658df8f1ae63405a1821aeabac17c7c2",
-            "path": "mods/mcef-libraries/windows_amd64/locales/pl.pak"
-          }
-        },
-        {
-          "id": "pt-BR.pak",
-          "name": "pt-BR.pak",
-          "type": "File",
-          "artifact": {
-            "size": 493272,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/pt-BR.pak",
-            "MD5": "1689a304ca09836866055f9c7973d743",
-            "path": "mods/mcef-libraries/windows_amd64/locales/pt-BR.pak"
-          }
-        },
-        {
-          "id": "pt-PT.pak",
-          "name": "pt-PT.pak",
-          "type": "File",
-          "artifact": {
-            "size": 495611,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/pt-PT.pak",
-            "MD5": "7ac8c079e11d6cfef62033aa89a979d1",
-            "path": "mods/mcef-libraries/windows_amd64/locales/pt-PT.pak"
-          }
-        },
-        {
-          "id": "ro.pak",
-          "name": "ro.pak",
-          "type": "File",
-          "artifact": {
-            "size": 512322,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ro.pak",
-            "MD5": "9ceebacdafa960bc7969724f9feceb21",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ro.pak"
-          }
-        },
-        {
-          "id": "ru.pak",
-          "name": "ru.pak",
-          "type": "File",
-          "artifact": {
-            "size": 839137,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ru.pak",
-            "MD5": "d9a421d32825d12eccbdc468e0eb5b6f",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ru.pak"
-          }
-        },
-        {
-          "id": "sk.pak",
-          "name": "sk.pak",
-          "type": "File",
-          "artifact": {
-            "size": 529118,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/sk.pak",
-            "MD5": "d4edf98371e5991ca8552500d5b95a8d",
-            "path": "mods/mcef-libraries/windows_amd64/locales/sk.pak"
-          }
-        },
-        {
-          "id": "sl.pak",
-          "name": "sl.pak",
-          "type": "File",
-          "artifact": {
-            "size": 508759,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/sl.pak",
-            "MD5": "3049cbabf6244f2568f3d0f8b088efc3",
-            "path": "mods/mcef-libraries/windows_amd64/locales/sl.pak"
-          }
-        },
-        {
-          "id": "sr.pak",
-          "name": "sr.pak",
-          "type": "File",
-          "artifact": {
-            "size": 781832,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/sr.pak",
-            "MD5": "2d1b04fd12951629e61241272f13e35f",
-            "path": "mods/mcef-libraries/windows_amd64/locales/sr.pak"
-          }
-        },
-        {
-          "id": "sv.pak",
-          "name": "sv.pak",
-          "type": "File",
-          "artifact": {
-            "size": 457916,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/sv.pak",
-            "MD5": "59775f95852b3c9223a0a738fe68f55e",
-            "path": "mods/mcef-libraries/windows_amd64/locales/sv.pak"
-          }
-        },
-        {
-          "id": "sw.pak",
-          "name": "sw.pak",
-          "type": "File",
-          "artifact": {
-            "size": 481027,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/sw.pak",
-            "MD5": "359648f47c3b1abeb9398f3eadca5186",
-            "path": "mods/mcef-libraries/windows_amd64/locales/sw.pak"
-          }
-        },
-        {
-          "id": "ta.pak",
-          "name": "ta.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1235462,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ta.pak",
-            "MD5": "8832385895d10d4768196321504de4e9",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ta.pak"
-          }
-        },
-        {
-          "id": "te.pak",
-          "name": "te.pak",
-          "type": "File",
-          "artifact": {
-            "size": 1141161,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/te.pak",
-            "MD5": "7ea295f0fb2581922f5a723bc72a323a",
-            "path": "mods/mcef-libraries/windows_amd64/locales/te.pak"
-          }
-        },
-        {
-          "id": "th.pak",
-          "name": "th.pak",
-          "type": "File",
-          "artifact": {
-            "size": 961725,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/th.pak",
-            "MD5": "fdb6be97f8bb46a566d67b3d51227525",
-            "path": "mods/mcef-libraries/windows_amd64/locales/th.pak"
-          }
-        },
-        {
-          "id": "tr.pak",
-          "name": "tr.pak",
-          "type": "File",
-          "artifact": {
-            "size": 491045,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/tr.pak",
-            "MD5": "99300a19a7c9d68680b68a43c29acd5b",
-            "path": "mods/mcef-libraries/windows_amd64/locales/tr.pak"
-          }
-        },
-        {
-          "id": "uk.pak",
-          "name": "uk.pak",
-          "type": "File",
-          "artifact": {
-            "size": 837359,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/uk.pak",
-            "MD5": "8cf54bc0b965022878aaf2d3c88cefb8",
-            "path": "mods/mcef-libraries/windows_amd64/locales/uk.pak"
-          }
-        },
-        {
-          "id": "ur.pak",
-          "name": "ur.pak",
-          "type": "File",
-          "artifact": {
-            "size": 728955,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/ur.pak",
-            "MD5": "509eb3b0cfcc5b3fb51488d053b7aca8",
-            "path": "mods/mcef-libraries/windows_amd64/locales/ur.pak"
-          }
-        },
-        {
-          "id": "vi.pak",
-          "name": "vi.pak",
-          "type": "File",
-          "artifact": {
-            "size": 581110,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/vi.pak",
-            "MD5": "0dc7ccc563917c7f65101c64d0493052",
-            "path": "mods/mcef-libraries/windows_amd64/locales/vi.pak"
-          }
-        },
-        {
-          "id": "zh-CN.pak",
-          "name": "zh-CN.pak",
-          "type": "File",
-          "artifact": {
-            "size": 421024,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/zh-CN.pak",
-            "MD5": "d218fe6db6ada9e893e70a46d5db4ed2",
-            "path": "mods/mcef-libraries/windows_amd64/locales/zh-CN.pak"
-          }
-        },
-        {
-          "id": "zh-TW.pak",
-          "name": "zh-TW.pak",
-          "type": "File",
-          "artifact": {
-            "size": 419459,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/locales/zh-TW.pak",
-            "MD5": "d4577d07e04d7d2939010d0bd389ab02",
-            "path": "mods/mcef-libraries/windows_amd64/locales/zh-TW.pak"
-          }
-        },
-        {
-          "id": "resources.pak",
-          "name": "resources.pak",
-          "type": "File",
-          "artifact": {
-            "size": 7852060,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/resources.pak",
-            "MD5": "14e36372dfd58bd65f5728ab73ff480e",
-            "path": "mods/mcef-libraries/windows_amd64/resources.pak"
-          }
-        },
-        {
-          "id": "snapshot_blob.bin",
-          "name": "snapshot_blob.bin",
-          "type": "File",
-          "artifact": {
-            "size": 268644,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/snapshot_blob.bin",
-            "MD5": "7c0773c840ffe9ee9bb88315feb4a3f4",
-            "path": "mods/mcef-libraries/windows_amd64/snapshot_blob.bin"
-          }
-        },
-        {
-          "id": "v8_context_snapshot.bin",
-          "name": "v8_context_snapshot.bin",
-          "type": "File",
-          "artifact": {
-            "size": 584316,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/v8_context_snapshot.bin",
-            "MD5": "a299989aaea2ae89e69833e2e81b38bd",
-            "path": "mods/mcef-libraries/windows_amd64/v8_context_snapshot.bin"
-          }
-        },
-        {
-          "id": "vk_swiftshader.dll",
-          "name": "vk_swiftshader.dll",
-          "type": "File",
-          "artifact": {
-            "size": 4945408,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/vk_swiftshader.dll",
-            "MD5": "afae7385ef2d799cb0dcf5c571c2b4af",
-            "path": "mods/mcef-libraries/windows_amd64/vk_swiftshader.dll"
-          }
-        },
-        {
-          "id": "vk_swiftshader_icd.json",
-          "name": "vk_swiftshader_icd.json",
-          "type": "File",
-          "artifact": {
-            "size": 106,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/vk_swiftshader_icd.json",
-            "MD5": "8642dd3a87e2de6e991fae08458e302b",
-            "path": "mods/mcef-libraries/windows_amd64/vk_swiftshader_icd.json"
-          }
-        },
-        {
-          "id": "vulkan-1.dll",
-          "name": "vulkan-1.dll",
-          "type": "File",
-          "artifact": {
-            "size": 929792,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64/vulkan-1.dll",
-            "MD5": "14ef304fe9e98ee480c10d39731c0833",
-            "path": "mods/mcef-libraries/windows_amd64/vulkan-1.dll"
-          }
-        },
-        {
-          "id": "windows_amd64.tar.gz.sha256",
-          "name": "windows_amd64.tar.gz.sha256",
-          "type": "File",
-          "artifact": {
-            "size": 314,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mcef-libraries/windows_amd64.tar.gz.sha256",
-            "MD5": "5b722be04afdf9c6c00520fc7ebe94e9",
-            "path": "mods/mcef-libraries/windows_amd64.tar.gz.sha256"
-          }
-        },
-        {
-          "id": "melody_fabric_1.0.11_MC_1.21.5.jar",
-          "name": "melody_fabric_1.0.11_MC_1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 188045,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/melody_fabric_1.0.11_MC_1.21.5.jar",
-            "MD5": "3830e26b463487b7250d87ecfb3c67a9",
-            "path": "mods/melody_fabric_1.0.11_MC_1.21.5.jar"
-          }
-        },
-        {
-          "id": "modmenu-14.0.0-rc.2.jar",
-          "name": "modmenu-14.0.0-rc.2.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1069680,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/modmenu-14.0.0-rc.2.jar",
-            "MD5": "5a262391236708f6bf39dc8df44e8945",
-            "path": "mods/modmenu-14.0.0-rc.2.jar"
-          }
-        },
-        {
-          "id": "mru-1.0.17+1.21.5+fabric.jar",
-          "name": "mru-1.0.17+1.21.5+fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 245375,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/mru-1.0.17+1.21.5+fabric.jar",
-            "MD5": "9b99068be64c699d44b903b5e766af48",
-            "path": "mods/mru-1.0.17+1.21.5+fabric.jar"
-          }
-        },
-        {
-          "id": "NoChatReports-FABRIC-1.21.5-v2.12.0.jar",
-          "name": "NoChatReports-FABRIC-1.21.5-v2.12.0.jar",
-          "type": "File",
-          "artifact": {
-            "size": 318499,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/NoChatReports-FABRIC-1.21.5-v2.12.0.jar",
-            "MD5": "1f4330d2f5eac520825a8b64702cd841",
-            "path": "mods/NoChatReports-FABRIC-1.21.5-v2.12.0.jar"
-          }
-        },
-        {
-          "id": "notenoughanimations-fabric-1.9.3-mc1.21.5.jar",
-          "name": "notenoughanimations-fabric-1.9.3-mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 449164,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/notenoughanimations-fabric-1.9.3-mc1.21.5.jar",
-            "MD5": "450016b0558780f9129dc926ca4bc885",
-            "path": "mods/notenoughanimations-fabric-1.9.3-mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "owo-lib-0.12.21+1.21.5.jar",
-          "name": "owo-lib-0.12.21+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1196597,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/owo-lib-0.12.21+1.21.5.jar",
-            "MD5": "4fa59144c6f2913092a0a8feea099acd",
-            "path": "mods/owo-lib-0.12.21+1.21.5.jar"
-          }
-        },
-        {
-          "id": "particulate-1.0.2+1.21.5.jar",
-          "name": "particulate-1.0.2+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 477758,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/particulate-1.0.2+1.21.5.jar",
-            "MD5": "23d9280b0ff9becf22c112bde57ebd45",
-            "path": "mods/particulate-1.0.2+1.21.5.jar"
-          }
-        },
-        {
-          "id": "placeholder-api-2.6.4+1.21.5.jar",
-          "name": "placeholder-api-2.6.4+1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 257878,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/placeholder-api-2.6.4+1.21.5.jar",
-            "MD5": "7d9d5c22497b4adf91606e38ce50c314",
-            "path": "mods/placeholder-api-2.6.4+1.21.5.jar"
-          }
-        },
-        {
-          "id": "reeses-sodium-options-fabric-1.8.3+mc1.21.4.jar",
-          "name": "reeses-sodium-options-fabric-1.8.3+mc1.21.4.jar",
-          "type": "File",
-          "artifact": {
-            "size": 81067,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/reeses-sodium-options-fabric-1.8.3+mc1.21.4.jar",
-            "MD5": "85f69ebd3bde2559ee53c01daa8e361e",
-            "path": "mods/reeses-sodium-options-fabric-1.8.3+mc1.21.4.jar"
-          }
-        },
-        {
-          "id": "rrls-5.1.6+mc1.21.5-fabric.jar",
-          "name": "rrls-5.1.6+mc1.21.5-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 195776,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/rrls-5.1.6+mc1.21.5-fabric.jar",
-            "MD5": "1c9fb3ccd5ac9a66d8bdcf3a4934838f",
-            "path": "mods/rrls-5.1.6+mc1.21.5-fabric.jar"
-          }
-        },
-        {
-          "id": "Searchables-fabric-1.21.5-1.0.2.jar",
-          "name": "Searchables-fabric-1.21.5-1.0.2.jar",
-          "type": "File",
-          "artifact": {
-            "size": 79908,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/Searchables-fabric-1.21.5-1.0.2.jar",
-            "MD5": "d4b60018926975be3b4082b9c3ed0bd9",
-            "path": "mods/Searchables-fabric-1.21.5-1.0.2.jar"
-          }
-        },
-        {
-          "id": "sodium-extra-fabric-0.6.3+mc1.21.5.jar",
-          "name": "sodium-extra-fabric-0.6.3+mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 361857,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/sodium-extra-fabric-0.6.3+mc1.21.5.jar",
-            "MD5": "f1abe5d7af9ccfca078312bab1e85bdd",
-            "path": "mods/sodium-extra-fabric-0.6.3+mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "sodium-fabric-0.6.13+mc1.21.5.jar",
-          "name": "sodium-fabric-0.6.13+mc1.21.5.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1336477,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/sodium-fabric-0.6.13+mc1.21.5.jar",
-            "MD5": "d36008a72882b8ccef234e715cf1e785",
-            "path": "mods/sodium-fabric-0.6.13+mc1.21.5.jar"
-          }
-        },
-        {
-          "id": "sound-physics-remastered-fabric-1.21.5-1.4.12.jar",
-          "name": "sound-physics-remastered-fabric-1.21.5-1.4.12.jar",
-          "type": "File",
-          "artifact": {
-            "size": 204022,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/sound-physics-remastered-fabric-1.21.5-1.4.12.jar",
-            "MD5": "fb11218ee6681606ae180f79f6981407",
-            "path": "mods/sound-physics-remastered-fabric-1.21.5-1.4.12.jar"
-          }
-        },
-        {
-          "id": "spark-1.10.138-fabric.jar",
-          "name": "spark-1.10.138-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 3767078,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/spark-1.10.138-fabric.jar",
-            "MD5": "2df9da01035ed2f1ac52c802009fbdf0",
-            "path": "mods/spark-1.10.138-fabric.jar"
-          }
-        },
-        {
-          "id": "UniLib-1.1.0+1.21.5-fabric.jar",
-          "name": "UniLib-1.1.0+1.21.5-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1793370,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/UniLib-1.1.0+1.21.5-fabric.jar",
-            "MD5": "51d1480bae6542b1d1531ceb853e528c",
-            "path": "mods/UniLib-1.1.0+1.21.5-fabric.jar"
-          }
-        },
-        {
-          "id": "voicechat-fabric-1.21.5-2.5.35.jar",
-          "name": "voicechat-fabric-1.21.5-2.5.35.jar",
-          "type": "File",
-          "artifact": {
-            "size": 7395786,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/voicechat-fabric-1.21.5-2.5.35.jar",
-            "MD5": "514641152755dc4e94d26b8ccbbbfb68",
-            "path": "mods/voicechat-fabric-1.21.5-2.5.35.jar"
-          }
-        },
-        {
-          "id": "yet_another_config_lib_v3-3.6.6+1.21.5-fabric.jar",
-          "name": "yet_another_config_lib_v3-3.6.6+1.21.5-fabric.jar",
-          "type": "File",
-          "artifact": {
-            "size": 1116615,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/mods/yet_another_config_lib_v3-3.6.6+1.21.5-fabric.jar",
-            "MD5": "2486c487586e9e43184d7582a1b3ae32",
-            "path": "mods/yet_another_config_lib_v3-3.6.6+1.21.5-fabric.jar"
-          }
-        },
-        {
-          "id": "Armor & Stuff X Bare Bones 1.21.3.zip.disabled",
-          "name": "Armor & Stuff X Bare Bones 1.21.3.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 180614,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Armor%20&%20Stuff%20X%20Bare%20Bones%201.21.3.zip.disabled",
-            "MD5": "79f6fdb6292d262a7c92d88b10ee15a3",
-            "path": "resourcepacks/Armor & Stuff X Bare Bones 1.21.3.zip.disabled"
-          }
-        },
-        {
-          "id": "Bare Bones - Better Leaves 1.21.5.zip.disabled",
-          "name": "Bare Bones - Better Leaves 1.21.5.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 59813,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Bare%20Bones%20-%20Better%20Leaves%201.21.5.zip.disabled",
-            "MD5": "af9f301d1c8a797caccb7c542d4b034a",
-            "path": "resourcepacks/Bare Bones - Better Leaves 1.21.5.zip.disabled"
-          }
-        },
-        {
-          "id": "Bare Bones - Connected Glass 1.21.5.zip.disabled",
-          "name": "Bare Bones - Connected Glass 1.21.5.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 44390,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Bare%20Bones%20-%20Connected%20Glass%201.21.5.zip.disabled",
-            "MD5": "76371c2c26d675b00ac78d9a70e3ab18",
-            "path": "resourcepacks/Bare Bones - Connected Glass 1.21.5.zip.disabled"
-          }
-        },
-        {
-          "id": "Bare Bones - Connected Textures.zip.disabled",
-          "name": "Bare Bones - Connected Textures.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 230253,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Bare%20Bones%20-%20Connected%20Textures.zip.disabled",
-            "MD5": "c68316a757a6ae77c50b21643c621fb3",
-            "path": "resourcepacks/Bare Bones - Connected Textures.zip.disabled"
-          }
-        },
-        {
-          "id": "Bare Bones 1.21.5.zip.disabled",
-          "name": "Bare Bones 1.21.5.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 6392416,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Bare%20Bones%201.21.5.zip.disabled",
-            "MD5": "0e73a0334b41b970d7efd62c88426a6d",
-            "path": "resourcepacks/Bare Bones 1.21.5.zip.disabled"
-          }
-        },
-        {
-          "id": "Bare Bones x Particle Effects 1.21.5.zip.disabled",
-          "name": "Bare Bones x Particle Effects 1.21.5.zip.disabled",
-          "type": "File",
-          "artifact": {
-            "size": 30756,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/Bare%20Bones%20x%20Particle%20Effects%201.21.5.zip.disabled",
-            "MD5": "b0210dea7b3903c3233647aeee348736",
-            "path": "resourcepacks/Bare Bones x Particle Effects 1.21.5.zip.disabled"
-          }
-        },
-        {
-          "id": "FreshAnimations_v1.9.4.zip",
-          "name": "FreshAnimations_v1.9.4.zip",
-          "type": "File",
-          "artifact": {
-            "size": 631568,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/FreshAnimations_v1.9.4.zip",
-            "MD5": "8ba43d8d6936319ed664472c49a2b0d1",
-            "path": "resourcepacks/FreshAnimations_v1.9.4.zip"
-          }
-        },
-        {
-          "id": "MultiGames-Studio.zip",
-          "name": "MultiGames-Studio.zip",
-          "type": "File",
-          "artifact": {
-            "size": 16440748,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/resourcepacks/MultiGames-Studio.zip",
-            "MD5": "28813dd255e89c713998a32489167986",
-            "path": "resourcepacks/MultiGames-Studio.zip"
-          }
-        },
-        {
-          "id": "whitelist.json",
-          "name": "whitelist.json",
-          "type": "File",
-          "artifact": {
-            "size": 678,
-            "url": "https://multigames-studio.fr/distribution/servers/mgs-com-1.21.5/files/whitelist.json",
-            "MD5": "041a66c659eb97c8e7f115852dae059f",
-            "path": "whitelist.json"
-          }
         }
       ]
-    },
-    {
-      "id": "TestNeoForge-1.21.5",
-      "name": "TestNeoForge (Minecraft 1.21.5)",
-      "description": "TestNeoForge Running Minecraft 1.21.5 (NeoForge v21.5.95)",
-      "icon": null,
-      "version": "1.0.0",
-      "address": "localhost:25565",
-      "minecraftVersion": "1.21.5",
-      "discord": {
-        "shortId": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageText": "<FILL IN OR REMOVE DISCORD OBJECT>",
-        "largeImageKey": "<FILL IN OR REMOVE DISCORD OBJECT>"
-      },
-      "mainServer": false,
-      "autoconnect": false,
-      "modules": []
     }
   ]
 }
