@@ -1,6 +1,6 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.0.28",
+  "version": "3.0.29",
   "description": "MultiGames Studio Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio",
   "license": "UNLICENSED",
@@ -64,6 +64,12 @@
         "owner": "Multigames-Studio-fr",
         "repo": "MGS-next-launcher"
       }
-    ]
+    ],
+    "win": {
+      "artifactName": "${name}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "${name}-Setup-${version}.${ext}"
+    }
   }
 }
