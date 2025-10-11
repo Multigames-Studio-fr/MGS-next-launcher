@@ -29,6 +29,8 @@ function initAutoUpdater(event, data) {
     }
     global.__autoUpdaterInitialized = true
 
+    log.info('Initializing autoUpdater, allowPrerelease=', !!data, 'isDev=', !!isDev, 'platform=', process.platform)
+
     if(data){
         autoUpdater.allowPrerelease = true
     } else {
@@ -44,33 +46,55 @@ function initAutoUpdater(event, data) {
         autoUpdater.autoDownload = false
     }
     autoUpdater.on('update-available', (info) => {
+        log.info('[AutoUpdater] update-available:', info && info.version)
         event.sender.send('autoUpdateNotification', 'update-available', info)
     })
     autoUpdater.on('update-downloaded', (info) => {
+        log.info('[AutoUpdater] update-downloaded:', info && info.version)
         event.sender.send('autoUpdateNotification', 'update-downloaded', info)
     })
     autoUpdater.on('update-not-available', (info) => {
+        log.info('[AutoUpdater] update-not-available')
         event.sender.send('autoUpdateNotification', 'update-not-available', info)
     })
     autoUpdater.on('checking-for-update', () => {
+        log.info('[AutoUpdater] checking-for-update')
         event.sender.send('autoUpdateNotification', 'checking-for-update')
     })
     autoUpdater.on('error', (err) => {
+        log.error('[AutoUpdater] error', err && err.message ? err.message : err)
+        // Include stack if available for debugging
+        if (err && err.stack) log.debug(err.stack)
         event.sender.send('autoUpdateNotification', 'realerror', err)
     }) 
 }
 
 // Open channel to listen for update actions.
 ipcMain.on('autoUpdateAction', (event, arg, data) => {
+    // Log incoming IPC call for update actions (helps track which renderer triggered it)
+    try {
+        const senderId = event && event.sender ? (event.sender.id || event.sender.webContentsId || 'unknown') : 'unknown'
+        log.info('[IPC:autoUpdateAction] received from sender=', senderId, 'action=', arg, 'data=', data)
+    } catch (e) {
+        log.warn('[IPC:autoUpdateAction] failed to log sender info', e && e.message)
+    }
+
     switch(arg){
         case 'initAutoUpdater':
             console.log('Initializing auto updater.')
+            log.info('[IPC] initAutoUpdater called')
             initAutoUpdater(event, data)
             event.sender.send('autoUpdateNotification', 'ready')
             break
         case 'checkForUpdate':
+            log.info('[IPC] checkForUpdate invoked - calling autoUpdater.checkForUpdates()')
             autoUpdater.checkForUpdates()
+                .then((res) => {
+                    log.info('[AutoUpdater] checkForUpdates result', res && res.updateInfo ? res.updateInfo.version : res)
+                    return res
+                })
                 .catch(err => {
+                    log.error('[AutoUpdater] checkForUpdates error', err && err.message)
                     event.sender.send('autoUpdateNotification', 'realerror', err)
                 })
             break
@@ -85,12 +109,19 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             } else {
                 autoUpdater.allowPrerelease = data
             }
+            log.info('[IPC] allowPrereleaseChange =>', autoUpdater.allowPrerelease)
             break
         case 'installUpdateNow':
-            autoUpdater.quitAndInstall()
+            log.info('[IPC] installUpdateNow invoked - calling quitAndInstall()')
+            try {
+                autoUpdater.quitAndInstall()
+            } catch (e) {
+                log.error('[AutoUpdater] quitAndInstall failed', e && e.message)
+            }
             break
         default:
             console.log('Unknown argument', arg)
+            log.warn('[IPC] Unknown autoUpdateAction argument', arg)
             break
     }
 })
