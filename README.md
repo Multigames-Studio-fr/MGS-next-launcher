@@ -26,10 +26,6 @@ Remarque rapide : la documentation est disponible dans le dossier <code>docs/</c
 - **Système de rapport de bugs intégré** (Ctrl + Shift + L).
 
 ## Prérequis
-
-Avant de commencer, assurez-vous d'avoir :
-
-- [Node.js](https://nodejs.org/) (version 16 ou supérieure).
 - [Git](https://git-scm.com/) pour cloner le dépôt.
 - Un éditeur de texte comme [Visual Studio Code](https://code.visualstudio.com/).
 
@@ -51,8 +47,20 @@ Avant de commencer, assurez-vous d'avoir :
 3. Lancez le projet en mode développement :
 
    ```powershell
-   npm run dev
    ```
+## Auto-updater ENOENT (Windows) — Added defensive recovery
+
+On Windows, some users reported an ENOENT error during the updater rename step where a temporary downloaded installer (temp-*.exe) could not be renamed into the `pending` folder. Common causes include antivirus removal of the temp file, the temp file being saved under a slightly different name, or transient filesystem errors.
+
+What we changed:
+- The main process now includes defensive recovery logic that scans the updater `pending` directory and attempts a safe fallback rename if a matching installer is present. It also provides clearer logging to help diagnose the root cause.
+
+If you still see ENOENT rename errors:
+- Check your antivirus/quarantine — it may have deleted the temp installer.
+- Inspect the updater folder: `%USERPROFILE%\\.multigames-studio-launcher-updater\\pending` for any `.exe` files.
+- If the folder is empty, try disabling antivirus temporarily and triggering an update again.
+
+If you'd like to improve or revert this behavior, see `index.js` for the auto-updater initialization and error handling.
 
 4. Pour générer une version de production :
 

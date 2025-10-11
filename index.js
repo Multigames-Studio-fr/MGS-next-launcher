@@ -268,8 +268,95 @@ function initAutoUpdater(event, data) {
         log.error('[AutoUpdater] error', err && err.message ? err.message : err)
         // Include stack if available for debugging
         if (err && err.stack) log.debug(err.stack)
+
+        // Defensive fallback for common Windows rename ENOENT introduced by
+        // electron-updater moving a temp download to the final pending location.
+        // If the rename failed because the temp file wasn't found, attempt a
+        // safe scan of the pending directory and try to recover a matching
+        // downloaded installer (common causes: antivirus removed temp file,
+        // download saved under different name, or transient FS issue).
+        try {
+            if (err && typeof err.message === 'string' && err.message.indexOf('ENOENT') !== -1 && err.message.indexOf('rename') !== -1) {
+                try {
+                    const os = require('os')
+                    const updaterBase = path.join(os.homedir(), '.multigames-studio-launcher-updater')
+                    const pendingDir = path.join(updaterBase, 'pending')
+
+                    // Attempt to extract paths from the error message in the form: rename '...temp...' -> '...final...'
+                    const m = err.message.match(/rename '\\?(.+?)' -> '\\?(.+?)'/)
+                    let tempPath = null
+                    let finalPath = null
+                    if (m && m.length >= 3) {
+                        tempPath = m[1]
+                        finalPath = m[2]
+                    }
+
+                    if (tempPath) {
+                        try {
+                            if (fs.existsSync(tempPath)) {
+                                // Try to complete the rename ourselves
+                                try {
+                                    fs.renameSync(tempPath, finalPath)
+                                    log.info('[AutoUpdater] recovered missing rename by moving', tempPath, '->', finalPath)
+                                } catch (renameErr) {
+                                    log.warn('[AutoUpdater] fallback rename attempt failed', renameErr && renameErr.message)
+                                }
+                            } else {
+                                // If temp path not present, scan pending dir for likely candidate files
+                                try {
+                                    const files = fs.readdirSync(pendingDir)
+                                    const candidates = files.filter(f => /multigames-studio-launcher-Setup-.*\\.exe$/i.test(f) || /^temp-.*multigames-studio-launcher-Setup-.*\\.exe$/i.test(f))
+                                    if (candidates.length > 0) {
+                                        // Prefer the newest candidate
+                                        candidates.sort((a, b) => {
+                                            try {
+                                                const sa = fs.statSync(path.join(pendingDir, a)).mtimeMs
+                                                const sb = fs.statSync(path.join(pendingDir, b)).mtimeMs
+                                                return sb - sa
+                                            } catch (e) { return 0 }
+                                        })
+                                        const chosen = path.join(pendingDir, candidates[0])
+                                        try {
+                                            const target = finalPath || path.join(pendingDir, path.basename(candidates[0]).replace(/^temp-/, ''))
+                                            fs.renameSync(chosen, target)
+                                            log.info('[AutoUpdater] fallback recovery: renamed', chosen, '->', target)
+                                        } catch (e) {
+                                            log.warn('[AutoUpdater] fallback recovery rename failed', e && e.message)
+                                        }
+                                    } else {
+                                        log.info('[AutoUpdater] pending directory scan found no candidate installer files:', pendingDir)
+                                    }
+                                } catch (e) {
+                                    log.warn('[AutoUpdater] failed to scan pending directory for recovery', e && e.message)
+                                }
+                            }
+                        } catch (e) {
+                            log.warn('[AutoUpdater] error during fallback recovery attempt', e && e.message)
+                        }
+                    } else {
+                        // If we couldn't parse paths, still try scanning pending dir
+                        try {
+                            const files = fs.readdirSync(pendingDir)
+                            if (files && files.length > 0) {
+                                log.info('[AutoUpdater] pending directory contains files:', files.join(', '))
+                            } else {
+                                log.info('[AutoUpdater] pending directory is empty:', pendingDir)
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+                } catch (e) {
+                    log.warn('[AutoUpdater] defensive recovery logic failed', e && e.message)
+                }
+            }
+        } catch (e) {
+            // ensure any bug in recovery logic doesn't crash the app
+            log.warn('[AutoUpdater] recovery logic threw', e && e.message)
+        }
+
+        // Notify renderer and keep previous behavior: clear downloading flag on any error to allow retry
         sendAutoUpdateNotification(event, 'realerror', err)
-        // Clear downloading flag on any error to allow retry
         try {
             global.__autoUpdaterDownloading = false
             if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
