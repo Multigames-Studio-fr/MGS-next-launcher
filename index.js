@@ -127,6 +127,16 @@ function initAutoUpdater(event, data) {
 
     log.info('Initializing autoUpdater, allowPrerelease=', !!data, 'isDev=', !!isDev, 'platform=', process.platform)
 
+    // Ensure updater pending directory exists to avoid ENOENT rename errors on Windows
+    try {
+        const os = require('os')
+        const updaterBase = path.join(os.homedir(), '.multigames-studio-launcher-updater')
+        const pendingDir = path.join(updaterBase, 'pending')
+        try { fs.mkdirSync(pendingDir, { recursive: true }) } catch (e) { /* best-effort */ }
+    } catch (e) {
+        // ignore
+    }
+
     if(data){
         autoUpdater.allowPrerelease = true
     } else {
