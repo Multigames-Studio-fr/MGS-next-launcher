@@ -198,6 +198,18 @@ document.addEventListener('readystatechange', function () {
 
 }, false)
 
+// Cleanup auto-update interval when window is closed or reloaded to avoid timer leaks
+window.addEventListener('beforeunload', () => {
+    try {
+        if (updateCheckListener) {
+            clearInterval(updateCheckListener)
+            updateCheckListener = null
+        }
+    } catch (e) {
+        // ignore
+    }
+})
+
 /**
  * Open web links in the user's default browser.
  */

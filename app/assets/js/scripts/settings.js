@@ -1642,6 +1642,71 @@ const settingsUpdateChangelogCont = settingsTabUpdate.getElementsByClassName(
 const settingsUpdateActionButton = document.getElementById(
   "settingsUpdateActionButton"
 );
+const settingsUpdateProgressContainer = document.getElementById("settingsUpdateProgressContainer");
+const settingsUpdateProgressBar = document.getElementById("settingsUpdateProgressBar");
+const settingsUpdateProgressLabel = document.getElementById("settingsUpdateProgressLabel");
+
+// Listen for auto update notifications to update the settings UI accordingly
+try {
+  ipcRenderer.on("autoUpdateNotification", (event, arg, info) => {
+    try {
+      switch (arg) {
+        case "download-progress": {
+          // Show progress on the button text
+          try {
+            // Show progress UI
+            if (settingsUpdateProgressContainer) settingsUpdateProgressContainer.classList.remove('hidden');
+            const percent = info && (info.percent || info.percent === 0) ? Math.round(info.percent) : null;
+            const p = percent != null ? percent : null;
+            if (p != null) {
+              if (settingsUpdateProgressBar) settingsUpdateProgressBar.style.width = Math.min(100, Math.max(0, p)) + '%';
+              if (settingsUpdateProgressLabel) settingsUpdateProgressLabel.innerText = `${p}%`;
+              settingsUpdateButtonStatus(Lang.queryJS("settings.updates.downloadingButton") + ` (${p}%)`, true);
+            } else {
+              if (settingsUpdateProgressBar) settingsUpdateProgressBar.style.width = '0%';
+              if (settingsUpdateProgressLabel) settingsUpdateProgressLabel.innerText = '...';
+              settingsUpdateButtonStatus(Lang.queryJS("settings.updates.downloadingButton"), true);
+            }
+          } catch (e) {
+            settingsUpdateButtonStatus(Lang.queryJS("settings.updates.downloadingButton"), true);
+          }
+          break;
+        }
+        case "update-downloaded": {
+          // Enable install now action
+          // Hide progress UI
+          try { if (settingsUpdateProgressContainer) settingsUpdateProgressContainer.classList.add('hidden'); } catch (e) {}
+
+          settingsUpdateButtonStatus(Lang.queryJS("settings.updates.installNowButton"), false, () => {
+            if (!isDev) {
+              ipcRenderer.send("autoUpdateAction", "installUpdateNow");
+            }
+          });
+          break;
+        }
+        case "realerror": {
+          // On error, revert button to check for updates
+          // Hide progress UI
+          try { if (settingsUpdateProgressContainer) settingsUpdateProgressContainer.classList.add('hidden'); } catch (e) {}
+
+          settingsUpdateButtonStatus(Lang.queryJS("settings.updates.checkForUpdatesButton"), false, () => {
+            if (!isDev) {
+              ipcRenderer.send("autoUpdateAction", "checkForUpdate");
+              settingsUpdateButtonStatus(Lang.queryJS("settings.updates.checkingForUpdatesButton"), true);
+            }
+          });
+          break;
+        }
+        default:
+          break;
+      }
+    } catch (e) {
+      // ignore UI listener errors
+    }
+  });
+} catch (e) {
+  // ignore if ipcRenderer not available
+}
 
 /**
  * Update the properties of the update action button.
@@ -1687,9 +1752,15 @@ function populateSettingsUpdateInformation(data) {
         }
       );
     } else {
+      // Provide explicit "Download" action for non-mac platforms.
       settingsUpdateButtonStatus(
-        Lang.queryJS("settings.updates.downloadingButton"),
-        true
+        Lang.queryJS("settings.updates.downloadButton"),
+        false,
+        () => {
+          // Disable button and show downloading state immediately.
+          settingsUpdateButtonStatus(Lang.queryJS("settings.updates.downloadingButton"), true);
+          ipcRenderer.send("autoUpdateAction", "downloadUpdate");
+        }
       );
     }
   } else {

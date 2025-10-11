@@ -1,5 +1,56 @@
+// Ensure Chromium has a writable disk cache directory to avoid "Unable to move the cache" / "Unable to create cache" errors
+// This must run before the app initializes Chromium (i.e. before creating BrowserWindow or calling app.whenReady())
+try {
+    const os = require('os')
+    const path = require('path')
+    const fs = require('fs')
+    // Use a cache directory inside the userData folder (per-user, writable)
+    const appDataPath = path.join(os.homedir(), '.multigames-cache')
+    try { fs.mkdirSync(appDataPath, { recursive: true }) } catch (e) { /* best-effort */ }
+    // Set Chromium switches early so Electron/Chromium uses our cache folder
+    try {
+        const electron = require('electron')
+        // Prefer the per-user cache path; this avoids permission issues when running from Program Files
+        electron.app && electron.app.setPath && electron.app.setPath('userData', appDataPath)
+    } catch (e) {
+        // If electron isn't available yet, fall back to commandLine switches
+        try {
+            const { app } = require('electron')
+            if (app && app.commandLine) {
+                app.commandLine.appendSwitch('disk-cache-dir', appDataPath)
+            }
+        } catch (ee) {
+            // Last resort: append via process argv for Chromium. This is best-effort and may be ignored.
+            try { process.argv.push(`--disk-cache-dir=${appDataPath}`) } catch (eee) { }
+        }
+    }
+    // Additional safe switches to reduce disk cache usage / permission issues
+    try {
+        const { app: _app } = require('electron')
+        if (_app && _app.commandLine) {
+            // Use a small, local cache and disable GPU cache which sometimes tries to create files elsewhere
+            _app.commandLine.appendSwitch('disk-cache-size', '1048576') // 1MB
+            _app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
+            _app.commandLine.appendSwitch('disable-application-cache')
+        }
+    } catch (e) { /* best-effort */ }
+} catch (e) {
+    // ignore any errors during cache setup - we made best-effort attempts
+}
+
 const remoteMain = require('@electron/remote/main')
 remoteMain.initialize()
+
+// Ensure Chromium allows autoplay where possible (best-effort).
+try {
+    const { app: _app } = require('electron')
+    if (_app && _app.commandLine) {
+        // Allow autoplay without user gesture
+        _app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
+        // Enable some experimental platform features which may improve media handling
+        _app.commandLine.appendSwitch('enable-experimental-web-platform-features')
+    }
+} catch (e) { /* best-effort */ }
 
 // Requirements
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron')
@@ -21,6 +72,50 @@ const LangLoader                        = require('./app/assets/js/langloader')
 // Setup Lang
 LangLoader.setupLanguage()
 
+// --- Ajout: utilitaire sûr pour notifier les renderers ---
+function sendAutoUpdateNotification(preferEvent /* may be undefined */, type, payload) {
+	// prefer sending to the original ipc sender when available
+	try {
+		if (preferEvent && preferEvent.sender) {
+			try { preferEvent.sender.send('autoUpdateNotification', type, payload); return; } catch (e) { /* fall through to broadcast */ }
+		}
+	} catch (e) {
+		// ignore
+	}
+
+	// fallback: broadcast to all renderer windows
+    // Ensure payload is JSON-safe (Errors and complex objects can break IPC)
+    try {
+        if (payload instanceof Error) {
+            payload = { message: payload.message, stack: payload.stack, code: payload.code }
+        } else if (payload && typeof payload === 'object') {
+            // Attempt shallow copy of enumerable properties to avoid circular structures
+            try {
+                payload = JSON.parse(JSON.stringify(payload))
+            } catch (e) {
+                // Fallback: pick common error-like props if JSON.stringify fails
+                const copy = {}
+                if (payload.message) copy.message = payload.message
+                if (payload.stack) copy.stack = payload.stack
+                if (payload.code) copy.code = payload.code
+                if (payload.version) copy.version = payload.version
+                if (payload.url) copy.url = payload.url
+                payload = copy
+            }
+        }
+    } catch (e) { /* best-effort; continue with original payload */ }
+
+    try {
+		const { BrowserWindow } = require('electron')
+		const wins = BrowserWindow.getAllWindows()
+		for (const w of wins) {
+			try { w.webContents.send('autoUpdateNotification', type, payload) } catch (e) { /* ignore per-window send errors */ }
+		}
+	} catch (e) {
+		try { log.warn('[AutoUpdater] failed to broadcast autoUpdateNotification', e && e.message) } catch (err) { /* noop */ }
+	}
+}
+
 // Setup auto updater.
 function initAutoUpdater(event, data) {
     // Prevent multiple initializations (listeners added multiple times)
@@ -39,67 +134,68 @@ function initAutoUpdater(event, data) {
         // autoUpdater.allowPrerelease = true
     }
     
+    // Explicit autoDownload default: disable auto-download on macOS, enable elsewhere
+    autoUpdater.autoDownload = process.platform !== 'darwin'
+
     if(isDev){
+        // In dev mode we don't want the updater to auto-install or auto-download
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml')
-    }
-    if(process.platform === 'darwin'){
         autoUpdater.autoDownload = false
     }
+
     autoUpdater.on('update-available', (info) => {
         log.info('[AutoUpdater] update-available:', info && info.version)
-        event.sender.send('autoUpdateNotification', 'update-available', info)
+        sendAutoUpdateNotification(event, 'update-available', info)
 
         // If autoDownload is disabled (or if we haven't started download yet),
         // start download and forward download progress to renderer.
         try {
-                if (!global.__autoUpdaterDownloading) {
-                // If autoDownload is false, explicitly call downloadUpdate(). If true,
-                // electron-updater will already be downloading; calling downloadUpdate()
-                // again is unnecessary but safe-guarded by the flag.
+            if (!global.__autoUpdaterDownloading) {
                 global.__autoUpdaterDownloading = true
                 log.info('[AutoUpdater] initiating downloadUpdate()')
-                    // Start a watchdog timer in case download stalls without emitting progress
-                    try {
-                        if (global.__autoUpdaterDownloadWatchdog) {
-                            clearTimeout(global.__autoUpdaterDownloadWatchdog)
-                        }
-                        // 5 minutes watchdog
-                        global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
-                            try {
-                                if (global.__autoUpdaterDownloading) {
-                                    log.warn('[AutoUpdater] download watchdog triggered - download appears stalled')
-                                    // Notify renderer so UI doesn't stay stuck in 'downloading' state.
-                                    try { event.sender.send('autoUpdateNotification', 'realerror', { message: 'Download timed out' }) } catch (e) { /* best-effort */ }
-                                    global.__autoUpdaterDownloading = false
-                                }
-                            } catch (e) {
-                                // ignore watchdog errors
-                            }
-                        }, 5 * 60 * 1000)
-                    } catch (e) {
-                        // ignore
+                // Start a watchdog timer in case download stalls without emitting progress
+                try {
+                    if (global.__autoUpdaterDownloadWatchdog) {
+                        clearTimeout(global.__autoUpdaterDownloadWatchdog)
                     }
+                    // 5 minutes watchdog
+                    global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
+                        try {
+                            if (global.__autoUpdaterDownloading) {
+                                log.warn('[AutoUpdater] download watchdog triggered - download appears stalled')
+                                // Notify renderer so UI doesn't stay stuck in 'downloading' state.
+                                try { sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' }) } catch (e) { /* best-effort */ }
+                                global.__autoUpdaterDownloading = false
+                            }
+                        } catch (e) {
+                            // ignore watchdog errors
+                        }
+                    }, 5 * 60 * 1000)
+                } catch (e) {
+                    // ignore
+                }
                 autoUpdater.downloadUpdate()
                     .then(() => {
                         log.info('[AutoUpdater] downloadUpdate() completed')
-                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
+                        try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
                     })
                     .catch((err) => {
                         log.error('[AutoUpdater] downloadUpdate() failed', err && err.message)
-                        event.sender.send('autoUpdateNotification', 'realerror', err)
+                        sendAutoUpdateNotification(event, 'realerror', err)
                         global.__autoUpdaterDownloading = false
-                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
+                        try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
                     })
             } else {
                 log.info('[AutoUpdater] download already in progress, skipping downloadUpdate()')
             }
         } catch (e) {
             log.error('[AutoUpdater] error while starting download', e && e.message)
-            event.sender.send('autoUpdateNotification', 'realerror', e)
+            sendAutoUpdateNotification(event, 'realerror', e)
             global.__autoUpdaterDownloading = false
         }
     })
+
     // Forward download progress to renderer and log it.
     autoUpdater.on('download-progress', (progress) => {
         try {
@@ -115,7 +211,7 @@ function initAutoUpdater(event, data) {
                     try {
                         if (global.__autoUpdaterDownloading) {
                             log.warn('[AutoUpdater] download watchdog triggered after progress reset - download appears stalled')
-                            try { event.sender.send('autoUpdateNotification', 'realerror', { message: 'Download timed out' }) } catch (e) { }
+                            try { sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' }) } catch (e) { }
                             global.__autoUpdaterDownloading = false
                         }
                     } catch (e) { }
@@ -126,7 +222,6 @@ function initAutoUpdater(event, data) {
         }
         // Broadcast to all renderer windows if event not present in closure.
         try {
-            // Attempt to send using the last event sender if available in scope; fallback: send to all windows.
             const { BrowserWindow } = require('electron')
             const wins = BrowserWindow.getAllWindows()
             for (const w of wins) {
@@ -136,32 +231,38 @@ function initAutoUpdater(event, data) {
             log.warn('[AutoUpdater] failed to forward download-progress to renderer', e && e.message)
         }
     })
+
     autoUpdater.on('update-downloaded', (info) => {
         log.info('[AutoUpdater] update-downloaded:', info && info.version)
-        event.sender.send('autoUpdateNotification', 'update-downloaded', info)
+        sendAutoUpdateNotification(event, 'update-downloaded', info)
         // Download finished, clear downloading flag
         try {
             global.__autoUpdaterDownloading = false
+            if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
         } catch (e) {
             // ignore
         }
     })
+
     autoUpdater.on('update-not-available', (info) => {
         log.info('[AutoUpdater] update-not-available')
-        event.sender.send('autoUpdateNotification', 'update-not-available', info)
+        sendAutoUpdateNotification(event, 'update-not-available', info)
     })
+
     autoUpdater.on('checking-for-update', () => {
         log.info('[AutoUpdater] checking-for-update')
-        event.sender.send('autoUpdateNotification', 'checking-for-update')
+        sendAutoUpdateNotification(event, 'checking-for-update')
     })
+
     autoUpdater.on('error', (err) => {
         log.error('[AutoUpdater] error', err && err.message ? err.message : err)
         // Include stack if available for debugging
         if (err && err.stack) log.debug(err.stack)
-        event.sender.send('autoUpdateNotification', 'realerror', err)
+        sendAutoUpdateNotification(event, 'realerror', err)
         // Clear downloading flag on any error to allow retry
         try {
             global.__autoUpdaterDownloading = false
+            if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
         } catch (e) {
             // ignore
         }
@@ -183,7 +284,7 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             console.log('Initializing auto updater.')
             log.info('[IPC] initAutoUpdater called')
             initAutoUpdater(event, data)
-            event.sender.send('autoUpdateNotification', 'ready')
+            sendAutoUpdateNotification(event, 'ready')
             break
         case 'checkForUpdate':
             // Throttle repeated checks from renderer: ignore if last check was within 30s
@@ -201,6 +302,7 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             }
 
             log.info('[IPC] checkForUpdate invoked - calling autoUpdater.checkForUpdates()')
+            initAutoUpdater(event, false) // ensure initialized
             autoUpdater.checkForUpdates()
                 .then((res) => {
                     log.info('[AutoUpdater] checkForUpdates result', res && res.updateInfo ? res.updateInfo.version : res)
@@ -208,9 +310,52 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
                 })
                 .catch(err => {
                     log.error('[AutoUpdater] checkForUpdates error', err && err.message)
-                    event.sender.send('autoUpdateNotification', 'realerror', err)
+                    sendAutoUpdateNotification(event, 'realerror', err)
                 })
             break
+
+        // --- Ajout: action explicite pour démarrer le download (utile si autoDownload=false) ---
+        case 'downloadUpdate':
+            try {
+                initAutoUpdater(event, false) // ensure listeners present
+                if (!global.__autoUpdaterDownloading) {
+                    log.info('[IPC] downloadUpdate invoked - calling autoUpdater.downloadUpdate()')
+                    global.__autoUpdaterDownloading = true
+                    // start watchdog
+                    try {
+                        if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog) }
+                        global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
+                            try {
+                                if (global.__autoUpdaterDownloading) {
+                                    log.warn('[AutoUpdater] download watchdog triggered - download appears stalled (manual start)')
+                                    sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' })
+                                    global.__autoUpdaterDownloading = false
+                                }
+                            } catch (e) {}
+                        }, 5 * 60 * 1000)
+                    } catch (e) {}
+                    autoUpdater.downloadUpdate()
+                        .then(() => {
+                            log.info('[AutoUpdater] downloadUpdate() completed (manual)')
+                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
+                            global.__autoUpdaterDownloading = false
+                        })
+                        .catch((err) => {
+                            log.error('[AutoUpdater] downloadUpdate() failed (manual)', err && err.message)
+                            sendAutoUpdateNotification(event, 'realerror', err)
+                            global.__autoUpdaterDownloading = false
+                            try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
+                        })
+                } else {
+                    log.info('[IPC] downloadUpdate skipped - already downloading')
+                }
+            } catch (e) {
+                log.error('[IPC] downloadUpdate error', e && e.message)
+                sendAutoUpdateNotification(event, 'realerror', e)
+                global.__autoUpdaterDownloading = false
+            }
+            break
+
         case 'allowPrereleaseChange':
             if(!data){
                 const preRelComp = semver.prerelease(app.getVersion())
@@ -390,7 +535,9 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            // Prefer an autoplay policy that does not require a user gesture
+            autoplayPolicy: 'no-user-gesture-required'
         },
         backgroundColor: '#171614'
     })
@@ -590,5 +737,20 @@ app.on('activate', () => {
     // dock icon is clicked and there are no other windows open.
     if (win === null) {
         createWindow()
+    }
+})
+
+// Cleanup watchdog/listeners before quit so timers don't hang
+app.on('before-quit', () => {
+    try {
+        if (global.__autoUpdaterDownloadWatchdog) {
+            clearTimeout(global.__autoUpdaterDownloadWatchdog)
+            global.__autoUpdaterDownloadWatchdog = null
+        }
+        global.__autoUpdaterDownloading = false
+        // remove autoUpdater listeners to avoid leaks on restart (safe-guard)
+        try { autoUpdater.removeAllListeners() } catch (e) {}
+    } catch (e) {
+        // ignore
     }
 })
