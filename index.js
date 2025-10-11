@@ -244,6 +244,12 @@ function initAutoUpdater(event, data) {
 
     autoUpdater.on('update-downloaded', (info) => {
         log.info('[AutoUpdater] update-downloaded:', info && info.version)
+        // Mark that a downloaded update is available. This prevents calls to
+        // quitAndInstall() when no installer is present which otherwise raises
+        // "No valid update available, can't quit and install" in some cases.
+        try {
+            global.__autoUpdaterDownloaded = info || true
+        } catch (e) { /* noop */ }
         sendAutoUpdateNotification(event, 'update-downloaded', info)
         // Download finished, clear downloading flag
         try {
@@ -261,6 +267,8 @@ function initAutoUpdater(event, data) {
 
     autoUpdater.on('checking-for-update', () => {
         log.info('[AutoUpdater] checking-for-update')
+        // Reset any previously stored downloaded state when we start a new check
+        try { global.__autoUpdaterDownloaded = false } catch (e) { }
         sendAutoUpdateNotification(event, 'checking-for-update')
     })
 
@@ -355,8 +363,9 @@ function initAutoUpdater(event, data) {
             log.warn('[AutoUpdater] recovery logic threw', e && e.message)
         }
 
-        // Notify renderer and keep previous behavior: clear downloading flag on any error to allow retry
-        sendAutoUpdateNotification(event, 'realerror', err)
+    // Notify renderer and keep previous behavior: clear downloading flag on any error to allow retry
+    try { global.__autoUpdaterDownloaded = false } catch (e) { }
+    sendAutoUpdateNotification(event, 'realerror', err)
         try {
             global.__autoUpdaterDownloading = false
             if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
@@ -469,7 +478,15 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
         case 'installUpdateNow':
             log.info('[IPC] installUpdateNow invoked - calling quitAndInstall()')
             try {
-                autoUpdater.quitAndInstall()
+                // Only attempt to quit and install if we actually have a downloaded update.
+                // Calling quitAndInstall() without a downloaded update can throw an exception
+                // like "No valid update available, can't quit and install".
+                if (global.__autoUpdaterDownloaded) {
+                    autoUpdater.quitAndInstall()
+                } else {
+                    log.warn('[AutoUpdater] installUpdateNow requested but no downloaded update present')
+                    sendAutoUpdateNotification(event, 'realerror', { message: 'No downloaded update available' })
+                }
             } catch (e) {
                 log.error('[AutoUpdater] quitAndInstall failed', e && e.message)
             }

@@ -236,7 +236,9 @@ function saveSettingsValues() {
           if (cVal === "MinRAM" || cVal === "MaxRAM") {
             let val = Number(v.getAttribute("value"));
             if (val % 1 > 0) {
-              val = val * 1024 + "M";
+              // Avoid floating point precision errors when converting
+              // fractional gigabyte values into megabytes.
+              val = Math.round(val * 1024) + "M";
             } else {
               val = val + "G";
             }
