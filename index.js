@@ -4,6 +4,10 @@ remoteMain.initialize()
 // Requirements
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron')
 const autoUpdater                       = require('electron-updater').autoUpdater
+// Logging for auto-updater events
+const log = require('electron-log')
+autoUpdater.logger = log
+autoUpdater.logger.transports.file.level = 'info'
 const ejse                              = require('ejs-electron')
 const fs                                = require('fs')
 const isDev                             = require('./app/assets/js/isdev')
@@ -18,6 +22,12 @@ LangLoader.setupLanguage()
 
 // Setup auto updater.
 function initAutoUpdater(event, data) {
+    // Prevent multiple initializations (listeners added multiple times)
+    if (global.__autoUpdaterInitialized) {
+        log.info('Auto updater already initialized, skipping re-init.')
+        return
+    }
+    global.__autoUpdaterInitialized = true
 
     if(data){
         autoUpdater.allowPrerelease = true
