@@ -75,15 +75,30 @@ if(!isDev){
                 ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
                 break
             case 'realerror':
-                if(info != null && info.code != null){
-                    if(info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED'){
-                        loggerAutoUpdater.info('No suitable releases found.')
-                    } else if(info.code === 'ERR_XML_MISSED_ELEMENT'){
-                        loggerAutoUpdater.info('No releases found.')
+                // Ensure errors are visible in the renderer console (DevTools)
+                try {
+                    if (info != null && info.code != null) {
+                        if (info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED') {
+                            loggerAutoUpdater.info('No suitable releases found.')
+                        } else if (info.code === 'ERR_XML_MISSED_ELEMENT') {
+                            loggerAutoUpdater.info('No releases found.')
+                        } else {
+                            loggerAutoUpdater.error('Error during update check..', info)
+                            loggerAutoUpdater.debug('Error Code:', info.code)
+                            // Also print to DevTools console for easier debugging
+                            try { console.error('[AutoUpdater] error:', info) } catch (e) { /* ignore */ }
+                            try { if (info && info.stack) console.debug(info.stack) } catch (e) { /* ignore */ }
+                            // Small user-visible notice (non-blocking)
+                            try { if (!isDev) { /* don't alert in dev */ } else { /* in dev, show lightweight alert */ alert('AutoUpdater error: ' + (info && info.message ? info.message : String(info))) } } catch (e) { }
+                        }
                     } else {
-                        loggerAutoUpdater.error('Error during update check..', info)
-                        loggerAutoUpdater.debug('Error Code:', info.code)
+                        // Generic non-coded error: log prominently
+                        loggerAutoUpdater.error('AutoUpdater reported an error with no code', info)
+                        try { console.error('[AutoUpdater] unknown error:', info) } catch (e) { }
                     }
+                } catch (e) {
+                    // Guard: if logging itself fails, fallback to console
+                    try { console.error('[AutoUpdater] error while handling realerror', e) } catch (ee) { }
                 }
                 break
             default:
