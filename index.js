@@ -48,10 +48,62 @@ function initAutoUpdater(event, data) {
     autoUpdater.on('update-available', (info) => {
         log.info('[AutoUpdater] update-available:', info && info.version)
         event.sender.send('autoUpdateNotification', 'update-available', info)
+
+        // If autoDownload is disabled (or if we haven't started download yet),
+        // start download and forward download progress to renderer.
+        try {
+            if (!global.__autoUpdaterDownloading) {
+                // If autoDownload is false, explicitly call downloadUpdate(). If true,
+                // electron-updater will already be downloading; calling downloadUpdate()
+                // again is unnecessary but safe-guarded by the flag.
+                global.__autoUpdaterDownloading = true
+                log.info('[AutoUpdater] initiating downloadUpdate()')
+                autoUpdater.downloadUpdate()
+                    .then(() => {
+                        log.info('[AutoUpdater] downloadUpdate() completed')
+                    })
+                    .catch((err) => {
+                        log.error('[AutoUpdater] downloadUpdate() failed', err && err.message)
+                        event.sender.send('autoUpdateNotification', 'realerror', err)
+                        global.__autoUpdaterDownloading = false
+                    })
+            } else {
+                log.info('[AutoUpdater] download already in progress, skipping downloadUpdate()')
+            }
+        } catch (e) {
+            log.error('[AutoUpdater] error while starting download', e && e.message)
+            event.sender.send('autoUpdateNotification', 'realerror', e)
+            global.__autoUpdaterDownloading = false
+        }
+    })
+    // Forward download progress to renderer and log it.
+    autoUpdater.on('download-progress', (progress) => {
+        try {
+            log.info('[AutoUpdater] download-progress', JSON.stringify(progress))
+        } catch (e) {
+            log.info('[AutoUpdater] download-progress')
+        }
+        // Broadcast to all renderer windows if event not present in closure.
+        try {
+            // Attempt to send using the last event sender if available in scope; fallback: send to all windows.
+            const { BrowserWindow } = require('electron')
+            const wins = BrowserWindow.getAllWindows()
+            for (const w of wins) {
+                try { w.webContents.send('autoUpdateNotification', 'download-progress', progress) } catch (e) { /* ignore */ }
+            }
+        } catch (e) {
+            log.warn('[AutoUpdater] failed to forward download-progress to renderer', e && e.message)
+        }
     })
     autoUpdater.on('update-downloaded', (info) => {
         log.info('[AutoUpdater] update-downloaded:', info && info.version)
         event.sender.send('autoUpdateNotification', 'update-downloaded', info)
+        // Download finished, clear downloading flag
+        try {
+            global.__autoUpdaterDownloading = false
+        } catch (e) {
+            // ignore
+        }
     })
     autoUpdater.on('update-not-available', (info) => {
         log.info('[AutoUpdater] update-not-available')
@@ -66,6 +118,12 @@ function initAutoUpdater(event, data) {
         // Include stack if available for debugging
         if (err && err.stack) log.debug(err.stack)
         event.sender.send('autoUpdateNotification', 'realerror', err)
+        // Clear downloading flag on any error to allow retry
+        try {
+            global.__autoUpdaterDownloading = false
+        } catch (e) {
+            // ignore
+        }
     }) 
 }
 
@@ -87,6 +145,20 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             event.sender.send('autoUpdateNotification', 'ready')
             break
         case 'checkForUpdate':
+            // Throttle repeated checks from renderer: ignore if last check was within 30s
+            try {
+                const now = Date.now()
+                const last = global.__autoUpdaterLastCheck || 0
+                const THROTTLE_MS = 30 * 1000
+                if (now - last < THROTTLE_MS) {
+                    log.info('[IPC] checkForUpdate throttled (last check at', new Date(last).toISOString(), ')')
+                    break
+                }
+                global.__autoUpdaterLastCheck = now
+            } catch (e) {
+                // ignore
+            }
+
             log.info('[IPC] checkForUpdate invoked - calling autoUpdater.checkForUpdates()')
             autoUpdater.checkForUpdates()
                 .then((res) => {
