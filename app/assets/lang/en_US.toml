@@ -132,7 +132,7 @@ checkForUpdates = "Vérifier les mises à jour"
 whatsNew = "Quoi de neuf"
 updateReleaseNotes = "Notes de mise à jour"
 
-navHeaderText = "navHeaderText"
+navHeaderText = "Paramètre"
 sourceGithubLink = "Source (GitHub)"
 supportLink = "Support"
 [ejs.waiting]
