@@ -116,6 +116,38 @@ function sendAutoUpdateNotification(preferEvent /* may be undefined */, type, pa
 	}
 }
 
+// Safe wrapper for quitting and installing updates.
+// The built-in quitAndInstall() can throw when no valid installer is present
+// (e.g. "No valid update available, can't quit and install"). Use this
+// wrapper to centralize checks and error handling so the main process won't
+// crash from an uncaught exception.
+function safeQuitAndInstall(caller) {
+    try {
+        if (global.__autoUpdaterDownloaded) {
+            try {
+                log.info('[AutoUpdater] safeQuitAndInstall called by', caller || 'unknown')
+            } catch (e) { /* ignore logging errors */ }
+
+            try {
+                autoUpdater.quitAndInstall()
+                return true
+            } catch (e) {
+                try { log.error('[AutoUpdater] quitAndInstall failed', e && e.message) } catch (le) { }
+                // Notify renderers that installation failed
+                try { sendAutoUpdateNotification(undefined, 'realerror', e) } catch (ne) { }
+                return false
+            }
+        } else {
+            try { log.warn('[AutoUpdater] safeQuitAndInstall called but no downloaded update present (caller=' + (caller || 'unknown') + ')') } catch (e) { }
+            try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'No downloaded update available' }) } catch (e) { }
+            return false
+        }
+    } catch (e) {
+        try { log.error('[AutoUpdater] safeQuitAndInstall unexpected error', e && e.message) } catch (le) { }
+        return false
+    }
+}
+
 // Relay for instance state changes from renderer to all renderers (useful when a process is spawned)
 ipcMain.on('instance-state', (event, state) => {
     try {
@@ -492,13 +524,9 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             log.info('[IPC] installUpdateNow invoked - calling quitAndInstall()')
             try {
                 // Only attempt to quit and install if we actually have a downloaded update.
-                // Calling quitAndInstall() without a downloaded update can throw an exception
-                // like "No valid update available, can't quit and install".
-                if (global.__autoUpdaterDownloaded) {
-                    autoUpdater.quitAndInstall()
-                } else {
-                    log.warn('[AutoUpdater] installUpdateNow requested but no downloaded update present')
-                    sendAutoUpdateNotification(event, 'realerror', { message: 'No downloaded update available' })
+                // Use safeQuitAndInstall to avoid uncaught exceptions from electron-updater.
+                if (!safeQuitAndInstall('ipc-installUpdateNow')) {
+                    log.warn('[AutoUpdater] installUpdateNow requested but installation failed or no update present')
                 }
             } catch (e) {
                 log.error('[AutoUpdater] quitAndInstall failed', e && e.message)
@@ -649,6 +677,24 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGOUT, (ipcEvent, uuid, isLastAccount) => {
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+let mcLogWindow
+const mcLogger = require(path.join(__dirname, 'mc-logger'))
+
+// Setup broadcaster so mc-logger can forward lines to renderer windows
+mcLogger.setBroadcaster((line) => {
+    try {
+        const { BrowserWindow } = require('electron')
+        const wins = BrowserWindow.getAllWindows() || []
+        for (const w of wins) {
+            try { w.webContents.send('mc-log-line', line) } catch (e) { /* ignore per-window send errors */ }
+        }
+        if (mcLogWindow && mcLogWindow.webContents) {
+            try { mcLogWindow.webContents.send('mc-log-line', line) } catch (e) { /* ignore */ }
+        }
+    } catch (e) {
+        try { log.warn('[mc-logger] broadcaster failed', e && e.message) } catch (er) {}
+    }
+})
 
 function createWindow() {
 
@@ -699,6 +745,43 @@ function createWindow() {
             // ignore
         }
     })
+}
+
+function createMcLogWindow() {
+    try {
+        if (mcLogWindow && !mcLogWindow.isDestroyed()) {
+            try { mcLogWindow.focus() } catch (e) { }
+            return
+        }
+
+        mcLogWindow = new BrowserWindow({
+            width: 900,
+            height: 420,
+            title: LangLoader.queryJS && typeof LangLoader.queryJS === 'function' ? LangLoader.queryJS('logs.title') : 'Minecraft Logs',
+            backgroundColor: '#111111',
+            frame: true,
+            icon: getPlatformIcon('multigames-logo'),
+            webPreferences: {
+                preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
+                nodeIntegration: true,
+                contextIsolation: false,
+                autoplayPolicy: 'no-user-gesture-required'
+            }
+        })
+
+        remoteMain.enable(mcLogWindow.webContents)
+
+        // Ensure ejse data (lang helper) is available to the logs window as well
+        mcLogWindow.loadURL(pathToFileURL(path.join(__dirname, 'app', 'logs.ejs')).toString())
+
+        mcLogWindow.removeMenu()
+
+        mcLogWindow.on('closed', () => {
+            mcLogWindow = null
+        })
+    } catch (e) {
+        try { log.warn('[LogsWindow] failed to create logs window', e && e.message) } catch (er) { }
+    }
 }
 
 // Animate a small "shrink" effect then minimize the window.
@@ -848,7 +931,107 @@ function getPlatformIcon(filename){
     return path.join(__dirname, 'app', 'assets', 'images', `${filename}.${ext}`)
 }
 
-app.on('ready', createWindow)
+// Prefer to check for updates and install them before creating the main window
+// when possible. ensureUpdatesThenStart will attempt to initialize the updater,
+// check for updates and if an update is downloaded, will quit+install. If no
+// update is available or the process times out, it will continue to create
+// the main window so the app still starts for the user.
+function ensureUpdatesThenStart() {
+    // Maximum time to wait for update check/download before starting UI (ms)
+    const MAX_WAIT = 15 * 1000 // 15 seconds - reasonable for most connections
+
+    // If auto-updater has already been initialized or download already finished,
+    // just proceed to start the UI.
+    try {
+        if (global.__autoUpdaterDownloaded) {
+            // There's an update ready; install immediately
+            try { log.info('[AutoUpdater] installer already present - quitting to install') } catch (e) {}
+            try { safeQuitAndInstall('early-install') } catch (e) { log.warn('[AutoUpdater] quitAndInstall failed during early install', e && e.message) }
+            return
+        }
+    } catch (e) { /* ignore */ }
+
+    // Initialize auto-updater listeners if not already
+    try { initAutoUpdater(undefined, false) } catch (e) { log.warn('[AutoUpdater] init failed', e && e.message) }
+
+    // Try a single check and wait for either update-downloaded, update-not-available,
+    // or an error. We'll set up temporary one-time handlers to drive the flow.
+    let settled = false
+
+    function startUI() {
+        if (settled) return
+        settled = true
+        try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed', e && e.message) }
+        try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed', e && e.message) }
+    }
+
+    function onDownloaded(info) {
+        if (settled) return
+        settled = true
+        try { log.info('[AutoUpdater] update downloaded during startup, installing now', info && info.version) } catch (e) {}
+        try {
+            // Mark downloaded so other code knows and attempt to quit+install
+            global.__autoUpdaterDownloaded = info || true
+            if (!safeQuitAndInstall('startup-onDownloaded')) {
+                // If installer couldn't be run, continue to UI as fallback
+                startUI()
+            }
+        } catch (e) {
+            log.error('[AutoUpdater] quitAndInstall failed during startup', e && e.message)
+            // Fallback: start the UI instead of leaving user blocked
+            startUI()
+        }
+    }
+
+    function onNotAvailable() {
+        if (settled) return
+        try { log.info('[AutoUpdater] no update available at startup - proceeding to UI') } catch (e) {}
+        startUI()
+    }
+
+    function onError(err) {
+        if (settled) return
+        try { log.warn('[AutoUpdater] error during startup update check', err && (err.message || err)) } catch (e) {}
+        startUI()
+    }
+
+    // Attach one-time listeners (do not replace existing persistent ones)
+    try {
+        autoUpdater.once && autoUpdater.once('update-downloaded', onDownloaded)
+        autoUpdater.once && autoUpdater.once('update-not-available', onNotAvailable)
+        autoUpdater.once && autoUpdater.once('error', onError)
+    } catch (e) {
+        log.warn('[AutoUpdater] failed to attach one-time startup listeners', e && e.message)
+    }
+
+    // Kick off the check. If autoDownload is true it may download automatically,
+    // otherwise the update-available handler in initAutoUpdater will trigger a
+    // download. We only wait a short period and then fall back to starting UI.
+    try {
+        autoUpdater.checkForUpdates()
+            .then((res) => {
+                try { log.info('[AutoUpdater] checkForUpdates early result', res && res.updateInfo && res.updateInfo.version) } catch (e) {}
+            })
+            .catch((err) => {
+                onError(err)
+            })
+    } catch (e) {
+        onError(e)
+    }
+
+    // Fallback timeout to avoid blocking startup indefinitely
+    setTimeout(() => {
+        if (!settled) {
+            try { log.warn('[AutoUpdater] startup wait timeout reached - proceeding to UI') } catch (e) {}
+            settled = true
+            try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed (timeout)', e && e.message) }
+            try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed (timeout)', e && e.message) }
+        }
+    }, MAX_WAIT)
+}
+
+// Start the app by attempting to apply updates before creating windows
+app.on('ready', ensureUpdatesThenStart)
 app.on('ready', createMenu)
 
 app.on('window-all-closed', () => {
@@ -879,5 +1062,37 @@ app.on('before-quit', () => {
         try { autoUpdater.removeAllListeners() } catch (e) {}
     } catch (e) {
         // ignore
+    }
+})
+
+// Open the Minecraft logs window on request
+ipcMain.on('open-mc-logs-window', (event) => {
+    try {
+        createMcLogWindow()
+    } catch (e) {
+        try { log.warn('[IPC] open-mc-logs-window failed', e && e.message) } catch (er) { }
+    }
+})
+
+// Provide recent log history to renderers on demand
+ipcMain.handle('request-mc-log-history', async (event) => {
+    try {
+        const hist = mcLogger.getHistory()
+        try { log.debug('[request-mc-log-history] returning ' + (hist && hist.bufferLen != null ? hist.bufferLen : (hist && hist.lines ? hist.lines.length : 0)) + ' lines') } catch (e) {}
+        try { event && event.sender && event.sender.send && event.sender.send('mc-log-history-ack', { bufferLen: hist && hist.bufferLen != null ? hist.bufferLen : (hist && hist.lines ? hist.lines.length : 0) }) } catch (e) { /* best-effort */ }
+        return hist
+    } catch (e) {
+        try { log.warn('[IPC] request-mc-log-history failed', e && e.message) } catch (er) { }
+        return { lines: [], bufferLen: 0 }
+    }
+})
+
+// Forward log lines to the logs window (create it if needed)
+ipcMain.on('mc-log-line', (event, line) => {
+    try {
+        // Delegate to centralized logger which buffers, writes file, and broadcasts via broadcaster
+        try { mcLogger.addLine(line) } catch (e) { try { log.warn('[IPC] mc-log-line addLine failed', e && e.message) } catch (er) {} }
+    } catch (e) {
+        try { log.warn('[IPC] mc-log-line broadcast failed', e && e.message) } catch (er) { }
     }
 })

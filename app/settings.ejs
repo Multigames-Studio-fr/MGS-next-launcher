@@ -2,8 +2,8 @@
   <div class="flex min-h-screen h-screen w-full relative fit-content" style="background: url('./assets/images/backgrounds/0.jpg') center/cover no-repeat;">
     <div class="absolute inset-0 bg-black/60 z-0"></div>
     <main class="relative z-10 flex-1 flex">
-    <aside id="settingsContainerLeft" class="w-64 sticky top-0 h-screen flex-shrink-0">
-      <div class="glass-sidebar bg-[#181818]/60 rounded-2xl sm:rounded-3xl py-4 px-3 border border-white/10 h-full overflow-y-auto">
+    <aside id="settingsContainerLeft" class="w-64 sticky top-0 h-screen ">
+      <div class="glass-sidebar bg-[#181818]/60  py-4 px-3 border border-white/10 h-full overflow-y-auto">
       <div id="settingsNavContainer" class="p-3">
 
         <div id="settingsNavHeader" class="mb-6">
@@ -11,28 +11,39 @@
         </div>
         <div id="settingsNavItemsContainer">
           <div id="settingsNavItemsContent" class="space-y-1">
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabAccount" id="settingsNavAccount" selected>
-              <%- lang('settings.navAccount') %>
-            </button>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabMinecraft">
-              <%- lang('settings.navMinecraft') %>
-            </button>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabMods">
-              <%- lang('settings.navMods') %>
-            </button>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabJava">
-              <%- lang('settings.navJava') %>
-            </button>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabLauncher">
-              <%- lang('settings.navLauncher') %>
-            </button>
+            <% const navItems = [
+              { key: 'settings.navAccount', rSc: 'settingsTabAccount', id: 'settingsNavAccount', selected: true, icon: 'bi-person' },
+              { key: 'settings.navMinecraft', rSc: 'settingsTabMinecraft', icon: 'bi-controller' },
+              { key: 'settings.navLogs', rSc: 'settingsTabLogs', icon: 'bi-journal-text' },
+              { key: 'settings.navMods', rSc: 'settingsTabMods', icon: 'bi-puzzle' },
+              { key: 'settings.navJava', rSc: 'settingsTabJava', icon: 'bi-file-code' },
+              { key: 'settings.navLauncher', rSc: 'settingsTabLauncher', icon: 'bi-rocket' },
+            ]; %>
+
+            <% navItems.forEach(function(item) { %>
+              <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors flex items-center" rSc="<%= item.rSc %>"<% if(item.id){ %> id="<%= item.id %>"<% } %><% if(item.selected){ %> selected<% } %>>
+                <% if(item.icon){ %>
+                  <i class="<%= item.icon %> mr-2 text-current"></i>
+                <% } %>
+                <span class="flex-1"><%- lang(item.key) %></span>
+              </button>
+            <% }) %>
+
             <div class="my-4 border-t border-gray-700"></div>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabAbout">
-              <%- lang('settings.navAbout') %>
-            </button>
-            <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors" rSc="settingsTabUpdate" id="settingsNavUpdate">
-              <%- lang('settings.navUpdates') %>
-            </button>
+
+            <% const bottomItems = [
+              { key: 'settings.navAbout', rSc: 'settingsTabAbout', icon: 'bi-info-circle' }
+            ]; %>
+
+            <% bottomItems.forEach(function(item) { %>
+              <button class="settingsNavItem w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 py-2 px-3 rounded transition-colors flex items-center" rSc="<%= item.rSc %>"<% if(item.id){ %> id="<%= item.id %>"<% } %>>
+                <% if(item.icon){ %>
+                  <i class="<%= item.icon %> mr-2 text-current"></i>
+                <% } %>
+                <span class="flex-1"><%- lang(item.key) %></span>
+              </button>
+            <% }) %>
+
             <div class="mt-6 pt-4 border-t border-gray-700">
               <button id="settingsNavDone" class="w-full bg-brand-primary hover:bg-brand-light text-white py-2 px-3 rounded transition-colors font-medium">
                 <%- lang('settings.navDone') %>
@@ -75,47 +86,88 @@
           <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.minecraftTabHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.minecraftTabHeaderDesc') %></p>
         </div>
-        <div class="space-y-4">
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <label class="text-white font-medium block mb-2"><%- lang('settings.gameResolutionTitle') %></label>
-            <div class="flex items-center gap-2">
-              <input type="number" id="settingsGameWidth" min="0" cValue="GameWidth" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
-              <span class="text-white">×</span>
-              <input type="number" id="settingsGameHeight" min="0" cValue="GameHeight" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Card: Resolution -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-aspect-ratio text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.gameResolutionTitle') %></div>
+              </div>
+              <div class="text-sm text-gray-400 mt-1">&nbsp;</div>
+              <div class="mt-4 flex items-center gap-2">
+                <input type="number" id="settingsGameWidth" min="0" cValue="GameWidth" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
+                <span class="text-white">×</span>
+                <input type="number" id="settingsGameHeight" min="0" cValue="GameHeight" class="w-24 p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500">
+              </div>
             </div>
           </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <div class="flex justify-between items-center">
-              <div>
-                <label class="text-white font-medium"><%- lang('settings.launchFullscreenTitle') %></label>
+
+          <!-- Card: Fullscreen -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-arrows-fullscreen text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.launchFullscreenTitle') %></div>
               </div>
-              <label class="toggleSwitch">
-                <input type="checkbox" cValue="Fullscreen" class="hidden">
-                <span class="toggleSwitchSlider"></span>
-              </label>
+              <div class="text-sm group-hover:text-white text-gray-400 mt-1">&nbsp;</div>
+              <div class="mt-4 flex justify-end">
+                <label class="toggleSwitch">
+                  <input type="checkbox" cValue="Fullscreen" class="hidden">
+                  <span class="toggleSwitchSlider"></span>
+                </label>
+              </div>
             </div>
           </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <div class="flex justify-between items-center">
-              <div>
-                <label class="text-white font-medium"><%- lang('settings.autoConnectTitle') %></label>
+
+          <!-- Card: Auto Connect -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-plug text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.autoConnectTitle') %></div>
               </div>
-              <label class="toggleSwitch">
-                <input type="checkbox" cValue="AutoConnect" class="hidden">
-                <span class="toggleSwitchSlider"></span>
-              </label>
+              <div class="text-sm group-hover:text-white text-gray-400 mt-1">&nbsp;</div>
+              <div class="mt-4 flex justify-end">
+                <label class="toggleSwitch">
+                  <input type="checkbox" cValue="AutoConnect" class="hidden">
+                  <span class="toggleSwitchSlider"></span>
+                </label>
+              </div>
             </div>
           </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <div class="flex justify-between items-center">
-              <div>
-                <label class="text-white font-medium"><%- lang('settings.launchDetachedTitle') %></label>
-                <p class="text-sm text-gray-400 mt-1"><%- lang('settings.launchDetachedDesc') %></p>
+
+          <!-- Card: Launch Detached -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-box-arrow-up-right text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.launchDetachedTitle') %></div>
               </div>
-              <label class="toggleSwitch">
-                <input type="checkbox" cValue="LaunchDetached" class="hidden">
-                <span class="toggleSwitchSlider"></span>
-              </label>
+              <div class="text-sm group-hover:text-white text-gray-400 mt-1"><%- lang('settings.launchDetachedDesc') %></div>
+              <div class="mt-4 flex justify-end">
+                <label class="toggleSwitch">
+                  <input type="checkbox" cValue="LaunchDetached" class="hidden">
+                  <span class="toggleSwitchSlider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: Show Minecraft Logs -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-journal-text text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.showMinecraftLogsTitle') %></div>
+              </div>
+              <div class="text-sm group-hover:text-white text-gray-400 mt-1"><%- lang('settings.showMinecraftLogsDesc') %></div>
+              <div class="mt-4 flex justify-end">
+                <label class="toggleSwitch">
+                  <input type="checkbox" cValue="ShowMinecraftLogs" class="hidden">
+                  <span class="toggleSwitchSlider"></span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -133,24 +185,35 @@
             </button>
           </div>
           <div id="settingsModsContainer" class="space-y-4">
+            <!-- Optional mods: shown as cards for quick scanning -->
             <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-              <h3 class="text-white font-medium mb-3"><%- lang('settings.requiredMods') %></h3>
-              <div id="settingsReqModsContent"></div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-white font-medium"><%- lang('settings.optionalMods') %></h3>
+                <span class="text-sm text-gray-400"><%- lang('settings.optionalModsNote') %></span>
+              </div>
+              <div id="settingsOptModsContent" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
+
+            <!-- Drop-in mods: keep add/remove controls together with a card list -->
             <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-              <h3 class="text-white font-medium mb-3"><%- lang('settings.optionalMods') %></h3>
-              <div id="settingsOptModsContent"></div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-white font-medium"><%- lang('settings.dropinMods') %></h3>
+                <div class="flex items-center gap-2">
+                  <button id="settingsDropinFileSystemButton" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors">
+                    <%- lang('settings.addMods') %>
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm text-gray-400 mb-3"><%- lang('settings.dropinRefreshNote') %></p>
+              <div id="settingsDropinModsContent" class="space-y-3"></div>
             </div>
+
+            <!-- Shaderpacks: simple control card -->
             <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-              <h3 class="text-white font-medium mb-3"><%- lang('settings.dropinMods') %></h3>
-              <button id="settingsDropinFileSystemButton" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors">
-                <%- lang('settings.addMods') %>
-              </button>
-              <p class="text-sm text-gray-400 mt-2"><%- lang('settings.dropinRefreshNote') %></p>
-              <div id="settingsDropinModsContent" class="mt-3"></div>
-            </div>
-            <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-              <h3 class="text-white font-medium mb-3"><%- lang('settings.shaderpacks') %></h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-white font-medium"><%- lang('settings.shaderpacks') %></h3>
+                <span class="text-sm text-gray-400"><%- lang('settings.shaderpackSummary') %></span>
+              </div>
               <p class="text-sm text-gray-400 mb-3"><%- lang('settings.shaderpackDesc') %></p>
               <div class="flex items-center gap-2">
                 <button id="settingsShaderpackButton" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors">+</button>
@@ -162,6 +225,16 @@
                 </div>
               </div>
             </div>
+
+            <!-- Required mods: placed last and shown as a clear list (no toggle to change activation) -->
+            <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-white font-medium"><%- lang('settings.requiredMods') %></h3>
+                <span class="text-sm text-gray-400"><%- lang('settings.requiredModsNote') %></span>
+              </div>
+              <p class="text-sm text-gray-400 mb-3"><%- lang('settings.requiredModsDesc') %></p>
+              <div id="settingsReqModsContent" class="space-y-3"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -170,61 +243,68 @@
           <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabJavaHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.tabJavaHeaderDesc') %></p>
         </div>
-        <div class="space-y-6">
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <div class="settingsSelServContent"></div>
-            <button class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors mt-3">
-              <%- lang('settings.switchServerButton') %>
-            </button>
-          </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4" id="settingsMemoryContainer">
-            <h3 class="text-white font-medium mb-4"><%- lang('settings.memoryTitle') %></h3>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="settingsMemoryContent">
-              <div class="lg:col-span-2">
-                <div class="space-y-4">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Card: Memory (refactored) - spans two columns on md+ -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group md:col-span-2">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-memory text-white text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.memoryTitle') %></div>
+              </div>
+              <div class="text-sm text-gray-400 mt-1"><%- lang('settings.memoryDesc') %></div>
+
+              <!-- Body: ranges -->
+              <div class="mt-3 flex-1">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <label class="text-white font-medium block mb-2"><%- lang('settings.maxRAM') %></label>
+                    <label for="settingsMaxRAMRange" class="text-white font-medium block mb-2"><%- lang('settings.maxRAM') %></label>
                     <div class="flex items-center gap-3">
                       <div id="settingsMaxRAMRange" class="rangeSlider flex-1" cValue="MaxRAM" serverDependent min="3" max="8" value="3" step="0.5">
                         <div class="rangeSliderBar"></div>
                         <div class="rangeSliderTrack"></div>
                       </div>
-                      <span id="settingsMaxRAMLabel" class="text-white font-medium w-12">3G</span>
+                      <span id="settingsMaxRAMLabel" class="text-white font-medium w-12 text-right">3G</span>
                     </div>
                   </div>
                   <div>
-                    <label class="text-white font-medium block mb-2"><%- lang('settings.minRAM') %></label>
+                    <label for="settingsMinRAMRange" class="text-white font-medium block mb-2"><%- lang('settings.minRAM') %></label>
                     <div class="flex items-center gap-3">
                       <div id="settingsMinRAMRange" class="rangeSlider flex-1" cValue="MinRAM" serverDependent min="3" max="8" value="3" step="0.5">
                         <div class="rangeSliderBar"></div>
                         <div class="rangeSliderTrack"></div>
                       </div>
-                      <span id="settingsMinRAMLabel" class="text-white font-medium w-12">3G</span>
+                      <span id="settingsMinRAMLabel" class="text-white font-medium w-12 text-right">3G</span>
                     </div>
                   </div>
                 </div>
-                <p class="text-sm text-gray-400 mt-4" id="settingsMemoryDesc"><%- lang('settings.memoryDesc') %></p>
               </div>
-              <div id="settingsMemoryStatus" class="bg-gray-900 rounded-lg p-4">
-                <div class="space-y-3">
+
+              <!-- Footer: memory status (refactored) -->
+              <div id="settingsMemoryStatus" class=" rounded-lg p-3 mt-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                   <div>
-                    <label class="text-white font-medium block"><%- lang('settings.memoryTotalTitle') %></label>
-                    <span id="settingsMemoryTotal" class="text-blue-400 text-lg font-semibold">16G</span>
+                    <div class="text-sm text-gray-400"><%- lang('settings.memoryTotalTitle') %></div>
+                    <div class="text-blue-400 text-lg font-semibold" id="settingsMemoryTotal">16G</div>
                   </div>
                   <div>
-                    <label class="text-white font-medium block"><%- lang('settings.memoryAvailableTitle') %></label>
-                    <span id="settingsMemoryAvail" class="text-green-400 text-lg font-semibold">7.3G</span>
+                    <div class="text-sm text-gray-400"><%- lang('settings.memoryAvailableTitle') %></div>
+                    <div class="text-green-400 text-lg font-semibold text-right sm:text-left" id="settingsMemoryAvail">7.3G</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
-            <h3 class="text-white font-medium mb-4"><%- lang('settings.javaExecutableTitle') %></h3>
-            <div class="space-y-3">
-              <div id="settingsJavaExecDetails" class="text-sm text-gray-400"><!-- Invalid Selection --></div>
-              <div class="flex items-center gap-2">
-                <i class="bi bi-folder2-open text-gray-400"></i>
+
+          <!-- Card: Java Executable -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-folder2-open text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.javaExecutableTitle') %></div>
+              </div>
+              <div class="text-sm text-gray-400 mt-1" id="settingsJavaExecDetails"><!-- Invalid Selection --></div>
+              <div class="mt-3 flex items-center gap-2">
                 <input class="bg-gray-700 text-white rounded p-2 flex-1 border border-gray-600 focus:border-brand-primary" 
                        id="settingsJavaExecVal" type="text" value="null" cValue="JavaExecutable" serverDependent disabled />
                 <button class="bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded transition-colors" 
@@ -232,77 +312,142 @@
                   <%- lang('settings.javaExecSelButtonText') %>
                 </button>
               </div>
-              <div class="text-sm text-gray-400">
+              <div class="text-sm text-gray-400 mt-3">
                 <%- lang('settings.javaExecDesc') %>
                 <strong id="settingsJavaReqDesc"><!-- Requires Java 8 x64. --></strong><br />
                 <%- lang('settings.javaPathDesc', {'pathSuffix': `bin${process.platform==='win32' ? '\\javaw.exe' : '/java' }`}) %>
               </div>
             </div>
           </div>
-          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4" id="settingsJVMOptsContainer">
-            <h3 class="text-white font-medium mb-4"><%- lang('settings.jvmOptsTitle') %></h3>
-            <div class="flex items-center gap-2">
-              <i class="bi bi-gear text-gray-400"></i>
-              <input id="settingsJVMOptsVal" class="bg-gray-700 text-white rounded p-2 flex-1 border border-gray-600 focus:border-blue-500" 
-                     cValue="JVMOptions" serverDependent type="text" />
+
+          <!-- Card: JVM Options -->
+          <div class="p-4 bg-[#181818]/60 border border-gray-700 rounded-lg group">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <i class="bi bi-gear text-white  text-1xl"></i>
+                <div class="text-white font-medium"><%- lang('settings.jvmOptsTitle') %></div>
+              </div>
+              <div class="text-sm text-gray-400 mt-1"><%- lang('settings.jvmOptsDesc') %></div>
+              <div class="mt-3">
+                <input id="settingsJVMOptsVal" class="bg-gray-700 text-white rounded p-2 flex-1 border border-gray-600 focus:border-blue-500" 
+                       cValue="JVMOptions" serverDependent type="text" />
+              </div>
+              <div class="text-sm text-gray-400 mt-3">
+                <a href="#" id="settingsJvmOptsLink" class="text-blue-400 hover:text-blue-300 underline"><!-- Available Options --></a>
+              </div>
             </div>
-            <div class="text-sm text-gray-400 mt-3">
-              <%- lang('settings.jvmOptsDesc') %><br />
-              <a href="#" id="settingsJvmOptsLink" class="text-blue-400 hover:text-blue-300 underline"><!-- Available Options --></a>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabLogs" class="settingsTab hidden">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.logsTabHeaderText') %></h2>
+          <p class="text-sm text-gray-400"><%- lang('settings.logsTabHeaderDesc') %></p>
+        </div>
+      <div class="space-y-6">
+        <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4" id="settingsMcLogsWrapper">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-3">
+              <div class="flex-1">
+                <label class="text-white font-medium"><%- lang('settings.mcLogsPanelTitle') %></label>
+                <p class="text-sm text-gray-400 mt-1"><%- lang('settings.mcLogsPanelDesc') %></p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="settingsMcLogsOpenWindow" class="bg-brand-primary hover:bg-brand-light text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-label="Open logs window" title="<%- lang('settings.mcLogsOpenWindow') %>">
+                  <i class="bi bi-window text-current"></i>
+                  <span class="sr-only"><%- lang('settings.mcLogsOpenWindow') %></span>
+                </button>
+
+                <button id="settingsMcLogsClear" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-label="Clear logs" title="Clear logs">
+                  <i class="bi bi-trash text-current"></i>
+                  <span class="hidden sm:inline"><%- lang('settings.mcLogsClear') || 'Clear' %></span>
+                </button>
+
+                <button id="settingsMcLogsPause" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-pressed="false" aria-label="Pause/resume logs" title="Pause/resume logs">
+                  <i class="bi bi-pause-fill text-current"></i>
+                  <span class="hidden sm:inline">Pause</span>
+                </button>
+
+                <button id="settingsMcLogsSave" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-label="Save logs" title="Save logs">
+                  <i class="bi bi-download text-current"></i>
+                  <span class="hidden sm:inline">Save</span>
+                </button>
+
+                <button id="settingsMcLogsCopy" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-label="Copy logs" title="Copy logs">
+                  <i class="bi bi-clipboard text-current"></i>
+                  <span class="hidden sm:inline">Copy</span>
+                </button>
+
+                <button id="settingsMcLogsCheck" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors flex items-center gap-2" aria-label="Check buffer" title="Check buffer">
+                  <i class="bi bi-check2-square text-current"></i>
+                  <span class="hidden sm:inline">Check</span>
+                </button>
+              </div>
             </div>
+
+            <div class="flex gap-2 items-center mb-3">
+              <input id="settingsMcLogsFilter" placeholder="Filter (regex)" class="bg-gray-700 placeholder-gray-400 text-white p-2 rounded text-sm flex-1 border border-gray-600 focus:border-brand-primary" />
+              <div id="settingsMcLogsStats" class="text-sm text-gray-400 ml-2 bg-gray-800 px-2 py-1 rounded">0 lines</div>
+            </div>
+
+            <div id="settingsMcLogsNote" class="text-sm text-gray-400 mb-2 hidden"></div>
+            <div id="settingsMcLogs" class=" text-gray-100 p-3 rounded font-mono text-sm h-96 overflow-auto whitespace-pre-wrap border border-gray-800"></div>
           </div>
         </div>
       </div>
       <div id="settingsTabLauncher" class="settingsTab hidden">
         <div class="settingsTabHeader mb-4">
-          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%- lang('settings.launcherTabHeaderText')
+          <span class="settingsTabHeaderText  text-1xl font-bold text-white"><%- lang('settings.launcherTabHeaderText')
               %></span>
           <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.launcherTabHeaderDesc') %></span>
         </div>
-        <div class="settingsFieldContainer mb-4">
-          <div class="settingsFieldLeft">
-            <span class="settingsFieldTitle text-lg font-semibold text-white"><%- lang('settings.allowPrereleaseTitle')
-                %></span>
-            <span class="settingsFieldDesc text-sm text-gray-400"><%- lang('settings.allowPrereleaseDesc') %></span>
-          </div>
-          <div class="settingsFieldRight">
-            <label class="toggleSwitch">
-              <input type="checkbox" cValue="AllowPrerelease" class="hidden">
-              <span class="toggleSwitchSlider "></span>
-            </label>
+        <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4 mb-4">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex-1">
+              <div class="text-lg font-semibold text-white"><%- lang('settings.allowPrereleaseTitle') %></div>
+              <div class="text-sm text-gray-400 mt-1"><%- lang('settings.allowPrereleaseDesc') %></div>
+            </div>
+            <div>
+              <label class="toggleSwitch">
+                <input type="checkbox" cValue="AllowPrerelease" class="hidden">
+                <span class="toggleSwitchSlider"></span>
+              </label>
+            </div>
           </div>
         </div>
-        <div class="settingsFileSelContainer mb-4">
-          <div class="settingsFileSelContent">
-            <div class="settingsFieldTitle text-lg font-semibold text-white" id="settingsDataDirTitle">
-              <%- lang('settings.dataDirectoryTitle') %>
+        <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4 mb-4">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <div class="text-lg font-semibold text-white" id="settingsDataDirTitle">
+                <%- lang('settings.dataDirectoryTitle') %>
+              </div>
+              <div class="text-sm text-gray-400 mt-1">
+                <%- lang('settings.dataDirectoryDesc') %>
+              </div>
             </div>
-            <div class="settingsFileSelActions flex items-center mt-2">
-              <i class="bi bi-folder2-open text-gray-400 mr-2"></i>
-              <input class="settingsFileSelVal bg-gray-700 text-white rounded p-2 flex-grow" type="text" value="null"
+
+            <div class="settingsFileSelActions flex items-center gap-2 w-full sm:w-auto">
+              <i class="bi bi-folder2-open text-current mr-2 hidden sm:inline"></i>
+              <input class="settingsFileSelVal bg-gray-700 text-white rounded p-2 flex-grow sm:flex-none sm:w-64" type="text" value="null"
                 cValue="DataDirectory" disabled>
-              <button class="settingsFileSelButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light ml-2"
-                dialogTitle="<%- lang('settings.selectDataDirectory') %>" dialogDirectory="true">
-                <%- lang('settings.chooseFolder') %>
+              <button class="settingsFileSelButton bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded text-sm transition-colors ml-2"
+                dialogTitle="<%- lang('settings.selectDataDirectory') %>" dialogDirectory="true" title="<%- lang('settings.selectDataDirectory') %>">
+                <span><%- lang('settings.chooseFolder') %></span>
               </button>
             </div>
-          </div>
-          <div class="settingsFileSelDesc text-sm text-gray-400 mt-2">
-            <%- lang('settings.dataDirectoryDesc') %>
           </div>
         </div>
       </div>
       <div id="settingsTabAbout" class="settingsTab hidden">
         <div class="settingsTabHeader mb-4">
-          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%- lang('settings.aboutTabHeaderText')
+          <span class="settingsTabHeaderText  text-1xl font-bold text-white"><%- lang('settings.aboutTabHeaderText')
               %></span>
           <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.aboutTabHeaderDesc') %></span>
         </div>
-        <div id="settingsAboutCurrentContainer" class="mb-4">
+        <div id="settingsAboutCurrentContainer" class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4 mb-4">
           <div id="settingsAboutCurrentContent">
             <div id="settingsAboutCurrentHeadline" class="flex items-center mb-4">
               <img id="settingsAboutLogo" src="./assets/images/multigames-logo.webp" class="w-12 h-12 mr-4" />
-              <span id="settingsAboutTitle" class="text-2xl font-bold text-white">
+              <span id="settingsAboutTitle" class=" text-1xl font-bold text-white">
                 <%- lang('settings.aboutTitle', { appName: lang('app.title') }) %>
               </span>
             </div>
@@ -323,101 +468,90 @@
           </div>
           <div id="settingsAboutButtons" class="flex flex-col space-y-2">
             <a href="<%- lang('settings.sourceGithubLink') %>" id="settingsAboutSourceButton"
-              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              class="settingsAboutButton bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded">
               <%- lang('settings.sourceGithub') %>
             </a>
             <!-- The following must be included in third-party usage. -->
             <!-- <a href="https://github.com/dscalzi/HeliosLauncher" id="settingsAboutSourceButton" class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">Original Source</a> -->
             <a href="<%- lang('settings.supportLink') %>" id="settingsAboutSupportButton"
-              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              class="settingsAboutButton bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded">
               <%- lang('settings.support') %>
             </a>
             <a href="#" id="settingsAboutDevToolsButton"
-              class="settingsAboutButton bg-brand-primary text-white py-2 px-4 rounded hover:bg-brand-light">
+              class="settingsAboutButton bg-brand-primary hover:bg-brand-light text-white py-2 px-4 rounded">
               <%- lang('settings.devToolsConsole') %>
             </a>
           </div>
         </div>
-        <div class="settingsChangelogContainer">
+        <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4 mb-4" id="settingsAboutChangelog">
           <div class="settingsChangelogContent">
             <div class="settingsChangelogHeadline mb-4">
-              <div class="settingsChangelogLabel text-lg font-semibold text-white">
-                <%- lang('settings.releaseNotes') %>
-              </div>
-              <div class="settingsChangelogTitle text-2xl font-bold text-white">
-                <%- lang('settings.changelog') %>
-              </div>
+              <div class="settingsChangelogLabel text-lg font-semibold text-white"><%- lang('settings.releaseNotes') %></div>
+              <div class="settingsChangelogTitle text-1xl font-bold text-white"><%- lang('settings.changelog') %></div>
             </div>
-            <div class="settingsChangelogText text-sm text-gray-400">
-              <%- lang('settings.noReleaseNotes') %>
-            </div>
+            <div class="settingsChangelogText text-sm text-gray-400"><%- lang('settings.noReleaseNotes') %></div>
           </div>
           <div class="settingsChangelogActions mt-4">
-            <a class="settingsChangelogButton settingsAboutButton bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500"
+            <a class="settingsChangelogButton settingsAboutButton bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded"
               href="#">
               <%- lang('settings.viewReleaseNotes') %>
             </a>
           </div>
         </div>
-      </div>
-      <div id="settingsTabUpdate" class="settingsTab hidden">
-        <div class="settingsTabHeader mb-4">
-          <span class="settingsTabHeaderText text-2xl font-bold text-white"><%-
-              lang('settings.launcherUpdatesHeaderText') %></span>
-          <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.launcherUpdatesHeaderDesc')
-              %></span>
-        </div>
-        <div id="settingsUpdateStatusContainer" class="mb-4">
-          <div id="settingsUpdateStatusContent">
-            <div id="settingsUpdateStatusHeadline" class="mb-4">
-              <span id="settingsUpdateTitle"
-                class="text-lg font-semibold text-white"><!-- You Are Running the Latest Version --></span>
-            </div>
-            <div id="settingsUpdateVersion" class="flex items-center mb-4">
-              <div id="settingsUpdateVersionCheck" class="text-green-500 mr-2">&#10003;</div>
-              <div id="settingsUpdateVersionDetails">
-                <span id="settingsUpdateVersionTitle" class="text-lg font-semibold text-white"><%-
-                    lang('settings.stableRelease') %></span>
-                <div id="settingsUpdateVersionLine" class="flex items-center">
-                  <span id="settingsUpdateVersionText" class="text-sm text-gray-400 mr-2"><%-
-                      lang('settings.versionText') %></span>
-                  <span id="settingsUpdateVersionValue" class="text-sm text-white">2.1.1</span>
-                </div>
-              </div>
-            </div>
-            <div id="settingsUpdateActionContainer" class="mt-4">
-              <button id="settingsUpdateActionButton" type="button" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500 disabled:opacity-50">
-                <%- lang('settings.checkForUpdates') %>
-              </button>
 
-              <div id="settingsUpdateProgressContainer" class="mt-3 hidden">
-                <div class="w-full bg-gray-700 rounded h-3 overflow-hidden">
-                  <div id="settingsUpdateProgressBar" class="bg-blue-500 h-3 w-0"></div>
+        <!-- Updates card moved into About tab -->
+        <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4 mb-4" id="settingsAboutUpdates">
+          <div class="settingsTabHeader mb-2">
+            <span class="settingsTabHeaderText text-1xl font-bold text-white"><%- lang('settings.launcherUpdatesHeaderText') %></span>
+            <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.launcherUpdatesHeaderDesc') %></span>
+          </div>
+
+          <div id="settingsUpdateStatusContainer" class="mb-2">
+            <div id="settingsUpdateStatusContent">
+              <div id="settingsUpdateStatusHeadline" class="mb-3">
+                <span id="settingsUpdateTitle" class="text-lg font-semibold text-white"><!-- You Are Running the Latest Version --></span>
+              </div>
+              <div id="settingsUpdateVersion" class="flex items-center mb-3">
+                <div id="settingsUpdateVersionCheck" class="text-green-500 mr-2">&#10003;</div>
+                <div id="settingsUpdateVersionDetails">
+                  <span id="settingsUpdateVersionTitle" class="text-lg font-semibold text-white"><%- lang('settings.stableRelease') %></span>
+                  <div id="settingsUpdateVersionLine" class="flex items-center">
+                    <span id="settingsUpdateVersionText" class="text-sm text-gray-400 mr-2"><%- lang('settings.versionText') %></span>
+                    <span id="settingsUpdateVersionValue" class="text-sm text-white">2.1.1</span>
+                  </div>
                 </div>
-                <div id="settingsUpdateProgressLabel" class="text-sm text-gray-400 mt-1">0%</div>
+              </div>
+              <div id="settingsUpdateActionContainer" class="mt-2">
+                <button id="settingsUpdateActionButton" type="button" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500 disabled:opacity-50">
+                  <%- lang('settings.checkForUpdates') %>
+                </button>
+
+                <div id="settingsUpdateProgressContainer" class="mt-3 hidden">
+                  <div class="w-full bg-gray-700 rounded h-3 overflow-hidden">
+                    <div id="settingsUpdateProgressBar" class="bg-blue-500 h-3 w-0"></div>
+                  </div>
+                  <div id="settingsUpdateProgressLabel" class="text-sm text-gray-400 mt-1">0%</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="settingsChangelogContainer">
-          <div class="settingsChangelogContent">
-            <div class="settingsChangelogHeadline mb-4">
-              <div class="settingsChangelogLabel text-lg font-semibold text-white">
-                <%- lang('settings.whatsNew') %>
+
+          <div class="settingsChangelogContainer">
+            <div class="settingsChangelogContent">
+              <div class="settingsChangelogHeadline mb-4">
+                <div class="settingsChangelogLabel text-lg font-semibold text-white"><%- lang('settings.whatsNew') %></div>
+                <div class="settingsChangelogTitle text-1xl font-bold text-white"><%- lang('settings.updateReleaseNotes') %></div>
               </div>
-              <div class="settingsChangelogTitle text-2xl font-bold text-white">
-                <%- lang('settings.updateReleaseNotes') %>
-              </div>
-            </div>
-            <div class="settingsChangelogText text-sm text-gray-400">
-              <%- lang('settings.noReleaseNotes') %>
+              <div class="settingsChangelogText text-sm text-gray-400"><%- lang('settings.noReleaseNotes') %></div>
             </div>
           </div>
         </div>
       </div>
+      <!-- settingsTabUpdate removed: content moved into About tab as cards -->
     </div>
     </main>
   </div>
 
   <script src="./assets/js/scripts/settings.js"></script>
+  <script src="./assets/js/scripts/settings-logs.js"></script>
 </div>

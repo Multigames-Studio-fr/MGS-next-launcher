@@ -1268,6 +1268,48 @@ button {
   box-sizing: border-box;
 }
 
+/* Ensure the settings sidebar is pinned to the left on large screens
+   and its navigation items align to the start. This makes the sidebar
+   appear at the left edge even if utility classes (Tailwind) are not
+   applied or compiled in some runtime cases. */
+@media (min-width: 1024px) {
+  /* The DOM structure is: #settingsContainer > div.min-h-screen > main */
+  #settingsContainer > .min-h-screen > main {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+  }
+
+  #settingsContainerLeft {
+    position: relative !important;
+    width: 18rem !important; /* same as lg:w-72 */
+    flex: 0 0 18rem !important;
+    padding-top: 4%;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  #settingsContainerRight {
+    margin-left: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+  }
+
+  /* Make nav items align to the left of the sidebar */
+  #settingsNavItemsContent {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Ensure the grid inside the nav doesn't center items */
+  #settingsNavItemsContent .settingsNavItem {
+    width: 100%;
+    text-align: left;
+  }
+}
+
 /* Settings tab shared styles. */
 .settingsTab {
   width: 100%;

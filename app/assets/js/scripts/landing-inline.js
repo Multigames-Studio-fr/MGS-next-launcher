@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 try {
     window._mgstest = window._mgstest || {};
     window._mgstest.start = function (pid = 12345) {
-        const payload = { started: true, pid };
+        const payload = { started: true, pid, serverId: (window.ConfigManager && typeof window.ConfigManager.getSelectedServer === 'function') ? window.ConfigManager.getSelectedServer() : null };
         console.info('[MGSTest] Simulating instance START', payload);
         try {
             if (typeof window.onInstanceStateChanged === 'function') window.onInstanceStateChanged(payload);
@@ -81,7 +81,7 @@ try {
     };
 
     window._mgstest.stop = function () {
-        const payload = { started: false };
+        const payload = { started: false, serverId: (window.ConfigManager && typeof window.ConfigManager.getSelectedServer === 'function') ? window.ConfigManager.getSelectedServer() : null };
         console.info('[MGSTest] Simulating instance STOP', payload);
         try {
             if (typeof window.onInstanceStateChanged === 'function') window.onInstanceStateChanged(payload);

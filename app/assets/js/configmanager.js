@@ -96,6 +96,8 @@ const DEFAULT_CONFIG = {
       fullscreen: false,
       autoConnect: true,
       launchDetached: true,
+      // Whether to show Minecraft stdout/stderr logs inside the launcher UI when launching
+      showMinecraftLogs: false,
     },
     launcher: {
       allowPrerelease: false,
@@ -817,6 +819,27 @@ exports.getLaunchDetached = function (def = false) {
  */
 exports.setLaunchDetached = function (launchDetached) {
   config.settings.game.launchDetached = launchDetached;
+};
+
+/**
+ * Get whether Minecraft logs should be displayed in the launcher UI.
+ *
+ * @param {boolean} def Optional. If true, return the default value.
+ * @returns {boolean}
+ */
+exports.getShowMinecraftLogs = function (def = false) {
+  return !def
+    ? config.settings.game.showMinecraftLogs
+    : DEFAULT_CONFIG.settings.game.showMinecraftLogs;
+};
+
+/**
+ * Set whether Minecraft logs should be displayed in the launcher UI.
+ *
+ * @param {boolean} val
+ */
+exports.setShowMinecraftLogs = function (val) {
+  config.settings.game.showMinecraftLogs = !!val;
 };
 
 // Launcher Settings

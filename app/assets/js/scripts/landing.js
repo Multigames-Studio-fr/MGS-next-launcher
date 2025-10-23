@@ -47,6 +47,61 @@ let newsArr = null
 let newsLoadingListener = null
 let newsActive = false
 
+// Per-instance runtime state map: { serverId: { started: boolean, pid: number|null, timestamp: number } }
+const instanceStateMap = {}
+
+/**
+ * Update the landing UI for a given server id based on instanceStateMap
+ * - updates launch button label and styling to reflect Running / Starting / Play
+ */
+function updateLaunchUIForServer(serverId){
+    try {
+        const launchBtn = document.getElementById('launch_button')
+        const details = document.getElementById('launch_details')
+        const state = serverId && instanceStateMap[serverId] ? instanceStateMap[serverId] : null
+
+        if (!launchBtn) return
+
+        if(state && state.started){
+            // Running
+            launchBtn.textContent = ''
+            // add icon + label
+            launchBtn.innerHTML = `<svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg> Relancer`
+            launchBtn.classList.remove('bg-[#FF6A1A]')
+            launchBtn.classList.add('bg-green-600')
+            launchBtn.disabled = false
+            // show small running indicator
+            if(details) setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
+            // Show stop and launch-other buttons, hide primary launch
+            try { document.getElementById('stop_button').style.display = '' } catch (e) {}
+            try { launchBtn.style.display = 'none' } catch (e) {}
+        } else if(state && state.starting){
+            // Starting
+            launchBtn.textContent = ''
+            launchBtn.innerHTML = `<svg class="animate-spin w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity=".2"></circle><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path></svg> Démarrage...`
+            launchBtn.classList.remove('bg-[#FF6A1A]')
+            launchBtn.classList.add('bg-yellow-600')
+            launchBtn.disabled = true
+            // Hide other action buttons while starting
+            try { document.getElementById('stop_button').style.display = 'none' } catch (e) {}
+            try { launchBtn.style.display = '' } catch (e) {}
+        } else {
+            // Not running
+            launchBtn.innerHTML = `<svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg> ${Lang.queryJS('landing.launchButton')}`
+            launchBtn.classList.remove('bg-green-600','bg-yellow-600')
+            launchBtn.classList.add('bg-[#FF6A1A]')
+            launchBtn.disabled = false
+            if(details) setLaunchDetails(Lang.queryJS('landing.tabLaunchReady') || '')
+            // Ensure primary launch visible, others hidden
+            try { document.getElementById('stop_button').style.display = 'none' } catch (e) {}
+            try { launchBtn.style.display = '' } catch (e) {}
+        }
+    } catch(e){ console.debug('[Landing] updateLaunchUIForServer error', e) }
+}
+
+// Expose for other modules
+window.updateLaunchUIForServer = updateLaunchUIForServer
+
 /* Launch Progress Wrapper Functions */
 
 /**
@@ -159,6 +214,49 @@ document.getElementById('launch_button').addEventListener('click', async e => {
     }
 })
 
+// Bind stop button
+try {
+    const stopBtn = document.getElementById('stop_button')
+    if (stopBtn) {
+        stopBtn.addEventListener('click', async () => {
+            loggerLanding.info('Stop button clicked')
+            try {
+                // Attempt graceful shutdown of proc if present
+                if (proc && typeof proc.kill === 'function') {
+                    try {
+                        proc.kill()
+                    } catch (e) {
+                        loggerLanding.warn('Failed to kill process directly', e)
+                        try { proc.kill('SIGKILL') } catch (e2) {}
+                    }
+                } else {
+                    // If no local proc, still notify main to stop by serverId
+                    try {
+                        const { ipcRenderer } = require('electron')
+                        const payload = { request: 'stop', serverId: ConfigManager.getSelectedServer() }
+                        ipcRenderer.send('request-instance-action', payload)
+                    } catch (e) { /* ignore */ }
+                }
+
+                // Notify UI and other windows
+                const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
+                if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
+                    window.onInstanceStateChanged(payload)
+                }
+                try {
+                    const { ipcRenderer } = require('electron')
+                    ipcRenderer.send('instance-state', payload)
+                } catch (e) { loggerLanding.debug && loggerLanding.debug('ipcRenderer not available to send instance-state stop (from stop button)', e) }
+
+            } catch (e) {
+                loggerLanding.error('Error handling stop button click', e)
+            }
+        })
+    }
+} catch (e) { /* ignore binding errors */ }
+
+// launch_other_button removed — logic consolidated to primary launch flow
+
 // Bind settings button
 document.getElementById('settingsMediaButton').onclick = async e => {
     await prepareSettings()
@@ -269,6 +367,11 @@ function updateSelectedServer(serv){
         animateSettingsTabRefresh()
     }
     setLaunchEnabled(serv != null)
+    // Refresh launch button UI based on per-instance state
+    try {
+        const selectedId = serv != null ? serv.rawServer.id : null
+        if (typeof window.updateLaunchUIForServer === 'function') window.updateLaunchUIForServer(selectedId)
+    } catch (e) { console.debug('[Landing] update launch UI failed', e) }
 }
 
 // Make function globally accessible
@@ -755,9 +858,47 @@ async function dlAsync(login = true) {
             // Build Minecraft process.
             proc = pb.build()
 
+            // Ensure log panel functions exist
+            window.appendMinecraftLog = function (txt) {
+                try {
+                    const el = document.getElementById('mc_logs_content')
+                    if (!el) return
+                    // Append with newline and trim to reasonable size
+                    const cleaned = ('' + txt).replace(/\r/g, '')
+                    el.textContent += cleaned + '\n'
+                    // Keep content size bounded (e.g., last 20000 chars)
+                    if (el.textContent.length > 20000) {
+                        el.textContent = el.textContent.slice(-20000)
+                    }
+                    const panel = document.getElementById('mc_logs_panel')
+                    if (panel && panel.style.display !== 'none') panel.scrollTop = panel.scrollHeight
+                } catch (e) { /* ignore */ }
+            }
+
+            window.toggleMinecraftLogsPanel = function (show) {
+                const panel = document.getElementById('mc_logs_panel')
+                if (!panel) return
+                if (typeof show === 'boolean') {
+                    panel.style.display = show ? 'block' : 'none'
+                } else {
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
+                }
+            }
+
+            // Wire mcLogsButton click
+            try {
+                const mcBtn = document.getElementById('mcLogsButton')
+                if (mcBtn && !mcBtn._bound) {
+                    mcBtn.addEventListener('click', () => {
+                        window.toggleMinecraftLogsPanel()
+                    })
+                    mcBtn._bound = true
+                }
+            } catch (e) { /* ignore */ }
+
             // Notify UI that the instance has started (so landing-inline watcher updates the launch overlay)
             try {
-                const payload = { started: true, pid: proc && proc.pid ? proc.pid : null }
+                const payload = { started: true, pid: proc && proc.pid ? proc.pid : null, serverId: ConfigManager.getSelectedServer() }
                 if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
                     console.info('[Landing] calling window.onInstanceStateChanged', payload)
                     window.onInstanceStateChanged(payload)
@@ -778,6 +919,34 @@ async function dlAsync(login = true) {
             proc.stdout.on('data', tempListener)
             proc.stderr.on('data', gameErrorListener)
 
+            // If configured, stream stdout/stderr to the logs panel
+            try {
+                const showLogs = ConfigManager.getShowMinecraftLogs && ConfigManager.getShowMinecraftLogs()
+                const streamListener = (data) => {
+                    try {
+                        const txt = ('' + data).trim()
+                        // Append to UI
+                        if (txt.length > 0 && typeof window.appendMinecraftLog === 'function') {
+                            window.appendMinecraftLog(txt)
+                            // Forward to main so other windows (settings/logs window) can receive it
+                            try {
+                                const { ipcRenderer } = require('electron')
+                                ipcRenderer.send('mc-log-line', txt)
+                            } catch (e) { /* ignore */ }
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+                proc.stdout.on('data', streamListener)
+                proc.stderr.on('data', streamListener)
+
+                // Auto-open panel if config enabled
+                if (showLogs) {
+                    try { window.toggleMinecraftLogsPanel(true) } catch (e) { /* ignore */ }
+                }
+            } catch (e) {
+                // ignore if ConfigManager not available
+            }
+
             setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
 
             // Init Discord Hook
@@ -796,7 +965,7 @@ async function dlAsync(login = true) {
             try {
                 proc.on('close', (code, signal) => {
                     try {
-                        const payload = { started: false }
+                        const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
                         console.info('[Landing] process closed, notifying instance stopped', { code, signal })
                         if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
                             window.onInstanceStateChanged(payload)
@@ -1553,6 +1722,8 @@ function initNewInterface() {
     }
     
     console.log('[INIT] New interface initialized')
+    // Reflect any known instance state for selected server
+    try { updateLaunchUIForServer(ConfigManager.getSelectedServer()) } catch(e){}
 }
 
 /**
@@ -1658,4 +1829,45 @@ window.testModpackCards = function() {
         console.error('populateModpackInstances not available')
     }
 }
+}
+
+/**
+ * Global instance state handler used by launch code and IPC.
+ * Accepts payloads like { started: boolean, pid?: number, serverId?: string, starting?: boolean }
+ */
+window.onInstanceStateChanged = function(payload){
+    try {
+        if(!payload || typeof payload !== 'object') return
+        const serverId = payload.serverId || ConfigManager.getSelectedServer()
+        if(!serverId) return
+
+        instanceStateMap[serverId] = instanceStateMap[serverId] || {}
+        instanceStateMap[serverId].started = !!payload.started
+        instanceStateMap[serverId].pid = payload.pid || null
+        instanceStateMap[serverId].starting = !!payload.starting
+        instanceStateMap[serverId].timestamp = Date.now()
+
+        // Update UI for selected server and for this serverId
+        updateLaunchUIForServer(serverId)
+        const selected = ConfigManager.getSelectedServer()
+        if(selected && selected !== serverId) updateLaunchUIForServer(selected)
+    } catch(e){ console.debug('[Landing] onInstanceStateChanged error', e) }
+}
+
+// Listen for IPC-relayed instance-state messages
+try {
+    const { ipcRenderer } = require('electron')
+    if(ipcRenderer && typeof ipcRenderer.on === 'function'){
+        ipcRenderer.on('instance-state', (_, state) => {
+            try {
+                // Ensure serverId presence if possible
+                if(state && !state.serverId){
+                    state.serverId = ConfigManager.getSelectedServer()
+                }
+                window.onInstanceStateChanged(state)
+            } catch(e){ console.debug('[Landing] ipc instance-state handler failed', e) }
+        })
+    }
+} catch(e) {
+    // ignore if not running in electron.
 }

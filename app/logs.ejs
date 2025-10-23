@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title><%= lang('logs.title') %></title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'"> 
+    <style>
+        html,body{height:100%;margin:0;background:#0b0b0b;color:#e6e6e6;font-family:system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+        #toolbar{height:40px;padding:6px;display:flex;gap:8px;align-items:center;background:#111}
+        #controls button{padding:6px 10px;background:#1f1f1f;border:1px solid #2b2b2b;color:#e6e6e6;border-radius:4px}
+        #logbox{padding:12px;height:calc(100% - 52px);overflow:auto;white-space:pre-wrap;font-family:monospace;font-size:12px;background:#090909}
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <div id="controls">
+            <button id="clearBtn"><%= lang('logs.clear') %></button>
+            <button id="pauseBtn"><%= lang('logs.pause') %></button>
+            <button id="saveBtn"><%= lang('logs.save') %></button>
+        </div>
+        <div style="flex:1"></div>
+        <div id="status"><%= lang('logs.statusReady') %></div>
+    </div>
+    <div id="logbox"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron')
+        const logbox = document.getElementById('logbox')
+        const clearBtn = document.getElementById('clearBtn')
+        const pauseBtn = document.getElementById('pauseBtn')
+        const saveBtn = document.getElementById('saveBtn')
+        let paused = false
+
+        function appendLine(line){
+            try{
+                if(paused) return
+                logbox.textContent += line + '\n'
+                // keep last ~50000 chars
+                if(logbox.textContent.length > 50000){
+                    logbox.textContent = logbox.textContent.slice(-50000)
+                }
+                logbox.scrollTop = logbox.scrollHeight
+            }catch(e){ }
+        }
+
+        ipcRenderer.on('mc-log-line', (_, line) => {
+            appendLine(line)
+        })
+
+        clearBtn.addEventListener('click', () => { logbox.textContent = '' })
+    pauseBtn.addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? "<%= lang('logs.resume') %>" : "<%= lang('logs.pause') %>" })
+        saveBtn.addEventListener('click', async () => {
+            const { dialog } = require('electron').remote || require('@electron/remote')
+            const fs = require('fs')
+            try{
+                const { filePath } = await dialog.showSaveDialog({ defaultPath: 'minecraft-logs.txt' })
+                if(filePath){
+                    fs.writeFileSync(filePath, logbox.textContent, 'utf8')
+                }
+            }catch(e){ }
+        })
+    </script>
+</body>
+</html>

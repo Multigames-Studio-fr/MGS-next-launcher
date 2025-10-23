@@ -292,6 +292,14 @@ function setupSettingsTabs() {
 /**
  * Settings nav item onclick lisener. Function is exposed so that
  * other UI elements can quickly toggle to a certain tab from other views.
+
+  // Dispatch a tab activation event for other scripts to react to (e.g., request log history)
+  try {
+    const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
+    window.dispatchEvent(ev);
+  } catch (e) {
+    // ignore if CustomEvent unsupported
+  }
  *
  * @param {Element} ele The nav item which has been clicked.
  * @param {boolean} fade Optional. True to fade transition.
@@ -323,6 +331,12 @@ function settingsNavItemListener(ele, fade = true) {
             target: document.getElementById(selectedSettingsTab),
           });
         },
+        complete: () => {
+          try {
+            const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
+            window.dispatchEvent(ev);
+          } catch (e) { /* ignore if CustomEvent unsupported */ }
+        }
       });
     });
   } else {
@@ -334,6 +348,12 @@ function settingsNavItemListener(ele, fade = true) {
             target: document.getElementById(selectedSettingsTab),
           });
         },
+        complete: () => {
+          try {
+            const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
+            window.dispatchEvent(ev);
+          } catch (e) { /* ignore if CustomEvent unsupported */ }
+        }
       });
     });
   }
@@ -664,18 +684,18 @@ function populateAuthAccounts() {
   authKeys.forEach((val) => {
     const acc = authAccounts[val];
 
-    const accHtml = `<div class="settingsAuthAccount flex items-center p-4 bg-gray-800 rounded-lg shadow-lg mb-4" uuid="${acc.uuid}">
+  const accHtml = `<div class="settingsAuthAccount group flex items-center p-4  rounded-lg mb-4" uuid="${acc.uuid}">
         <div class="settingsAuthAccountLeft mr-4">
             <img class="settingsAuthAccountImage w-16 h-16 rounded-full" alt="${acc.displayName}" src="https://mc-heads.net/avatar/${acc.uuid}/60">
         </div>
         <div class="settingsAuthAccountRight flex-grow">
             <div class="settingsAuthAccountDetails mb-4">
                 <div class="settingsAuthAccountDetailPane mb-2">
-                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold text-gray-400">${Lang.queryJS("settings.authAccountPopulate.username")}</div>
+                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold group-hover:text-white text-gray-400">${Lang.queryJS("settings.authAccountPopulate.username")}</div>
                     <div class="settingsAuthAccountDetailValue text-lg font-bold text-white">${acc.displayName}</div>
                 </div>
                 <div class="settingsAuthAccountDetailPane">
-                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold text-gray-400">${Lang.queryJS("settings.authAccountPopulate.uuid")}</div>
+                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold group-hover:text-white text-gray-400">${Lang.queryJS("settings.authAccountPopulate.uuid")}</div>
                     <div class="settingsAuthAccountDetailValue text-lg font-bold text-white">${acc.uuid}</div>
                 </div>
             </div>
@@ -771,62 +791,65 @@ function parseModulesForUI(mdls, submodules, servConf) {
       mdl.rawModule.type === Type.FabricMod
     ) {
       if (mdl.getRequired().value) {
-        reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${submodules ? "settingsSubMod" : ""}" enabled>
-                    <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4">
-                        <div class="settingsModMainWrapper flex items-center justify-between">
-                            <div class="settingsModStatus w-4 h-4 bg-green-500 rounded-full mr-4"></div>
-                            <div class="settingsModDetails flex-grow">
-                                <span class="settingsModName text-lg font-bold text-white">${mdl.rawModule.name}</span>
-                                <span class="settingsModVersion text-sm text-gray-400">v${mdl.mavenComponents.version}</span>
-                            </div>
-                        </div>
-                        <label class="toggleSwitch">
-                            <input type="checkbox" checked class="hidden">
-                            <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
-                        </label>
-                    </div>
-                    ${
-                      mdl.subModules.length > 0
-                        ? `<div class="settingsSubModContainer ml-4">
-                        ${Object.values(
-                          parseModulesForUI(
-                            mdl.subModules,
-                            true,
-                            servConf[mdl.getVersionlessMavenIdentifier()]
-                          )
-                        ).join("")}
-                    </div>`
-                        : ""
-                    }
-                </div>`;
+        const subHtml =
+          mdl.subModules.length > 0
+            ? `<div class="settingsSubModContainer ml-4">${Object.values(
+                parseModulesForUI(
+                  mdl.subModules,
+                  true,
+                  servConf[mdl.getVersionlessMavenIdentifier()]
+                )
+              ).join("")}</div>`
+            : "";
+
+        reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
+          submodules ? "settingsSubMod" : ""
+        }" enabled>
+          <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group">
+            <div class="settingsModMainWrapper flex items-center">
+              <div class="settingsModStatus w-4 h-4 bg-green-500 rounded-full mr-4 flex-shrink-0"></div>
+              <div class="settingsModDetails flex-1">
+                <div class="text-lg font-bold text-white">${mdl.rawModule.name}</div>
+                <div class="text-sm group-hover:text-white text-gray-400">v${mdl.mavenComponents.version}</div>
+              </div>
+            </div>
+          </div>
+          ${subHtml}
+        </div>`;
       } else {
         const conf = servConf[mdl.getVersionlessMavenIdentifier()];
         const val = typeof conf === "object" ? conf.value : conf;
+        const subHtml =
+          mdl.subModules.length > 0
+            ? `<div class="settingsSubModContainer ml-4">${Object.values(
+                parseModulesForUI(mdl.subModules, true, conf.mods)
+              ).join("")}</div>`
+            : "";
 
-        optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${submodules ? "settingsSubMod" : ""}" ${val ? "enabled" : ""}>
-                    <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4">
-                        <div class="settingsModMainWrapper flex items-center justify-between">
-                            <div class="settingsModStatus w-4 h-4 ${val ? "bg-green-500" : "bg-red-500"} rounded-full mr-4"></div>
-                            <div class="settingsModDetails flex-grow">
-                                <span class="settingsModName text-lg font-bold text-white">${mdl.rawModule.name}</span>
-                                <span class="settingsModVersion text-sm text-gray-400">v${mdl.mavenComponents.version}</span>
-                            </div>
-                        </div>
-                        <label class="toggleSwitch">
-                            <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${val ? "checked" : ""} class="hidden">
-                            <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
-                        </label>
-                    </div>
-                    ${
-                      mdl.subModules.length > 0
-                        ? `<div class="settingsSubModContainer ml-4">
-                        ${Object.values(
-                          parseModulesForUI(mdl.subModules, true, conf.mods)
-                        ).join("")}
-                    </div>`
-                        : ""
-                    }
-                </div>`;
+        optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
+          submodules ? "settingsSubMod" : ""
+        }" ${val ? "enabled" : ""}>
+          <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group h-full flex flex-col justify-between">
+            <div class="settingsModMainWrapper flex items-start">
+              <div class="settingsModStatus w-4 h-4 ${
+                val ? "bg-green-500" : "bg-red-500"
+              } rounded-full mr-4 flex-shrink-0"></div>
+              <div class="settingsModDetails flex-1">
+                <div class="text-lg font-bold text-white">${mdl.rawModule.name}</div>
+                <div class="text-sm group-hover:text-white text-gray-400">v${mdl.mavenComponents.version}</div>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center justify-end">
+              <label class="toggleSwitch">
+                <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${
+          val ? "checked" : ""
+        } class="hidden">
+                <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
+              </label>
+            </div>
+          </div>
+          ${subHtml}
+        </div>`;
       }
     }
   }
@@ -918,23 +941,23 @@ async function resolveDropinModsForUI() {
   let dropinMods = "";
 
   for (dropin of CACHE_DROPIN_MODS) {
-      dropinMods += `<div id="${dropin.fullName}" class="settingsBaseMod settingsDropinMod ${!dropin.disabled ? "enabled" : ""}">
-                      <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4">
-                          <div class="settingsModMainWrapper flex items-center justify-between">
-                              <div class="settingsModStatus w-4 h-4 ${!dropin.disabled ? "bg-green-500" : "bg-red-500"} rounded-full mr-4"></div>
-                              <div class="settingsModDetails flex-grow">
-                                  <span class="settingsModName text-lg font-bold text-white">${dropin.name}</span>
-                                  <div class="settingsDropinRemoveWrapper ml-4">
-                                      <button class="settingsDropinRemoveButton bg-red-600 text-white py-2 px-4 rounded hover:bg-red-500" remmod="${dropin.fullName}">${Lang.queryJS("settings.dropinMods.removeButton")}</button>
-                                  </div>
-                              </div>
-                          </div>
-                          <label class="toggleSwitch">
-                              <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} class="hidden">
-                              <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
-                          </label>
-                      </div>
-                  </div>`;
+    dropinMods += `<div id="${dropin.fullName}" class="settingsBaseMod settingsDropinMod ${!dropin.disabled ? "enabled" : ""}">
+            <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group">
+              <div class="settingsModMainWrapper flex items-center justify-between">
+                <div class="settingsModStatus w-4 h-4 ${!dropin.disabled ? "bg-green-500" : "bg-red-500"} rounded-full mr-4"></div>
+                <div class="settingsModDetails flex-grow">
+                  <span class="settingsModName text-lg font-bold text-white">${dropin.name}</span>
+                  <div class="settingsDropinRemoveWrapper ml-4">
+                    <button class="settingsDropinRemoveButton bg-red-600 text-white py-2 px-4 rounded hover:bg-red-500" remmod="${dropin.fullName}">${Lang.queryJS("settings.dropinMods.removeButton")}</button>
+                  </div>
+                </div>
+              </div>
+              <label class="toggleSwitch">
+                <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} class="hidden">
+                <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
+              </label>
+            </div>
+          </div>`;
   }
   
   document.getElementById("settingsDropinModsContent").innerHTML = dropinMods;
@@ -1160,7 +1183,7 @@ async function loadSelectedServerOnModsTab() {
             <img class="serverListingImg w-16 h-16 rounded-full mr-4" src="${serv.rawServer.icon}"/>
             <div class="serverListingDetails flex flex-col">
                 <span class="serverListingName text-lg font-bold text-white">${serv.rawServer.name}</span>
-                <span class="serverListingDescription text-sm text-gray-400">${
+                <span class="serverListingDescription text-sm group-hover:text-white text-gray-400">${
                   serv.rawServer.description
                 }</span>
                 <div class="serverListingInfo flex items-center mt-2 space-x-4">
@@ -1555,15 +1578,27 @@ function populateVersionInformation(
   titleElement,
   checkElement
 ) {
-  valueElement.innerHTML = version;
+  // Be defensive: caller may pass null elements if the DOM isn't present.
+  if (valueElement) {
+    valueElement.innerHTML = version;
+  }
+
   if (isPrerelease(version)) {
-    titleElement.innerHTML = Lang.queryJS("settings.about.preReleaseTitle");
-    titleElement.style.color = "#ff886d";
-    checkElement.style.background = "#ff886d";
+    if (titleElement) {
+      titleElement.innerHTML = Lang.queryJS("settings.about.preReleaseTitle");
+      titleElement.style.color = "#ff886d";
+    }
+    if (checkElement) {
+      checkElement.style.background = "#ff886d";
+    }
   } else {
-    titleElement.innerHTML = Lang.queryJS("settings.about.stableReleaseTitle");
-    titleElement.style.color = null;
-    checkElement.style.background = null;
+    if (titleElement) {
+      titleElement.innerHTML = Lang.queryJS("settings.about.stableReleaseTitle");
+      titleElement.style.color = null;
+    }
+    if (checkElement) {
+      checkElement.style.background = null;
+    }
   }
 }
 
@@ -1620,9 +1655,15 @@ function prepareAboutTab() {
 
 /**
  * Update Tab
+ *
+ * Note: the Update UI was moved into the About tab (id="#settingsAboutUpdates").
+ * Historically this module assumed an element with id "settingsTabUpdate" existed
+ * and attempted to access children immediately which will throw if the element
+ * is missing. To support both old and new layouts we only query DOM elements
+ * defensively at runtime (document.getElementById) and avoid dereferencing a
+ * possibly-null wrapper element.
  */
 
-const settingsTabUpdate = document.getElementById("settingsTabUpdate");
 const settingsUpdateTitle = document.getElementById("settingsUpdateTitle");
 const settingsUpdateVersionCheck = document.getElementById(
   "settingsUpdateVersionCheck"
@@ -1633,15 +1674,6 @@ const settingsUpdateVersionTitle = document.getElementById(
 const settingsUpdateVersionValue = document.getElementById(
   "settingsUpdateVersionValue"
 );
-const settingsUpdateChangelogTitle = settingsTabUpdate.getElementsByClassName(
-  "settingsChangelogTitle"
-)[0];
-const settingsUpdateChangelogText = settingsTabUpdate.getElementsByClassName(
-  "settingsChangelogText"
-)[0];
-const settingsUpdateChangelogCont = settingsTabUpdate.getElementsByClassName(
-  "settingsChangelogContainer"
-)[0];
 const settingsUpdateActionButton = document.getElementById(
   "settingsUpdateActionButton"
 );
@@ -1719,10 +1751,19 @@ try {
  * @param {function} handler Optional. New button event handler.
  */
 function settingsUpdateButtonStatus(text, disabled = false, handler = null) {
-  settingsUpdateActionButton.innerHTML = text;
-  settingsUpdateActionButton.disabled = disabled;
+  // Use a dynamic lookup in case the DOM wasn't present when this file
+  // was initially parsed (cached consts may be null). If the button
+  // is not present, silently return.
+  const btn =
+    typeof settingsUpdateActionButton !== "undefined" &&
+    settingsUpdateActionButton
+      ? settingsUpdateActionButton
+      : document.getElementById("settingsUpdateActionButton");
+  if (!btn) return;
+  btn.innerHTML = text;
+  btn.disabled = disabled;
   if (handler != null) {
-    settingsUpdateActionButton.onclick = handler;
+    btn.onclick = handler;
   }
 }
 
@@ -1732,18 +1773,41 @@ function settingsUpdateButtonStatus(text, disabled = false, handler = null) {
  * @param {Object} data The update data.
  */
 function populateSettingsUpdateInformation(data) {
+  // Query DOM elements at runtime in case the settings DOM hasn't been
+  // mounted when this module was initially executed. If the update
+  // tab is not found, try the About updates card used after UI refactor.
+  let tab = document.getElementById("settingsTabUpdate");
+  if (!tab) tab = document.getElementById("settingsAboutUpdates");
+  if (!tab) return;
+
+  const titleEl = document.getElementById("settingsUpdateTitle");
+  const versionCheckEl = document.getElementById(
+    "settingsUpdateVersionCheck"
+  );
+  const versionTitleEl = document.getElementById(
+    "settingsUpdateVersionTitle"
+  );
+  const versionValueEl = document.getElementById(
+    "settingsUpdateVersionValue"
+  );
+  const changelogTitleEl = tab.getElementsByClassName("settingsChangelogTitle")[0];
+  const changelogTextEl = tab.getElementsByClassName("settingsChangelogText")[0];
+  const changelogContEl = tab.getElementsByClassName("settingsChangelogContainer")[0];
+
   if (data != null) {
-    settingsUpdateTitle.innerHTML = isPrerelease(data.version)
-      ? Lang.queryJS("settings.updates.newPreReleaseTitle")
-      : Lang.queryJS("settings.updates.newReleaseTitle");
-    settingsUpdateChangelogCont.style.display = null;
-    settingsUpdateChangelogTitle.innerHTML = data.releaseName;
-    settingsUpdateChangelogText.innerHTML = data.releaseNotes;
+    if (titleEl) {
+      titleEl.innerHTML = isPrerelease(data.version)
+        ? Lang.queryJS("settings.updates.newPreReleaseTitle")
+        : Lang.queryJS("settings.updates.newReleaseTitle");
+    }
+    if (changelogContEl) changelogContEl.style.display = null;
+    if (changelogTitleEl) changelogTitleEl.innerHTML = data.releaseName;
+    if (changelogTextEl) changelogTextEl.innerHTML = data.releaseNotes;
     populateVersionInformation(
       data.version,
-      settingsUpdateVersionValue,
-      settingsUpdateVersionTitle,
-      settingsUpdateVersionCheck
+      versionValueEl,
+      versionTitleEl,
+      versionCheckEl
     );
 
     if (process.platform === "darwin") {
@@ -1761,21 +1825,23 @@ function populateSettingsUpdateInformation(data) {
         false,
         () => {
           // Disable button and show downloading state immediately.
-          settingsUpdateButtonStatus(Lang.queryJS("settings.updates.downloadingButton"), true);
+          settingsUpdateButtonStatus(
+            Lang.queryJS("settings.updates.downloadingButton"),
+            true
+          );
           ipcRenderer.send("autoUpdateAction", "downloadUpdate");
         }
       );
     }
   } else {
-    settingsUpdateTitle.innerHTML = Lang.queryJS(
-      "settings.updates.latestVersionTitle"
-    );
-    settingsUpdateChangelogCont.style.display = "none";
+    if (titleEl)
+      titleEl.innerHTML = Lang.queryJS("settings.updates.latestVersionTitle");
+    if (changelogContEl) changelogContEl.style.display = "none";
     populateVersionInformation(
       remote.app.getVersion(),
-      settingsUpdateVersionValue,
-      settingsUpdateVersionTitle,
-      settingsUpdateVersionCheck
+      versionValueEl,
+      versionTitleEl,
+      versionCheckEl
     );
     settingsUpdateButtonStatus(
       Lang.queryJS("settings.updates.checkForUpdatesButton"),

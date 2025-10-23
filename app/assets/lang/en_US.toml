@@ -71,6 +71,15 @@ launchFullscreenTitle = "Lancer en plein écran"
 autoConnectTitle = "Connexion automatique au serveur au lancement"
 launchDetachedTitle = "Lancer le processus du jeu détaché du lanceur"
 launchDetachedDesc = "Si le jeu n'est pas détaché, fermer le lanceur fermera également le jeu."
+showMinecraftLogsTitle = "Afficher les logs Minecraft"
+showMinecraftLogsDesc = "Affiche la sortie des logs du jeu dans la console du lanceur au démarrage et pendant l'exécution. Activez cette option si vous souhaitez déboguer ou voir les messages du jeu."
+mcLogsPanelTitle = "Console Minecraft"
+mcLogsPanelDesc = "Affiche en direct la sortie standard et les erreurs du jeu lorsque celui-ci est lancé. Vous pouvez ouvrir cette sortie dans une fenêtre séparée."
+mcLogsOpenWindow = "Ouvrir dans une fenêtre"
+mcLogsClear = "Effacer"
+navLogs = "Logs"
+logsTabHeaderText = "Logs"
+logsTabHeaderDesc = "Consultez les logs Minecraft en direct et ouvrez-les dans une fenêtre séparée si nécessaire."
 tabModsHeaderText = "Paramètres des mods"
 tabModsHeaderDesc = "Activez ou désactivez les mods."
 switchServerButton = "Basculer"
@@ -123,12 +132,18 @@ checkForUpdates = "Vérifier les mises à jour"
 whatsNew = "Quoi de neuf"
 updateReleaseNotes = "Notes de mise à jour"
 
+navHeaderText = "navHeaderText"
+sourceGithubLink = "Source (GitHub)"
+supportLink = "Support"
 [ejs.waiting]
 waitingText = "En attente de Microsoft.."
 
 [ejs.welcome]
 continueButton = "CONTINUER"
 
+welcomeHeader = "welcomeHeader"
+welcomeDescription = "welcomeDescription"
+welcomeDescCTA = "welcomeDescCTA"
 [js.discord]
 waiting = "En attente du client.."
 state = "MultiGames Studio V2.2.0"
@@ -207,6 +222,7 @@ doneEnjoyServer = "Terminé. Profitez du serveur !"
 checkConsoleForDetails = "Veuillez consulter la console (CTRL + Shift + i) pour plus de détails."
 
 
+errorDuringLaunchText = "errorDuringLaunchText"
 [js.landing.news]
 checking = "Vérification des actualités"
 
@@ -280,6 +296,7 @@ latestVersionTitle = "Vous utilisez la dernière version"
 checkForUpdatesButton = "Vérifier les mises à jour"
 checkingForUpdatesButton = "Vérification des mises à jour en cours.."
 
+installNowButton = "installNowButton"
 [js.uibinder.startup]
 fatalErrorTitle = "Erreur fatale : Impossible de charger l'index de distribution"
 fatalErrorMessage = "Une connexion n'a pas pu être établie avec nos serveurs pour télécharger l'index de distribution. Aucune copie locale n'était disponible pour le chargement. <br><br>L'index de distribution est un fichier essentiel qui fournit les dernières informations sur le serveur. Le lanceur ne peut pas démarrer sans lui. Assurez-vous d'être connecté à Internet et relancez l'application."
@@ -297,3 +314,30 @@ selectAnotherAccountButton = "Sélectionner un autre compte"
 checkingForUpdateButton = "Vérifier les mises à jour"
 installNowButton = "Installer maintenant"
 checkForUpdatesButton = "Vérifier les mises à jour"
+
+
+[ejs.app]
+title = "{appName}"
+
+[js.settings.msftLogin]
+errorTitle = "Quelque chose s'est mal passé"
+errorMessage = "L'authentification Microsoft a échoué. Veuillez réessayer."
+okButton = "OK"
+
+[js.settings.msftLogout]
+errorTitle = "Quelque chose s'est mal passé"
+errorMessage = "La déconnexion Microsoft a échoué. Veuillez réessayer."
+okButton = "OK"
+
+[js.landing]
+launchButton = "JOUER"
+tabLaunchReady = "Prêt à lancer"
+noSelection = "Aucun serveur sélectionné"
+
+[ejs.logs]
+title = "Logs"
+clear = "Effacer"
+pause = "Pause"
+save = "Enregistrer"
+statusReady = "Prêt"
+resume = "Reprendre"

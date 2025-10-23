@@ -64,6 +64,14 @@
                         </svg>
                         <%- lang('landing.launchButton') %>
                     </button>
+
+                    <!-- Stop button (visible when instance running) - styled like play button -->
+                    <button id="stop_button" style="display:none;"
+                        class="play-btn stop-btn flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-lg sm:text-xl md:text-2xl shadow-xl transition-all duration-200 w-full sm:w-auto">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                        Arrêter
+                    </button>
+
                     <button id="settingsMediaButton"
                         class="settings-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-[#181818] hover:bg-[#F8BA59]/80 text-white transition shadow-lg">
 
@@ -118,6 +126,7 @@
                         </button>
                     </div>
                 </div>
+                <!-- Minecraft Logs Panel removed (moved to Settings -> Logs) -->
                 <!-- Sélecteur d'instance (optionnel, à afficher si plusieurs instances) -->
                 <div class="flex items-center gap-2 mb-8 hidden">
                     <span class="text-[#F8BA59] font-bold text-xl"><!-- Icone instance dynamique --></span>
