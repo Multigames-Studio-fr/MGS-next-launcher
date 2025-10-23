@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mise à jour</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0f0f0f;color:#fff;font-family:Inter,Segoe UI,Helvetica,Arial}
+    .wrap{display:flex;align-items:center;gap:16px;padding:18px}
+    .logo{width:64px;height:64px;flex:0 0 64px}
+    .content{flex:1}
+    .title{font-size:16px;font-weight:700;margin-bottom:6px}
+    .desc{font-size:13px;color:#cfcfcf;margin-bottom:8px}
+    .progress{height:10px;background:#222;border-radius:6px;overflow:hidden}
+    .progress > .bar{height:100%;width:0%;background:#4f9dff}
+    .percent{font-size:12px;color:#aaa;margin-top:6px}
+    .btn{display:inline-block;margin-top:10px;padding:8px 12px;background:#2b7cff;color:#fff;border-radius:6px;cursor:pointer}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="logo" src="assets/images/SealCircle.png" alt="logo"/>
+    <div class="content">
+      <div id="title" class="title">Recherche des mises à jour...</div>
+      <div id="desc" class="desc">Veuillez patienter pendant que le lanceur vérifie la disponibilité d'une nouvelle version.</div>
+      <div id="progressWrap" class="hidden">
+        <div class="progress"><div id="progressBar" class="bar"></div></div>
+        <div id="percent" class="percent">0%</div>
+      </div>
+      <div id="actionRow" class="hidden">
+        <div id="installBtn" class="btn">Installer maintenant</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron')
+
+    function showChecking() {
+      document.getElementById('title').innerText = 'Recherche des mises à jour...'
+      document.getElementById('desc').innerText = 'Veuillez patienter pendant que le lanceur vérifie la disponibilité d\'une nouvelle version.'
+      document.getElementById('progressWrap').classList.add('hidden')
+      document.getElementById('actionRow').classList.add('hidden')
+    }
+
+    function showNoUpdate() {
+      document.getElementById('title').innerText = 'Aucune mise à jour disponible'
+      document.getElementById('desc').innerText = 'Vous utilisez la dernière version.'
+      document.getElementById('progressWrap').classList.add('hidden')
+      document.getElementById('actionRow').classList.add('hidden')
+      setTimeout(() => { window.close() }, 1300)
+    }
+
+    function showUpdateAvailable(info) {
+      const ver = (info && info.version) ? info.version : ''
+      document.getElementById('title').innerText = 'Mise à jour disponible' + (ver ? (': ' + ver) : '')
+      document.getElementById('desc').innerText = 'Téléchargement en cours...' 
+      document.getElementById('progressWrap').classList.remove('hidden')
+      document.getElementById('actionRow').classList.add('hidden')
+    }
+
+    function showProgress(progress) {
+      const p = progress && (progress.percent || progress.percent === 0) ? Math.round(progress.percent) : null
+      if (p !== null) {
+        document.getElementById('progressBar').style.width = Math.min(100, Math.max(0, p)) + '%'
+        document.getElementById('percent').innerText = p + '%'
+      } else {
+        document.getElementById('progressBar').style.width = '0%'
+        document.getElementById('percent').innerText = '...'
+      }
+    }
+
+    function showDownloaded() {
+      document.getElementById('title').innerText = 'Téléchargement terminé'
+      document.getElementById('desc').innerText = 'La mise à jour est prête à être installée.'
+      document.getElementById('progressWrap').classList.add('hidden')
+      document.getElementById('actionRow').classList.remove('hidden')
+    }
+
+    function showError(err) {
+      document.getElementById('title').innerText = 'Erreur lors de la mise à jour'
+      document.getElementById('desc').innerText = err && err.message ? err.message : String(err || 'Erreur inconnue')
+      document.getElementById('progressWrap').classList.add('hidden')
+      document.getElementById('actionRow').classList.add('hidden')
+      setTimeout(() => { window.close() }, 3000)
+    }
+
+    ipcRenderer.on('autoUpdateNotification', (ev, type, payload) => {
+      try {
+        switch(type) {
+          case 'checking-for-update':
+            showChecking();
+            break;
+          case 'update-available':
+            showUpdateAvailable(payload);
+            break;
+          case 'download-progress':
+            showProgress(payload);
+            break;
+          case 'update-downloaded':
+            showDownloaded();
+            break;
+          case 'update-not-available':
+            showNoUpdate();
+            break;
+          case 'realerror':
+            showError(payload);
+            break;
+          default:
+            break;
+        }
+      } catch (e) {
+        // ignore UI errors
+      }
+    })
+
+    // install button
+    document.getElementById('installBtn').addEventListener('click', () => {
+      ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+      // close the window, installation will proceed
+      setTimeout(() => { try { window.close() } catch (e) {} }, 200)
+    })
+
+    // allow closing by click on background when idle
+    document.body.addEventListener('click', (e) => {
+      const title = document.getElementById('title').innerText || ''
+      if (title.indexOf('Téléchargement') === -1 && title.indexOf('Recherche') === -1) {
+        try { window.close() } catch (e) {}
+      }
+    })
+
+  </script>
+</body>
+</html>

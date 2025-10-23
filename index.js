@@ -201,6 +201,7 @@ function initAutoUpdater(event, data) {
 
     autoUpdater.on('update-available', (info) => {
         log.info('[AutoUpdater] update-available:', info && info.version)
+        try { createUpdateWindow() } catch (e) { /* best-effort */ }
         sendAutoUpdateNotification(event, 'update-available', info)
 
         // If autoDownload is disabled (or if we haven't started download yet),
@@ -275,7 +276,8 @@ function initAutoUpdater(event, data) {
         } catch (e) {
             // ignore watchdog errors
         }
-        // Broadcast to all renderer windows if event not present in closure.
+        // Ensure update window exists and broadcast to all renderer windows if event not present in closure.
+        try { createUpdateWindow() } catch (e) { /* best-effort */ }
         try {
             const { BrowserWindow } = require('electron')
             const wins = BrowserWindow.getAllWindows()
@@ -296,6 +298,15 @@ function initAutoUpdater(event, data) {
             global.__autoUpdaterDownloaded = info || true
         } catch (e) { /* noop */ }
         sendAutoUpdateNotification(event, 'update-downloaded', info)
+        // Close the update window after a short delay so user sees completion message
+        try {
+            if (updateWindow && !updateWindow.isDestroyed()) {
+                setTimeout(() => {
+                    try { updateWindow.close() } catch (e) { }
+                    updateWindow = null
+                }, 1600)
+            }
+        } catch (e) { }
         // Download finished, clear downloading flag
         try {
             global.__autoUpdaterDownloading = false
@@ -308,12 +319,18 @@ function initAutoUpdater(event, data) {
     autoUpdater.on('update-not-available', (info) => {
         log.info('[AutoUpdater] update-not-available')
         sendAutoUpdateNotification(event, 'update-not-available', info)
+        try {
+            if (updateWindow && !updateWindow.isDestroyed()) {
+                setTimeout(() => { try { updateWindow.close() } catch (e) { } ; updateWindow = null }, 1200)
+            }
+        } catch (e) { }
     })
 
     autoUpdater.on('checking-for-update', () => {
         log.info('[AutoUpdater] checking-for-update')
         // Reset any previously stored downloaded state when we start a new check
         try { global.__autoUpdaterDownloaded = false } catch (e) { }
+        try { createUpdateWindow() } catch (e) { /* best-effort */ }
         sendAutoUpdateNotification(event, 'checking-for-update')
     })
 
@@ -678,6 +695,7 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGOUT, (ipcEvent, uuid, isLastAccount) => {
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 let mcLogWindow
+let updateWindow
 const mcLogger = require(path.join(__dirname, 'mc-logger'))
 
 // Setup broadcaster so mc-logger can forward lines to renderer windows
@@ -1096,3 +1114,52 @@ ipcMain.on('mc-log-line', (event, line) => {
         try { log.warn('[IPC] mc-log-line broadcast failed', e && e.message) } catch (er) { }
     }
 })
+
+/**
+ * Create a small update status window used to show checking/downloading state.
+ * This window listens to the same `autoUpdateNotification` IPC events as the
+ * main renderer, so we only need to ensure it exists early in the flow.
+ */
+function createUpdateWindow() {
+    try {
+        if (updateWindow && !updateWindow.isDestroyed()) {
+            try { updateWindow.focus() } catch (e) { }
+            return
+        }
+
+        updateWindow = new BrowserWindow({
+            width: 420,
+            height: 160,
+            resizable: false,
+            alwaysOnTop: true,
+            frame: false,
+            transparent: false,
+            modal: false,
+            show: true,
+            icon: getPlatformIcon('multigames-logo'),
+            webPreferences: {
+                preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
+                nodeIntegration: true,
+                contextIsolation: false
+            },
+            backgroundColor: '#111111'
+        })
+
+        remoteMain.enable(updateWindow.webContents)
+
+        // Provide language helper and random background id same as main window
+        const data = {
+            lang: (str, placeHolders) => LangLoader.queryEJS(str, placeHolders)
+        }
+        Object.entries(data).forEach(([key, val]) => ejse.data(key, val))
+
+        updateWindow.loadURL(pathToFileURL(path.join(__dirname, 'app', 'update.ejs')).toString())
+        updateWindow.removeMenu()
+
+        updateWindow.on('closed', () => {
+            updateWindow = null
+        })
+    } catch (e) {
+        try { log.warn('[UpdateWindow] failed to create update window', e && e.message) } catch (er) { }
+    }
+}
