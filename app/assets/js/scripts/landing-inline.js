@@ -61,6 +61,159 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 })();
 
+// --- Dev/Test helpers -------------------------------------------------
+// Expose simple functions to simulate instance start/stop for testing the
+// renderer<->main<->renderer path without actually launching the game.
+try {
+    window._mgstest = window._mgstest || {};
+    window._mgstest.start = function (pid = 12345) {
+        const payload = { started: true, pid };
+        console.info('[MGSTest] Simulating instance START', payload);
+        try {
+            if (typeof window.onInstanceStateChanged === 'function') window.onInstanceStateChanged(payload);
+        } catch (e) { console.warn('[MGSTest] onInstanceStateChanged threw', e); }
+        try {
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.send('instance-state', payload);
+        } catch (e) {
+            console.debug('[MGSTest] ipcRenderer not available to send instance-state START', e);
+        }
+    };
+
+    window._mgstest.stop = function () {
+        const payload = { started: false };
+        console.info('[MGSTest] Simulating instance STOP', payload);
+        try {
+            if (typeof window.onInstanceStateChanged === 'function') window.onInstanceStateChanged(payload);
+        } catch (e) { console.warn('[MGSTest] onInstanceStateChanged threw', e); }
+        try {
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.send('instance-state', payload);
+        } catch (e) {
+            console.debug('[MGSTest] ipcRenderer not available to send instance-state STOP', e);
+        }
+    };
+    console.info('[MGSTest] helpers installed: window._mgstest.start(pid), window._mgstest.stop()');
+} catch (e) {
+    // ignore in environments where require is not available
+}
+
+
+// INSTANCE STATE WATCHER
+// Affiche #launch_details quand une instance est démarrée (flexible sur le shape de l'objet)
+(function () {
+    function instanceIsStarted(inst) {
+        if (!inst) return false;
+        try {
+            // Accept many possible conventions
+            if (typeof inst === 'boolean') return inst === true;
+            if (Array.isArray(inst)) return inst.some(instanceIsStarted);
+            if (typeof inst === 'object') {
+                if (inst.state && String(inst.state).toLowerCase() === 'started') return true;
+                if (inst.status && String(inst.status).toLowerCase() === 'started') return true;
+                if (inst.running === true) return true;
+                if (inst.started === true) return true;
+                if (inst.isRunning === true) return true;
+                // Some APIs use numeric codes or progress flags
+                if (inst.progress && String(inst.progress).toLowerCase() === 'running') return true;
+            }
+        } catch (e) {
+            console.warn('instanceIsStarted check failed', e);
+        }
+        return false;
+    }
+
+    function checkAndToggle(target) {
+        try {
+            const root = document.getElementById('launch_details');
+            const anyStarted = Array.isArray(target) ? target.some(instanceIsStarted) : instanceIsStarted(target);
+
+            if (typeof window.gameLaunchUI === 'object' && window.gameLaunchUI) {
+                if (anyStarted) {
+                    window.gameLaunchUI.show();
+                } else {
+                    window.gameLaunchUI.hide();
+                }
+                return;
+            }
+
+            // Fallback: toggle the DOM directly
+            if (root) {
+                if (anyStarted) {
+                    root.classList.remove('hidden');
+                    root.classList.add('active');
+                } else {
+                    root.classList.remove('active');
+                    setTimeout(() => root.classList.add('hidden'), 380);
+                }
+            }
+        } catch (e) {
+            console.warn('checkAndToggle failed', e);
+        }
+    }
+
+    // Public API for other modules: call with a single instance or an array of instances
+    window.onInstanceStateChanged = function (instanceOrList) {
+        console.info('[LandingInline] onInstanceStateChanged called with', instanceOrList);
+        checkAndToggle(instanceOrList);
+    };
+
+    // If ipcRenderer is available (Electron renderer), listen for main-relayed instance-state events
+    try {
+        const { ipcRenderer } = require('electron')
+        if (ipcRenderer && typeof ipcRenderer.on === 'function') {
+            ipcRenderer.on('instance-state', (evt, state) => {
+                try {
+                    console.info('[LandingInline] received instance-state via IPC', state)
+                    checkAndToggle(state)
+                } catch (e) {
+                    console.warn('Failed to handle instance-state ipc', e)
+                }
+            })
+        }
+    } catch (e) {
+        // Not running in electron renderer or require not available - ignore silently
+    }
+
+    // Wrap setSelectedInstance if present so selection changes update the UI
+    try {
+        const origSet = window.setSelectedInstance;
+        if (typeof origSet === 'function') {
+            window.setSelectedInstance = function (instance) {
+                try {
+                    const res = origSet.apply(this, arguments);
+                    checkAndToggle(instance);
+                    return res;
+                } catch (e) {
+                    console.warn('wrapped setSelectedInstance failed', e);
+                    return origSet.apply(this, arguments);
+                }
+            };
+        }
+    } catch (e) {
+        console.warn('Failed to wrap setSelectedInstance', e);
+    }
+
+    // Also check when populateModpackInstances is called (passes an array)
+    try {
+        const origPop = window.populateModpackInstances;
+        if (typeof origPop === 'function') {
+            window.populateModpackInstances = function (instances) {
+                const res = origPop.apply(this, arguments);
+                try {
+                    checkAndToggle(instances);
+                } catch (e) {
+                    console.warn('post-populate check failed', e);
+                }
+                return res;
+            };
+        }
+    } catch (e) {
+        console.warn('Failed to wrap populateModpackInstances', e);
+    }
+
+})();
+
 // Progress bar handler compatible avec le code existant
 (function () {
     const root = document.querySelector('.game-launch-overlay');

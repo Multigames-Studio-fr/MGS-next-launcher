@@ -268,6 +268,13 @@ async function showMainUI(data){
         // The relaunch frequency is usually far too high.
         if(!isDev && isLoggedIn){
             validateSelectedAccount()
+            // Start periodic validation and schedule based on token expiry
+            try {
+                if (typeof schedulePeriodicValidation === 'function') schedulePeriodicValidation()
+                if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+            } catch (e) {
+                console.warn('Failed to start session validation schedulers', e)
+            }
         }
 
         if(ConfigManager.isFirstLaunch()){
@@ -621,6 +628,38 @@ function setSelectedAccount(uuid){
     ConfigManager.save()
     updateSelectedAccount(authAcc)
     validateSelectedAccount()
+    try {
+        if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+    } catch (e) {
+        console.warn('Failed to reschedule validation after setSelectedAccount', e)
+    }
+}
+
+// When the app regains focus or becomes visible again, validate tokens immediately.
+try {
+    window.addEventListener('focus', () => {
+        try {
+            console.debug('[UIBINDER] window.focus -> validateSelectedAccount')
+            validateSelectedAccount()
+            if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+        } catch (e) {
+            console.warn('Focus handler validation failed', e)
+        }
+    })
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            try {
+                console.debug('[UIBINDER] visibilitychange visible -> validateSelectedAccount')
+                validateSelectedAccount()
+                if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+            } catch (e) {
+                console.warn('Visibility handler validation failed', e)
+            }
+        }
+    })
+} catch (e) {
+    // ignoring errors attaching handlers in weird environments
 }
 
 // Synchronous Listener

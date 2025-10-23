@@ -116,6 +116,19 @@ function sendAutoUpdateNotification(preferEvent /* may be undefined */, type, pa
 	}
 }
 
+// Relay for instance state changes from renderer to all renderers (useful when a process is spawned)
+ipcMain.on('instance-state', (event, state) => {
+    try {
+        const { BrowserWindow } = require('electron')
+        const wins = BrowserWindow.getAllWindows()
+        for (const w of wins) {
+            try { w.webContents.send('instance-state', state) } catch (e) { /* ignore per-window send errors */ }
+        }
+    } catch (e) {
+        try { log.warn('[IPC] failed to broadcast instance-state', e && e.message) } catch (err) { /* noop */ }
+    }
+})
+
 // Setup auto updater.
 function initAutoUpdater(event, data) {
     // Prevent multiple initializations (listeners added multiple times)

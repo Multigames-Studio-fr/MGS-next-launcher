@@ -129,6 +129,31 @@ function calculateExpiryDate(nowMs, epiresInS) {
 }
 
 /**
+ * Retry helper with exponential backoff for transient failures.
+ * Retries only when the wrapped function throws (network/IO).
+ *
+ * @param {function(): Promise<any>} fn Async function to call
+ * @param {number} attempts Number of attempts (default 3)
+ * @param {number} delayMs Initial delay in ms (default 1000)
+ */
+async function retryAsync(fn, attempts = 3, delayMs = 1000) {
+    let lastErr
+    for (let i = 0; i < attempts; i++) {
+        try {
+            return await fn()
+        } catch (err) {
+            lastErr = err
+            log.warn(`Retry ${i+1}/${attempts} failed`, err)
+            if (i < attempts - 1) {
+                const wait = delayMs * Math.pow(2, i)
+                await new Promise(r => setTimeout(r, wait))
+            }
+        }
+    }
+    throw lastErr
+}
+
+/**
  * Add a Microsoft account. This will pass the provided auth code to Mojang's OAuth2.0 flow.
  * The resultant data will be stored as an auth account in the configuration database.
  * 
@@ -214,14 +239,20 @@ async function validateSelectedMojangAccount(){
     if(response.responseStatus === RestResponseStatus.SUCCESS) {
         const isValid = response.data
         if(!isValid){
-            const refreshResponse = await MojangRestAPI.refresh(current.accessToken, ConfigManager.getClientToken())
-            if(refreshResponse.responseStatus === RestResponseStatus.SUCCESS) {
-                const session = refreshResponse.data
-                ConfigManager.updateMojangAuthAccount(current.uuid, session.accessToken)
-                ConfigManager.save()
-            } else {
-                log.error('Error while validating selected profile:', refreshResponse.error)
-                log.info('Account access token is invalid.')
+            try {
+                const refreshResponse = await retryAsync(() => MojangRestAPI.refresh(current.accessToken, ConfigManager.getClientToken()), 3, 1000)
+                if(refreshResponse.responseStatus === RestResponseStatus.SUCCESS) {
+                    const session = refreshResponse.data
+                    ConfigManager.updateMojangAuthAccount(current.uuid, session.accessToken)
+                    ConfigManager.save()
+                } else {
+                    log.error('Error while validating selected profile:', refreshResponse.error)
+                    log.info('Account access token is invalid.')
+                    return false
+                }
+            } catch (err) {
+                log.warn('Mojang refresh failed after retries', err)
+                // treat as transient failure; return false to let UI handle (it may re-add account)
                 return false
             }
             log.info('Account access token validated.')
@@ -260,7 +291,7 @@ async function validateSelectedMicrosoftAccount(){
     if(msExpired) {
         // MS expired, do full refresh.
         try {
-            const res = await fullMicrosoftAuthFlow(current.microsoft.refresh_token, AUTH_MODE.MS_REFRESH)
+            const res = await retryAsync(() => fullMicrosoftAuthFlow(current.microsoft.refresh_token, AUTH_MODE.MS_REFRESH), 3, 1500)
 
             ConfigManager.updateMicrosoftAuthAccount(
                 current.uuid,
@@ -273,12 +304,13 @@ async function validateSelectedMicrosoftAccount(){
             ConfigManager.save()
             return true
         } catch(err) {
+            log.warn('MS full refresh failed after retries', err)
             return false
         }
     } else {
         // Only MC expired, use existing MS token.
         try {
-            const res = await fullMicrosoftAuthFlow(current.microsoft.access_token, AUTH_MODE.MC_REFRESH)
+            const res = await retryAsync(() => fullMicrosoftAuthFlow(current.microsoft.access_token, AUTH_MODE.MC_REFRESH), 3, 1000)
 
             ConfigManager.updateMicrosoftAuthAccount(
                 current.uuid,
@@ -292,6 +324,7 @@ async function validateSelectedMicrosoftAccount(){
             return true
         }
         catch(err) {
+            log.warn('MC refresh failed after retries', err)
             return false
         }
     }

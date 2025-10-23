@@ -750,9 +750,29 @@ async function dlAsync(login = true) {
             }
         }
 
+
         try {
             // Build Minecraft process.
             proc = pb.build()
+
+            // Notify UI that the instance has started (so landing-inline watcher updates the launch overlay)
+            try {
+                const payload = { started: true, pid: proc && proc.pid ? proc.pid : null }
+                if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
+                    console.info('[Landing] calling window.onInstanceStateChanged', payload)
+                    window.onInstanceStateChanged(payload)
+                }
+                // Also explicitly send to main so it can broadcast to other renderers
+                try {
+                    const { ipcRenderer } = require('electron')
+                    console.info('[Landing] ipcRenderer.send instance-state', payload)
+                    ipcRenderer.send('instance-state', payload)
+                } catch (e) {
+                    loggerLaunchSuite && loggerLaunchSuite.debug && loggerLaunchSuite.debug('ipcRenderer not available to send instance-state', e)
+                }
+            } catch (e) {
+                loggerLaunchSuite && loggerLaunchSuite.warn && loggerLaunchSuite.warn('Failed to notify instance started', e)
+            }
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)
@@ -770,6 +790,29 @@ async function dlAsync(login = true) {
                     hasRPC = false
                     proc = null
                 })
+            }
+
+            // Always listen for process close to notify UI watcher
+            try {
+                proc.on('close', (code, signal) => {
+                    try {
+                        const payload = { started: false }
+                        console.info('[Landing] process closed, notifying instance stopped', { code, signal })
+                        if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
+                            window.onInstanceStateChanged(payload)
+                        }
+                        try {
+                            const { ipcRenderer } = require('electron')
+                            ipcRenderer.send('instance-state', payload)
+                        } catch (e) {
+                            loggerLaunchSuite && loggerLaunchSuite.debug && loggerLaunchSuite.debug('ipcRenderer not available to send instance-state stop', e)
+                        }
+                    } catch (e) {
+                        loggerLaunchSuite && loggerLaunchSuite.warn && loggerLaunchSuite.warn('Failed to notify instance stopped', e)
+                    }
+                })
+            } catch (e) {
+                // silently ignore if proc not present or listener fails
             }
 
         } catch(err) {
