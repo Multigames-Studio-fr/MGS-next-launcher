@@ -298,15 +298,17 @@ function initAutoUpdater(event, data) {
             global.__autoUpdaterDownloaded = info || true
         } catch (e) { /* noop */ }
         sendAutoUpdateNotification(event, 'update-downloaded', info)
-        // Close the update window after a short delay so user sees completion message
+        // Instead of closing the update window immediately, defer closing it
+        // until the main launcher window is started so the user isn't left
+        // looking at an empty splash if the launcher hasn't opened yet.
         try {
-            if (updateWindow && !updateWindow.isDestroyed()) {
-                setTimeout(() => {
-                    try { updateWindow.close() } catch (e) { }
-                    updateWindow = null
-                }, 1600)
+            if (win && !win.isDestroyed()) {
+                try { if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.close(); updateWindow = null } } catch (e) { }
+            } else {
+                // Mark pending close - will be flushed when createWindow shows the main window
+                global.__closeUpdateWindowWhenLauncherStarted = true
             }
-        } catch (e) { }
+        } catch (e) { /* ignore */ }
         // Download finished, clear downloading flag
         try {
             global.__autoUpdaterDownloading = false
@@ -320,8 +322,11 @@ function initAutoUpdater(event, data) {
         log.info('[AutoUpdater] update-not-available')
         sendAutoUpdateNotification(event, 'update-not-available', info)
         try {
-            if (updateWindow && !updateWindow.isDestroyed()) {
-                setTimeout(() => { try { updateWindow.close() } catch (e) { } ; updateWindow = null }, 1200)
+            if (win && !win.isDestroyed()) {
+                try { if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.close(); updateWindow = null } } catch (e) { }
+            } else {
+                // Defer closing the update window until launcher main window starts
+                global.__closeUpdateWindowWhenLauncherStarted = true
             }
         } catch (e) { }
     })
@@ -742,9 +747,18 @@ function createWindow() {
 
     win.loadURL(pathToFileURL(path.join(__dirname, 'app', 'app.ejs')).toString())
 
-    /*win.once('ready-to-show', () => {
-        win.show()
-    })*/
+    // Do not show immediately - we'll display the main window after a short
+    // delay so the splash/update window has time to be visible.
+    win.once('ready-to-show', () => {
+        try {
+            // Show after 4 seconds to match requested behavior
+            setTimeout(() => {
+                try { win.show() } catch (e) { /* ignore show errors */ }
+                // If an update status window is waiting to be closed, close it now
+                try { flushPendingUpdateWindowClose() } catch (e) { }
+            }, 4000)
+        } catch (e) { try { win.show() } catch (e) { } }
+    })
 
     win.removeMenu()
 
@@ -1128,8 +1142,8 @@ function createUpdateWindow() {
         }
 
         updateWindow = new BrowserWindow({
-            width: 420,
-            height: 160,
+            width: 720,    // avant: 420
+            height: 920, 
             resizable: false,
             alwaysOnTop: true,
             frame: false,
@@ -1161,5 +1175,33 @@ function createUpdateWindow() {
         })
     } catch (e) {
         try { log.warn('[UpdateWindow] failed to create update window', e && e.message) } catch (er) { }
+    }
+}
+
+// Helper: close the update status window if the main launcher window has
+// started; otherwise mark a pending flag so it closes as soon as the launcher
+// is shown. This keeps the splash/update window visible until the main UI
+// appears, per requested behavior.
+function flushPendingUpdateWindowClose() {
+    try {
+        if (updateWindow && !updateWindow.isDestroyed()) {
+            // Only close when the main launcher window exists (we want the
+            // update window to remain visible until after launcher is shown).
+            if (win && !win.isDestroyed()) {
+                try { updateWindow.close() } catch (e) { }
+                updateWindow = null
+                global.__closeUpdateWindowWhenLauncherStarted = false
+                return true
+            }
+            // No main window yet
+            global.__closeUpdateWindowWhenLauncherStarted = true
+            return false
+        }
+        // No update window present - clear the pending flag
+        global.__closeUpdateWindowWhenLauncherStarted = false
+        return true
+    } catch (e) {
+        try { log.warn('[UpdateWindow] flushPendingUpdateWindowClose failed', e && e.message) } catch (er) { }
+        return false
     }
 }

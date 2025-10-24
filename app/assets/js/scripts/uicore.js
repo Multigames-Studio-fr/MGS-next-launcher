@@ -69,10 +69,11 @@ if(!isDev){
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
                 break
             case 'ready':
-                updateCheckListener = setInterval(() => {
+                // Only perform a single check when the updater signals it's ready.
+                // Removed periodic polling so updates are checked at startup only.
+                try {
                     ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
-                }, 1800000)
-                ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+                } catch (e) { loggerAutoUpdater.warn('Failed to request update check', e) }
                 break
             case 'realerror':
                 // Ensure errors are visible in the renderer console (DevTools)
