@@ -51,12 +51,20 @@ mac:
 # Linux Configuration
 linux:
   icon: "build/icon.png"
-  target: "AppImage"
+  target:
+    - "AppImage"
+    - "deb"
   maintainer: "MultiGames Studio"
   vendor: "MultiGames Studio"
   synopsis: "MultiGames Studio Launcher"
   description: "MultiGames Studio game launcher for Minecraft and more."
   category: "Game"
+
+# Debian package specific options
+deb:
+  priority: "optional"
+  depends:
+    - "libc6"
 
 directories:
   buildResources: "build"

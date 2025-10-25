@@ -126,4 +126,5 @@ jobs:
           tag_name: v${{ needs.create-release.outputs.version }}
           files: |
             dist/*.AppImage
+            dist/*.deb
             dist/latest-linux.yml
