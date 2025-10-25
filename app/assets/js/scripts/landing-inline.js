@@ -3,23 +3,67 @@
 // Minimal DOM ready hook placeholder
 window.addEventListener('DOMContentLoaded', () => {});
 
-// Hook bouton refresh news
+// Hook bouton refresh news and Open News button
 document.addEventListener('DOMContentLoaded', () => {
+    // Refresh button: delegates to the news module when available
     const btn = document.querySelector('.refresh-news');
-    if (btn && typeof initNews === 'function') {
-        btn.addEventListener('click', () => {
-            btn.disabled = true;
-            btn.classList.add('opacity-60');
-            initNews().finally(() => {
-                btn.disabled = false;
-                btn.classList.remove('opacity-60');
-            });
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            try { btn.disabled = true; btn.classList.add('opacity-60'); } catch (e) {}
+            try {
+                if (typeof initNews === 'function') await initNews();
+                else console.warn('initNews not available (news module missing)');
+            } catch (e) {
+                console.warn('refresh news failed', e);
+            } finally {
+                try { btn.disabled = false; btn.classList.remove('opacity-60'); } catch (e) {}
+            }
         });
+    }
+
+    // Open news button (added via template) - reveals the news section and loads news
+    try {
+        const openNews = document.getElementById('openNewsButton');
+        if (openNews) {
+            openNews.addEventListener('click', () => {
+                try {
+                    // Prefer the slide-over show/hide behavior so News doesn't
+                    // take the entire screen. Fall back to switchView only if
+                    // showNewsMode isn't available.
+                    if (typeof showNewsMode === 'function') {
+                        try { showNewsMode(); } catch (e) { console.warn('showNewsMode failed', e) }
+                    } else if (typeof switchView === 'function' && typeof getCurrentView === 'function' && typeof VIEWS !== 'undefined' && VIEWS.news) {
+                        try { switchView(getCurrentView(), VIEWS.news); } catch (e) { console.warn('switchView to news failed', e) }
+                    } else {
+                        const c = document.getElementById('newsContainer'); if (c) { c.style.display = 'block'; c.classList.add('news-fullscreen') }
+                    }
+
+                    if (typeof initNews === 'function') initNews();
+                } catch (e) { console.warn('openNews handler error', e) }
+            });
+        }
+    } catch (e) {
+        console.warn('openNewsButton handler failed to attach', e);
     }
 });
 
+// Small shim so other code can safely call the news API even if the module
+if (typeof window.initNews !== 'function') window.initNews = async () => { console.warn('initNews: news module not loaded') }
+if (typeof window.showNewsMode !== 'function') window.showNewsMode = () => {
+    const c = document.getElementById('newsContainer');
+    const bd = document.getElementById('newsBackdrop');
+    if (bd) bd.style.display = 'block';
+    if (c) { c.style.display = 'block'; c.classList.add('news-fullscreen') }
+}
+if (typeof window.hideNewsMode !== 'function') window.hideNewsMode = () => {
+    const c = document.getElementById('newsContainer');
+    const bd = document.getElementById('newsBackdrop');
+    if (bd) bd.style.display = 'none';
+    if (c) { c.classList.remove('news-fullscreen'); setTimeout(() => { try { c.style.display = 'none' } catch(e){} }, 260) }
+}
+
 // Safely set sidebar username when AuthManager is available.
-(function () {
+;(function () {
     function setSidebarUsername() {
         try {
             const usernameEl = document.getElementById('sidebar-username');

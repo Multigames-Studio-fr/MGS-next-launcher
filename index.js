@@ -129,8 +129,63 @@ function safeQuitAndInstall(caller) {
             } catch (e) { /* ignore logging errors */ }
 
             try {
-                autoUpdater.quitAndInstall()
-                return true
+                        // Before calling quitAndInstall, attempt a safer fallback: look for the
+                        // installer in the pending updater directory and execute it directly.
+                        // This helps when electron-updater's internal path differs or the
+                        // rename/move operation previously failed and quitAndInstall would
+                        // throw "No valid update available".
+                        try {
+                            const os = require('os')
+                            const child = require('child_process')
+                            const pendingBase = path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
+                            let installerPath = null
+                            try {
+                                if (fs.existsSync(pendingBase)) {
+                                    const files = fs.readdirSync(pendingBase)
+                                    // prefer exact setup file name if present, else pick newest candidate
+                                    const candidates = files.filter(f => /multigames-studio-launcher-Setup-.*\.exe$/i.test(f))
+                                    if (candidates.length > 0) {
+                                        // pick newest
+                                        candidates.sort((a, b) => {
+                                            try {
+                                                const sa = fs.statSync(path.join(pendingBase, a)).mtimeMs
+                                                const sb = fs.statSync(path.join(pendingBase, b)).mtimeMs
+                                                return sb - sa
+                                            } catch (e) { return 0 }
+                                        })
+                                        installerPath = path.join(pendingBase, candidates[0])
+                                    }
+                                }
+                            } catch (e) {
+                                // ignore scanning errors
+                                installerPath = null
+                            }
+
+                            if (installerPath && fs.existsSync(installerPath)) {
+                                try {
+                                    log.info('[AutoUpdater] Found installer, launching directly:', installerPath)
+                                } catch (e) {}
+                                // Launch installer detached so it continues after app quits
+                                try {
+                                    const spawnOpts = { detached: true, stdio: 'ignore' }
+                                    const childProc = child.spawn(installerPath, [], spawnOpts)
+                                    try { childProc.unref && childProc.unref() } catch (e) {}
+                                    // Quit the app to allow installer to run/replace files
+                                    try { app.quit() } catch (e) { process.exit(0) }
+                                    return true
+                                } catch (e) {
+                                    try { log.warn('[AutoUpdater] failed to spawn installer directly', e && e.message) } catch (le) {}
+                                    // fallthrough to calling quitAndInstall
+                                }
+                            }
+
+                        } catch (e) {
+                            // ignore fallback errors and continue to autoUpdater.quitAndInstall
+                        }
+
+                        // final attempt: use the electron-updater helper
+                        autoUpdater.quitAndInstall()
+                        return true
             } catch (e) {
                 try { log.error('[AutoUpdater] quitAndInstall failed', e && e.message) } catch (le) { }
                 // Notify renderers that installation failed
@@ -727,7 +782,7 @@ function createWindow() {
         icon: getPlatformIcon('multigames-logo'),
         minWidth: 1280,
         minHeight: 752,
-
+  frame: false,
         webPreferences: {
             preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
             nodeIntegration: true,
@@ -1205,3 +1260,64 @@ function flushPendingUpdateWindowClose() {
         return false
     }
 }
+
+// Global error handlers to prevent main-process crashes from uncaught exceptions
+// (particularly around electron-updater/NSIS install race conditions).
+process.on('uncaughtException', (err) => {
+    try {
+        log.error('[Main] uncaughtException:', err && (err.stack || err.message || err))
+    } catch (e) { /* ignore logging errors */ }
+
+    // Common electron-updater NSIS installer message when quitAndInstall is invoked
+    // without a valid downloaded installer. Handle it gracefully instead of letting
+    // the main process crash.
+    try {
+        const msg = err && (err.message || '')
+        if (msg && (msg.indexOf('No valid update available') !== -1 || msg.indexOf("can't quit and install") !== -1)) {
+            try { sendAutoUpdateNotification(undefined, 'realerror', { message: msg }) } catch (e) {}
+            // swallow this specific error - it's non-fatal and expected in some race conditions
+            return
+        }
+    } catch (e) {
+        // fallthrough to default behaviour below
+    }
+
+    // For other uncaught exceptions, try to notify renderers and keep process alive
+    try { sendAutoUpdateNotification(undefined, 'realerror', { message: err && (err.message || String(err)) }) } catch (e) {}
+    // Do not rethrow to avoid crashing the app in production; allow graceful degradation.
+})
+
+process.on('unhandledRejection', (reason, p) => {
+    try { log.warn('[Main] unhandledRejection:', reason) } catch (e) {}
+    try { sendAutoUpdateNotification(undefined, 'realerror', { message: reason && (reason.message || String(reason)) }) } catch (e) {}
+})
+// IPC helper: fetch RSS (used as fallback when renderer fetch is blocked by CORS)
+ipcMain.handle('fetch-rss', async (event, url) => {
+    const https = require('https')
+    const http = require('http')
+    const { URL } = require('url')
+    return new Promise((resolve, reject) => {
+        try {
+            const u = new URL(url)
+            const lib = u.protocol === 'https:' ? https : http
+            const req = lib.get(u, { timeout: 15000 }, (res) => {
+                const status = res.statusCode || 0
+                if (status >= 400) {
+                    reject(new Error('HTTP error ' + status))
+                    return
+                }
+                let body = ''
+                res.setEncoding('utf8')
+                res.on('data', (chunk) => { body += chunk })
+                res.on('end', () => resolve({ ok: true, text: body }))
+            })
+            req.on('error', (err) => reject(err))
+            req.on('timeout', () => {
+                try { req.abort() } catch (e) {}
+                reject(new Error('Request timed out'))
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+})

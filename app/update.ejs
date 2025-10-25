@@ -161,26 +161,29 @@
     <div id="status" class="status" aria-hidden="true">
       <div id="statusTitle" class="title">Recherche des mises à jour...</div>
       <div id="statusDesc" class="desc">Veuillez patienter pendant que le lanceur vérifie la disponibilité d'une nouvelle version.</div>
-      <div id="progressWrap" style="display:none">
-        <div class="progress"><div id="progressBar" class="bar"></div></div>
-        <div id="percent" class="percent">0%</div>
-      </div>
+      
       <div id="actionRow" class="action" style="display:none">
         <div id="installBtn" class="btn">Installer maintenant</div>
         <div id="closeBtn" class="btn ghost">Fermer</div>
       </div>
     </div>
+    <!-- From Uiverse.io by ZacharyCrespin -->
+    <div class="loader">
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+      <div class="loader-square"></div>
+    </div>
+
+    <div id="progressWrap" style="display:none; width: 320px; max-width:80vw;">
+      <div class="progress"><div id="progressBar" class="bar"></div></div>
+      <div id="percent" class="percent">0%</div>
+    </div>
+
     <div class="copyright">Multigames Launcher 2025</div>
-      <!-- From Uiverse.io by ZacharyCrespin -->
-      <div class="loader">
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-        <div class="loader-square"></div>
-      </div>
 
   <script>
     const { ipcRenderer } = require('electron')

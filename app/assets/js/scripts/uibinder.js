@@ -107,17 +107,23 @@ async function populateSidebarInstances() {
             }
             
                
-            // If whitelist disallows the selected account, skip the server (don't show it)
+            // If whitelist disallows the selected account, show the server but mark it disabled
+            // so the user still sees the instance but cannot select it.
+            let disabledAttr = ''
+            let disabledClasses = ''
+            let disabledTitle = ''
             if (!whitelistAllowed) {
-                console.log('[UIBINDER] Skipping server', serverId, 'because whitelist disallows current account')
-                continue
+                console.log('[UIBINDER] Server', serverId, 'is restricted by whitelist; showing as disabled')
+                disabledAttr = 'disabled'
+                disabledClasses = ' opacity-40 cursor-not-allowed '
+                disabledTitle = whitelistTooltip || 'Accès restreint'
             }
 
             htmlString += `
-                <li class="server-instance-item group  transition-all duration-200  p-4  rounded-l-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}" title="${serverName}">
-                    <button class="py-2 pl-3 server-instance-btn ${isSelected ? 'w-64' : 'w-20'}" 
+                <li class="server-instance-item group  glass-sidebar transition-all duration-200  p-4  rounded-l-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}" title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
+                    <button ${disabledAttr} class="py-2 pl-3 server-instance-btn glass-sidebar ${isSelected ? 'w-64' : 'w-20'} ${disabledClasses}" 
                         data-server-id="${serverId}"
-                        title="${serverName}">
+                        title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
                         
                         <!-- Icon -->
                         <img src="${iconUrl}" 
@@ -127,8 +133,8 @@ async function populateSidebarInstances() {
                         
                         <!-- Content -->
                         <div class="flex flex-col justify-center pl-2 min-w-0">
-                            <!-- Badge STAFF -->
-                            <span class="${isSelected ? 'block' : 'hidden'}  font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
+                            <!-- Label: let CSS handle visibility/animation via .block/.hidden classes -->
+                            <span class="${isSelected ? 'block animate-slide-right' : 'hidden'} server-instance-label font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
                                 ${serverName}
                             </span>
                         </div>
@@ -143,6 +149,8 @@ async function populateSidebarInstances() {
         // Bind click events to server instance buttons
         bindSidebarInstanceEvents()
         
+        // No JS animation post-render; CSS handles entry/exit transitions.
+
         console.log('[UIBINDER] Populated sidebar with ' + servers.length + ' server instances')
         
     } catch (error) {
@@ -172,7 +180,191 @@ function bindSidebarInstanceEvents() {
                 return
             }
             btn.blur()
+
+            // No JS micro-animations here; we rely on CSS width/opacity/transform transitions.
             
+            // JS-driven animations (Web Animations API) to show the width change clearly
+            try {
+                const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+                const toPxForW64 = 16 * rootFontSize // 16rem -> px
+                const toPxForW20 = 5 * rootFontSize  // 5rem -> px
+
+                function animateWidth(elem, toPx, duration = 300) {
+                    return new Promise((resolve) => {
+                        if (!elem) return resolve()
+                        const from = parseFloat(getComputedStyle(elem).width)
+                        // create animation
+                        const anim = elem.animate([
+                            { width: from + 'px' },
+                            { width: toPx + 'px' }
+                        ], {
+                            duration,
+                            easing: 'cubic-bezier(.2,.9,.2,1)',
+                            fill: 'forwards'
+                        })
+                        anim.onfinish = () => {
+                            // ensure final width is applied inline so re-renders keep it stable
+                            elem.style.width = toPx + 'px'
+                            resolve()
+                        }
+                        // safety fallback
+                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); elem.style.width = toPx + 'px'; resolve() } }, duration + 80)
+                    })
+                }
+
+                function animateLabel(elem, show = true, duration = 260, setHiddenOnFinish = false) {
+                    return new Promise((resolve) => {
+                        if (!elem) return resolve()
+                        // ensure visible for animation
+                        try { elem.style.display = 'inline-block' } catch (e) {}
+                        // If showing, remove hidden class
+                        if (show) {
+                            try { elem.classList.remove('hidden') } catch (e) {}
+                        }
+
+                        const computed = getComputedStyle(elem)
+                        const currentOpacity = parseFloat(computed.opacity || 0)
+                        const toOpacity = show ? 1 : 0
+                        const fromX = show ? -6 : 0
+                        const toX = show ? 0 : -6
+                        // compute target max-width: prefer inline max-width or computed max-width, fall back to 160px
+                        const targetMax = show ? (elem.style.maxWidth || computed.maxWidth || '160px') : '0px'
+                        const fromMax = show ? (elem.style.maxWidth || computed.maxWidth === 'none' ? '0px' : '0px') : (elem.style.maxWidth || computed.maxWidth || '160px')
+
+                        const keyframes = [
+                            { opacity: currentOpacity, transform: `translateX(${fromX}px)`, maxWidth: fromMax },
+                            { opacity: toOpacity, transform: `translateX(${toX}px)`, maxWidth: targetMax }
+                        ]
+
+                        const anim = elem.animate(keyframes, { duration, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
+                        anim.onfinish = () => {
+                            try {
+                                elem.style.opacity = toOpacity
+                                elem.style.transform = `translateX(${toX}px)`
+                                elem.style.maxWidth = targetMax
+                                if (!show && setHiddenOnFinish) elem.classList.add('hidden')
+                            } catch (e) {}
+                            resolve()
+                        }
+                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.opacity = toOpacity; elem.style.transform = `translateX(${toX}px)`; elem.style.maxWidth = targetMax; if (!show && setHiddenOnFinish) elem.classList.add('hidden') } catch (e) {}; resolve() } }, duration + 60)
+                    })
+                }
+
+                function animateImgScale(img, toScale = 1.04, duration = 260) {
+                    return new Promise((resolve) => {
+                        if (!img) return resolve()
+                        const anim = img.animate([
+                            { transform: 'scale(1)' },
+                            { transform: `scale(${toScale})` }
+                        ], { duration, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
+                        anim.onfinish = () => { img.style.transform = `scale(${toScale})`; resolve() }
+                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); img.style.transform = `scale(${toScale})`; resolve() } }, duration + 40)
+                    })
+                }
+
+                // Animate background and text colors to avoid instant white/black jumps
+                function animateBg(elem, toColor, duration = 300) {
+                    return new Promise((resolve) => {
+                        if (!elem) return resolve()
+                        const from = getComputedStyle(elem).backgroundColor
+                        const anim = elem.animate([
+                            { backgroundColor: from },
+                            { backgroundColor: toColor }
+                        ], { duration, easing: 'ease-out', fill: 'forwards' })
+                        anim.onfinish = () => { try { elem.style.backgroundColor = toColor } catch (e) {} ; resolve() }
+                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.backgroundColor = toColor } catch (e) {}; resolve() } }, duration + 60)
+                    })
+                }
+
+                function animateColor(elem, toColor, duration = 300) {
+                    return new Promise((resolve) => {
+                        if (!elem) return resolve()
+                        const from = getComputedStyle(elem).color
+                        // ensure starting color is inline to avoid flash
+                        try { elem.style.color = from } catch (e) {}
+                        const anim = elem.animate([
+                            { color: from },
+                            { color: toColor }
+                        ], { duration, easing: 'ease-out', fill: 'forwards' })
+                        anim.onfinish = () => { try { elem.style.color = toColor } catch (e) {}; resolve() }
+                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.color = toColor } catch (e) {}; resolve() } }, duration + 60)
+                    })
+                }
+
+                const prevBtn = document.querySelector('.server-instance-btn.w-64')
+                const prevLabel = prevBtn && prevBtn.querySelector('span.font-semibold.text-xl')
+                const prevImg = prevBtn && prevBtn.querySelector('img')
+                const tgtLabel = btn.querySelector('span.font-semibold.text-xl')
+                const tgtImg = btn.querySelector('img')
+
+                // Determine elements for background/text animation
+                const prevLi = prevBtn && prevBtn.closest('li.server-instance-item')
+                const tgtLi = btn.closest('li.server-instance-item')
+
+                const selectionBg = 'rgb(248, 186, 89)' // #F8BA59
+                const selectionText = 'rgb(0, 0, 0)'
+
+                const tasks = []
+
+                // Animate previous selected's bg/text back to default
+                if (prevLi && prevLi !== tgtLi) {
+                    const defaultBg = getComputedStyle(tgtLi || prevLi).backgroundColor || 'rgba(17,24,39,0.1)'
+                    const defaultText = getComputedStyle(tgtLi || prevLi).color || 'rgb(255,255,255)'
+                    tasks.push(animateBg(prevLi, defaultBg, 260))
+                    tasks.push(animateColor(prevLi, defaultText, 260))
+                    // label fade out + image scale back
+                    tasks.push(animateLabel(prevLabel, false, 180, true))
+                    tasks.push(animateImgScale(prevImg, 1))
+                    tasks.push(animateWidth(prevBtn, toPxForW20))
+                    // update width classes after animation so Tailwind styles don't jump in the middle
+                    tasks.push(new Promise(res => setTimeout(() => { prevBtn.classList.remove('w-64'); prevBtn.classList.add('w-20'); res() }, 360)))
+                }
+
+                // Animate target element's bg/text to selection colors
+                if (tgtLi && btn && !btn.classList.contains('w-64')) {
+                    const defaultBg = getComputedStyle(tgtLi).backgroundColor || 'rgba(17,24,39,0.1)'
+                    const defaultText = getComputedStyle(tgtLi).color || 'rgb(255,255,255)'
+                    // ensure label unhidden and starting styles prepared
+                    if (tgtLabel && tgtLabel.classList.contains('hidden')) {
+                        tgtLabel.classList.remove('hidden')
+                        tgtLabel.style.opacity = '0'
+                        tgtLabel.style.transform = 'translateX(-6px)'
+                    }
+                    // JS 'pop' animation for the label to guarantee it appears even if CSS class animations fail
+                    try {
+                        if (tgtLabel) {
+                            tgtLabel.style.display = 'inline-block'
+                            // remove any lingering inline maxWidth to compute correctly
+                            tgtLabel.style.maxWidth = tgtLabel.style.maxWidth || '0px'
+                            const popAnim = tgtLabel.animate([
+                                { opacity: 0, transform: 'translateX(-6px) scale(.98)', maxWidth: '0px' },
+                                { opacity: 1, transform: 'translateX(0) scale(1)', maxWidth: '160px' }
+                            ], { duration: 220, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
+                            popAnim.onfinish = () => {
+                                try {
+                                    tgtLabel.style.opacity = '1'
+                                    tgtLabel.style.transform = 'translateX(0)'
+                                    tgtLabel.style.maxWidth = '160px'
+                                    tgtLabel.classList.add('block')
+                                } catch (e) {}
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[UIBINDER] label pop animation failed', e)
+                    }
+                    tasks.push(animateBg(tgtLi, selectionBg, 260))
+                    tasks.push(animateColor(tgtLi, selectionText, 260))
+                    tasks.push(animateWidth(btn, toPxForW64))
+                    tasks.push(animateLabel(tgtLabel, true))
+                    tasks.push(animateImgScale(tgtImg, 1.04))
+                    tasks.push(new Promise(res => setTimeout(() => { btn.classList.remove('w-20'); btn.classList.add('w-64'); res() }, 360)))
+                }
+
+                await Promise.all(tasks)
+            } catch (tcErr) {
+                console.warn('[UIBINDER] Width transition helper failed', tcErr)
+            }
+
             const serverId = button.getAttribute('data-server-id')
             
             try {
@@ -204,8 +396,51 @@ const VIEWS = {
     landing: '#landingContainer',
     loginOptions: '#loginOptionsContainer',
     settings: '#settingsContainer',
+    news: '#newsContainer',
     welcome: '#welcomeContainer',
     waiting: '#waitingContainer'
+}
+
+/**
+ * Try to call window.initNews() when it becomes available.
+ * This helps in situations where other renderer scripts are loaded later
+ * and `initNews` isn't defined yet at the time we initialize the UI.
+ */
+function scheduleInitNewsCall(maxRetries = 15, delayMs = 200, onReady = null) {
+    try {
+        if (typeof window.initNews === 'function') {
+            // already available, call immediately and run callback
+            try {
+                const ret = window.initNews()
+                if (ret && typeof ret.then === 'function') ret.then(() => { if (typeof onReady === 'function') onReady() })
+                else if (typeof onReady === 'function') onReady()
+            } catch (e) { console.warn('[UIBINDER] initNews threw', e) }
+            return
+        }
+        let attempts = 0
+        const iv = setInterval(() => {
+            attempts++
+            try {
+                if (typeof window.initNews === 'function') {
+                    clearInterval(iv)
+                    try {
+                        const ret = window.initNews()
+                        if (ret && typeof ret.then === 'function') ret.then(() => { if (typeof onReady === 'function') onReady() })
+                        else if (typeof onReady === 'function') onReady()
+                    } catch (e) { console.warn('[UIBINDER] initNews threw', e) }
+                    return
+                }
+            } catch (e) {
+                // ignore and keep retrying until max
+            }
+            if (attempts >= maxRetries) {
+                clearInterval(iv)
+                console.warn('[UIBINDER] initNews not available after retries')
+            }
+        }, delayMs)
+    } catch (e) {
+        console.warn('[UIBINDER] scheduleInitNewsCall failed', e)
+    }
 }
 
 // The currently shown view container.
@@ -258,7 +493,7 @@ async function showMainUI(data){
     populateSidebarInstances()
     
     setTimeout(() => {
-        document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
+        document.getElementById('frameBar').style.backgroundColor = ''
         document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
         $('#main').show()
 
@@ -306,7 +541,8 @@ async function showMainUI(data){
             $('#newsContainer *').attr('tabindex', '-1')
         })
     } else {
-        console.warn('[UIBINDER] initNews is not yet available')
+        // initNews may be defined by a script loaded later; schedule retries and when ready
+        scheduleInitNewsCall(15, 200, () => { try { $('#newsContainer *').attr('tabindex', '-1') } catch (e) {} })
     }
 }
 
@@ -341,7 +577,8 @@ function onDistroRefresh(data){
     if (typeof window.initNews === 'function') {
         initNews()
     } else {
-        console.warn('[UIBINDER] initNews is not yet available')
+        // If initNews arrives shortly after distro refresh, try again a few times
+        scheduleInitNewsCall(15, 200)
     }
     
     syncModConfigurations(data)

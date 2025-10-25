@@ -203,7 +203,7 @@ document.addEventListener('readystatechange', function () {
         const launchDetailsRight = document.getElementById('launch_details_right')
         const launchProgressLabel = document.getElementById('launch_progress_label')
         
-        if (launchDetails) launchDetails.style.maxWidth = 266.01
+       
         if (launchProgress) launchProgress.style.width = 170.8
         if (launchDetailsRight) launchDetailsRight.style.maxWidth = 170.8
         if (launchProgressLabel) launchProgressLabel.style.width = 53.21

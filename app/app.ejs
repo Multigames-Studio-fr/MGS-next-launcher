@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet">
     <script src="./assets/js/scripts/uicore.js"></script>
+    <script src="./assets/js/scripts/init-news-stub.js"></script>
     <script src="./assets/js/scripts/uibinder.js"></script>
     <link type="text/css" rel="stylesheet" href="./assets/css/tailwind-compiled.css">
     <link type="text/css" rel="stylesheet" href="./assets/css/launcher2.css">
@@ -18,7 +19,11 @@
         body {
             font-family: "Sora", serif;
             font-optical-sizing: auto;
-            /*background: url('assets/images/backgrounds/<%=bkid%>.jpg') no-repeat center center fixed;*/
+
+        background: url('assets/images/backgrounds/<%=bkid%>.jpg') no-repeat center center fixed;
+        background-size: cover;
+        background-position: center center;
+        background-attachment: fixed;
         }
         @import url('http://multigames-studio.fr/font/fs-mojang-studios-2.otf');
         @font-face {
@@ -40,7 +45,7 @@
             height: calc(100% - 22px);
             width: 100%;
             position: absolute;
-            z-index: 10;
+
         }
 
 
@@ -115,16 +120,62 @@
             background: #a0aec0;
             /* Tailwind CSS bg-gray-500 */
         }
+        /* --- Sidebar / label animation helpers (shared) --- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(18px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(.96) translateY(4px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-fade { animation: fadeUp 520ms cubic-bezier(.2,.9,.2,1) both; }
+        .animate-slide-right { animation: slideRight 420ms cubic-bezier(.2,.9,.2,1) both; }
+        .animated-pop { animation: popIn 420ms cubic-bezier(.2,.9,.2,1) both; }
+
+        /* Server label reveal helpers (used by landing sidebar) */
+        .server-instance-label {
+            display: inline-block !important;
+            opacity: 0;
+            transform: translateX(-6px);
+            max-width: 0;
+            transition: opacity 220ms linear, transform 260ms cubic-bezier(.2,.9,.2,1), max-width 260ms cubic-bezier(.2,.9,.2,1);
+            white-space: nowrap;
+            vertical-align: middle;
+            pointer-events: none;
+        }
+        .server-instance-label.block {
+            opacity: 1;
+            transform: translateX(0);
+            max-width: 160px;
+            pointer-events: auto;
+        }
+        .server-instance-label.hidden {
+            opacity: 0;
+            transform: translateX(-6px);
+            max-width: 0;
+            pointer-events: none;
+        }
+
+        /* Fixed width for player info block to avoid layout shift */
+        .player-top-info { min-width: 12.5rem; max-width: 12.5rem; box-sizing: border-box; }
     </style>
 </head>
 
-<body class="dark bg-gray-900" bkid="<%=bkid%>">
-    <%- include('frame') %>
+<body class="dark " bkid="<%=bkid%>">
+    
     <div id="main">
+        <%- include('frame') %>
         <%- include('welcome') %>
         <%- include('waiting') %>
         <%- include('loginOptions') %>
         <%- include('settings') %>
+    <%- include('news') %>
         <%- include('landing') %>
     </div>
     <%- include('overlay') %>
@@ -134,11 +185,12 @@
             <source src="https://multigames-studio.fr/MultigamesStudio16-6-25.mp4" type="video/mp4">
             Votre navigateur ne supporte pas la vidéo.
         </video>
-        <button id="skipIntroBtn" aria-label="Skip intro" title="Skip intro" class="absolute top-4 right-4 z-50 bg-gray-800 text-white px-3 py-1 rounded opacity-80 hover:opacity-100">Skip</button>
+       
         <!-- Optional separate audio track for the intro. Browsers may require a user gesture to unmute/play. -->
         <audio id="introAudio" preload="auto" style="display:none">
             <!-- Add a source here if you want a separate audio track, e.g. <source src="/assets/audio/intro.mp3" type="audio/mpeg"> -->
         </audio>
+         <button id="skipIntroBtn" aria-label="Skip intro" title="Skip intro" class="absolute bottom-4 right-4 z-50 bg-gray-800 text-white px-3 py-1 rounded opacity-80 hover:opacity-100">Skip</button>
     </div>
 
     <script src="./assets/js/scripts/intro.js"></script>

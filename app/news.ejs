@@ -1,0 +1,230 @@
+<!-- News partial: moved from landing.ejs -->
+<!-- Backdrop for news full-screen overlay -->
+<div id="newsBackdrop" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:85; display:none; opacity:0; pointer-events:none;"></div>
+<section class="mt-8 sm:mt-10 md:mt-12 " id="newsContainer" style="display: none;">
+    <h2
+        class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+        <span
+            class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl bg-[#F8BA59]/15 border border-[#F8BA59]/30 text-[#F8BA59]">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path d="M4 6h16M4 12h10M4 18h16"></path>
+            </svg>
+        </span>
+        <span>Actualités</span>
+        <button
+            class="refresh-news text-xs sm:text-sm ml-0 sm:ml-4 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg bg-[#181818]/70 hover:bg-[#F8BA59]/80 hover:text-[#181818] text-white border border-white/10 transition shadow">
+            Rafraîchir
+        </button>
+        <!-- Bouton fermer (affiché quand la vue news est seule) -->
+        <button id="newsCloseButton" title="Fermer" style="display:none;"
+            class="ml-2 px-2 py-1 rounded-md bg-white/6 hover:bg-white/12 text-white text-sm border border-white/10 transition">
+            Fermer
+        </button>
+    </h2>
+
+    <!-- News Content -->
+    <div id="newsContent" class="news-list" article="-1" style="display: none;">
+        <div class="news-grid" aria-live="polite">
+            <div id="newsStatusContainer">
+                <div id="newsStatusContent">
+                    <div id="newsTitleContainer">
+                        <a id="newsArticleTitle" href="#">Lorem Ipsum</a>
+                    </div>
+                    <div id="newsMetaContainer">
+                        <div id="newsArticleDateWrapper">
+                            <span id="newsArticleDate">Mar 15, 44 BC, 9:14 AM</span>
+                        </div>
+                        <div id="newsArticleAuthorWrapper">
+                            <span id="newsArticleAuthor">by Cicero</span>
+                        </div>
+                        <a href="#" id="newsArticleComments">0 Comments</a>
+                    </div>
+                </div>
+                <div id="newsNavigationContainer">
+                    <button id="newsButtonl">
+                        <div id="newsButtonAlert" style="display: none;"></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                            fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5" />
+                        </svg>
+                    </button>
+                    <button id="newsNavigateLeft">
+                        <svg id="newsNavigationLeftSVG" viewBox="0 0 24.87 13.97">
+                            <defs>
+                                <style>
+                                    .arrowLine {
+                                        fill: none;
+                                        stroke: #fff;
+                                        stroke-width: 2px;
+                                        transition: 0.25s ease;
+                                    }
+                                </style>
+                            </defs>
+                            <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02" />
+                        </svg>
+                    </button>
+                    <span id="newsNavigationStatus"><%- lang('landing.newsNavigationStatus', {
+                            currentPage: 1, totalPages: 1 }) %></span>
+                    <button id="newsNavigateRight">
+                        <svg id="newsNavigationRightSVG" viewBox="0 0 24.87 13.97">
+                            <defs>
+                                <style>
+                                    .arrowLine {
+                                        fill: none;
+                                        stroke: #fff;
+                                        stroke-width: 2px;
+                                        transition: 0.25s ease;
+                                    }
+                                </style>
+                            </defs>
+                            <polyline class="arrowLine" points="0.71 13.26 12.56 1.41 24.16 13.02" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="newsArticleContainer">
+                <div id="newsArticleContent">
+                    <div id="newsArticleContentScrollable">
+                        <!-- Article Content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Template for a single news card (horizontal card used in the right column) -->
+        <template id="news-card-template">
+            <article class="news-card glass-global relative overflow-hidden" role="article">
+                <div class="news-image absolute inset-0 bg-cover bg-center"></div>
+                <div
+                    class="news-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                </div>
+                <div class="news-badges absolute left-4 top-4 flex gap-2"></div>
+                <div class="news-content absolute left-4 bottom-4 right-4 text-left text-white">
+                    <div class="news-title-stacked font-extrabold text-xl leading-tight"></div>
+                    <div class="news-excerpt-stacked mt-1 text-sm text-white/80"></div>
+                    <div class="flex items-center justify-between mt-2 text-xs text-white/70">
+                        <div class="news-date"><span class="news-date-day font-semibold"></span> <span
+                                class="news-date-month ml-1"></span></div>
+                        <button class="news-open-button glass-btn px-3 py-1 font-semibold">Voir</button>
+                    </div>
+                </div>
+                <button
+                    class="news-play absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+                    <svg class="w-16 h-16 text-white drop-shadow-xl" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                </button>
+            </article>
+        </template>
+    </div>
+
+    <!-- News Error Container -->
+    <div id="newsErrorContainer">
+        <div id="newsErrorLoading">
+            <span id="nELoadSpan" class="newsErrorContent text-white"><%-
+                    lang('landing.newsErrorLoadSpan') %></span>
+        </div>
+        <div id="newsErrorFailed" style="display: none">
+            <span id="nEFailedSpan" class="newsErrorContent text-white"><%-
+                    lang('landing.newsErrorFailedSpan') %></span>
+            <button id="newsErrorRetry"
+                class="bg-[#F8BA59] hover:bg-[#EB843B] text-white px-3 py-1 rounded text-sm">
+                <%- lang('landing.newsErrorRetryButton') %>
+            </button>
+        </div>
+        <div id="newsErrorNone" style="display: none">
+            <span id="nENoneSpan" class="newsErrorContent text-white"><%-
+                    lang('landing.newsErrorNoneSpan') %></span>
+        </div>
+    </div>
+
+    <style>
+        /* News-specific styles (moved from landing.ejs) */
+        /* Right-aligned news grid */
+        .news-list { display: flex; justify-content: flex-end; }
+
+        /* Bento-style news grid: mosaic of tiles with varying sizes */
+        .news-grid {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-auto-rows: 110px;
+            gap: 12px;
+            align-items: start;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) { .news-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 120px; } }
+        @media (min-width: 641px) and (max-width: 1024px) { .news-grid { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 120px; } }
+        @media (min-width: 1025px) { .news-grid { grid-template-columns: repeat(6, 1fr); grid-auto-rows: 120px; } }
+
+        /* Tile sizes for bento layout */
+        .bento-large { grid-column: span 4; grid-row: span 2; }
+        .bento-medium { grid-column: span 2; grid-row: span 1; }
+        .bento-small { grid-column: span 2; grid-row: span 1; }
+
+        .news-card { border-radius: 12px; overflow: hidden; position: relative; background: linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.48)); display: block; height: 100%; }
+        .news-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(.55) contrast(.95); }
+
+        /* Skeleton loader visuals */
+        .skeleton { position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03)); }
+        .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%); transform: translateX(-100%); animation: skeleton-shimmer 1.4s linear infinite; mix-blend-mode: overlay; }
+        @keyframes skeleton-shimmer { to { transform: translateX(100%); } }
+        .skeleton .skeleton-line { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); margin-bottom: 8px; }
+        .skeleton .skeleton-title { height: 18px; width: 60%; border-radius: 6px; margin-bottom: 10px; background: rgba(255,255,255,0.08); }
+        .skeleton .skeleton-sub { height: 12px; width: 40%; border-radius: 6px; background: rgba(255,255,255,0.04); }
+
+        .news-overlay { pointer-events: none; }
+        .news-badges { pointer-events: none; }
+        .news-content { pointer-events: auto; }
+        .news-title-stacked { font-size: 1.05rem; }
+        .news-excerpt-stacked { font-size: 0.95rem; }
+        .news-open-button { white-space: nowrap; }
+        .news-play { pointer-events: none; }
+        .news-card:hover .news-play { opacity: 1; pointer-events: none; }
+
+        .news-card.glass-global { background: rgba(24, 24, 24, 0.36); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; }
+        .news-thumb { width: 140px; height: 84px; background-size: cover; background-position: center; border-radius: 8px; flex-shrink: 0; }
+
+        /* Full-screen overlay base (hidden by default) */
+        #newsContainer {
+            display: none !important;
+        }
+
+        /* Visible state: cover the whole viewport (force no margins, full height and proper scrolling) */
+        #newsContainer.news-fullscreen {
+            position: fixed;
+            /* ensure full inset coverage */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            inset: 0;
+            z-index: 90;
+            width: 100vw;
+            /* enforce viewport height and allow internal scrolling */
+            height: 100vh;
+            min-height: 100vh;
+            max-height: 100vh;
+            margin: 0 !important; /* override any utility margins (eg. mt-8) */
+            background: linear-gradient(180deg, rgba(8,8,8,0.98), rgba(8,8,8,0.995));
+            padding: 28px;
+            overflow-y: auto;
+            display: block !important;
+            box-shadow: none;
+            border-left: none;
+            border-radius: 0;
+        }
+
+        /* Ensure the grid inside the full-screen overlay remains centered and constrained */
+        #newsContainer.news-fullscreen .news-grid { max-width: 1100px; margin: 0 auto; }
+
+        /* Backdrop visibility helper */
+        #newsBackdrop { transition: opacity 260ms ease; }
+        #newsBackdrop.visible { opacity: 1; pointer-events: auto; display:block; }
+    </style>
+</section>
