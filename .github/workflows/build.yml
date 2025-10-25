@@ -128,3 +128,37 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/latest-linux.yml
+
+  build-deb:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install fpm and native build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-dev build-essential rpm dpkg-dev fakeroot xz-utils libgconf-2-4 libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libuuid1 libsecret-1-0
+          sudo gem install --no-document fpm
+
+      - name: Build Debian package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux deb --config electron-builder.yml --publish never
+
+      - name: Upload Debian Artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: |
+            dist/*.deb

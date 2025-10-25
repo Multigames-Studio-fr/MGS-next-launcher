@@ -54,7 +54,7 @@ linux:
   target:
     - "AppImage"
     - "deb"
-  maintainer: "MultiGames Studio"
+  maintainer: "MultiGames Studio <noreply@multigames-studio.fr>"
   vendor: "MultiGames Studio"
   synopsis: "MultiGames Studio Launcher"
   description: "MultiGames Studio game launcher for Minecraft and more."

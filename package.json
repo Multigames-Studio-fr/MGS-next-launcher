@@ -1,8 +1,8 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.2.5",
+  "version": "3.2.7",
   "description": "MultiGames Studio Launcher - Your simple and efficient gaming launcher",
-  "author": "MultiGames Studio",
+  "author": "MultiGames Studio <noreply@multigames-studio.fr>",
   "license": "UNLICENSED",
   "homepage": "https://github.com/Multigames-Studio-fr/Multigames-studio-lancheur/",
   "bugs": {
@@ -16,7 +16,8 @@
     "dist": "electron-builder build",
     "dist:win": "npm run dist -- -w",
     "dist:mac": "npm run dist -- -m",
-    "dist:linux": "npm run dist -- -l",
+  "dist:linux": "npm run dist -- -l",
+  "dist:deb": "electron-builder build --linux deb",
     "lint": "eslint --config .eslintrc.json .",
     "build-css": "tailwindcss -i ./app/assets/css/tailwind.css -o ./app/assets/css/tailwind-compiled.css",
     "watch-css": "tailwindcss -i ./app/assets/css/tailwind.css -o ./app/assets/css/tailwind-compiled.css --watch",
@@ -65,6 +66,9 @@
         "repo": "MGS-next-launcher"
       }
     ],
+    "linux": {
+      "category": "Game"
+    },
     "win": {
       "artifactName": "${name}-Setup-${version}.${ext}"
     },
