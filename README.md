@@ -1,120 +1,129 @@
-<p align="center"><img src="./app/assets/images/SealCircle.png" width="150" height="150" alt="Multigames Luncher"></p>
+<p align="center"><img src="./app/assets/images/SealCircle.png" width="150" height="150" alt="Multigames Launcher"></p>
 
-<h1 align="center">Multigames Luncher — BETA</h1>
+# Multigames Launcher — BETA
 
-<p align="center"><em>(anciennement Electron Launcher / HeliosLauncher)</em></p>
+Un lanceur multiplateforme, léger et ergonomique pour gérer et lancer vos jeux et mods.
 
-<p align="center">
-	<a href="https://github.com/kasycorp/multigames/actions"><img src="https://img.shields.io/github/actions/workflow/status/dscalzi/HeliosLauncher/build.yml?branch=master&style=for-the-badge" alt="CI"></a>
-	<a href="https://github.com/kasycorp/multigames"><img src="https://img.shields.io/github/downloads/dscalzi/HeliosLauncher/total.svg?style=for-the-badge" alt="downloads"></a>
-	<img src="https://forthebadge.com/images/badges/winter-is-coming.svg" height="28" alt="tag">
-</p>
+Principales orientations : simplicité d'utilisation, mise à jour automatique des composants, prise en charge des comptes (Microsoft/Mojang), et outils pour les mods.
 
-<p align="center">Un lanceur multiplateforme simple et léger pour lancer vos jeux/mods — en développement.</p>
+## Fonctionnalités
 
----
-
-Remarque rapide : la documentation est disponible dans le dossier <code>docs/</code>. Pour contribuer ou lancer le projet en local, consultez la section « Installation » plus bas.
-
-## Fonctionnalités principales
-
-- Lanceur multiplateforme pour jeux et mods.
-- Interface utilisateur moderne et personnalisable.
-- Gestion des comptes (Microsoft, Mojang, etc.).
-- Téléchargement et mise à jour automatiques des fichiers nécessaires.
+- Interface moderne et personnalisable (EJS + Tailwind).
+- Gestion multi-comptes (Microsoft, Mojang...)
+- Téléchargement et mise à jour automatiques des composants du jeu.
 - Support des mods et des configurations personnalisées.
-- **Système de rapport de bugs intégré** (Ctrl + Shift + L).
+- Système de rapport de bugs intégré (Ctrl + Shift + L).
+- Auto-updater avec logique de récupération défensive sur Windows.
 
 ## Prérequis
-- [Git](https://git-scm.com/) pour cloner le dépôt.
-- Un éditeur de texte comme [Visual Studio Code](https://code.visualstudio.com/).
 
-## Installation
+- Node.js 20.x (voir `engines` dans `package.json`).
+- Git pour cloner le dépôt.
+- Sur Windows : outils de packaging si vous voulez créer des installateurs (electron-builder est déjà configuré).
+
+## Installation rapide (développement)
 
 1. Clonez le dépôt :
 
-   ```powershell
-   git clone https://github.com/kasycorp/multigames.git
-   cd multigames
-   ```
+```powershell
+git clone https://github.com/Multigames-Studio-fr/MGS-next-launcher.git
+cd MGS-next-launcher
+```
 
 2. Installez les dépendances :
 
-   ```powershell
-   npm install
-   ```
+```powershell
+npm install
+```
 
-3. Lancez le projet en mode développement :
+3. Lancer l'application en mode développement :
 
-   ```powershell
-   ```
-## Auto-updater ENOENT (Windows) — Added defensive recovery
+```powershell
+npm run dev
+```
 
-On Windows, some users reported an ENOENT error during the updater rename step where a temporary downloaded installer (temp-*.exe) could not be renamed into the `pending` folder. Common causes include antivirus removal of the temp file, the temp file being saved under a slightly different name, or transient filesystem errors.
+Ou pour démarrer la build Electron (mode production local) :
 
-What we changed:
-- The main process now includes defensive recovery logic that scans the updater `pending` directory and attempts a safe fallback rename if a matching installer is present. It also provides clearer logging to help diagnose the root cause.
+```powershell
+npm start
+```
 
-If you still see ENOENT rename errors:
-- Check your antivirus/quarantine — it may have deleted the temp installer.
-- Inspect the updater folder: `%USERPROFILE%\\.multigames-studio-launcher-updater\\pending` for any `.exe` files.
-- If the folder is empty, try disabling antivirus temporarily and triggering an update again.
+Pour compiler les styles Tailwind au besoin :
 
-If you'd like to improve or revert this behavior, see `index.js` for the auto-updater initialization and error handling.
+```powershell
+npm run build-css
+```
 
-4. Pour générer une version de production :
+## Générer des builds / installer
 
-   ```powershell
-   npm run build
-   ```
+Le projet utilise `electron-builder` pour produire des artefacts :
+
+```powershell
+# build pour toutes les plateformes configurées
+npm run dist
+
+# build spécifique Windows / macOS / Linux
+npm run dist:win
+npm run dist:mac
+npm run dist:linux
+```
+
+Les noms d'artefacts et la publication vers GitHub sont configurés dans `package.json`.
 
 ## Rapport de bugs
 
-### Méthode automatique (recommandée)
-Le launcher dispose d'un système de rapport de bugs intégré :
+Méthode recommandée (intégrée) :
 
-1. **Appuyez sur `Ctrl + Shift + L`** pour ouvrir le formulaire de rapport
-2. Remplissez les informations demandées :
-   - **Votre pseudo**
-   - **Titre du problème**
-   - **Description détaillée** du problème rencontré
-3. Les informations système et logs sont collectés automatiquement
-4. Cliquez sur "Envoyer le rapport"
+1. Ouvrez le launcher et appuyez sur `Ctrl + Shift + L`.
+2. Remplissez le formulaire (pseudo, titre, description). Les logs et infos système sont inclus automatiquement.
+3. Cliquez sur `Envoyer`.
 
-### Méthode manuelle
-Si le système automatique ne fonctionne pas, créez un rapport manuel :
+Si l'outil intégré ne fonctionne pas, procédez manuellement :
 
-**Utilisateur :** [Votre Pseudo]
+- Ouvrez la console de développement dans le launcher : `Ctrl + Shift + I`.
+- Récupérez l'onglet `Console` et copiez les logs.
+- Indiquez : système d'exploitation, RAM, CPU, version du launcher, étapes pour reproduire, et collez les logs.
 
-**Titre :** [Titre du problème rencontré]
+Les issues publiques peuvent être ouvertes ici : https://github.com/Multigames-Studio-fr/MGS-next-launcher/issues
 
-**Description :**  
-Veuillez détailler les problèmes rencontrés avec le launcher. Fournissez les informations suivantes :  
-- **Système d'exploitation (OS)** : [Indiquez votre OS, par exemple Windows 10, macOS, etc.]  
-- **RAM** : [Indiquez la quantité de RAM de votre machine]  
-- **Processeur (CPU)** : [Indiquez le modèle de votre processeur]  
-- **Version du launcher** : [Indiquez la version du launcher utilisée]  
+## Contribuer
 
-Pour nous aider à diagnostiquer le problème, fournissez également les logs :  
-1. Ouvrez le launcher  
-2. Appuyez sur **Ctrl + Shift + I** pour ouvrir la console de développement  
-3. Allez dans l'onglet **Console**  
-4. Copiez tous les logs affichés et collez-les dans votre rapport  
-
-## Contribution
-
-Les contributions sont les bienvenues ! Pour contribuer :
+Contributions bienvenues — petite marche à suivre :
 
 1. Forkez le dépôt.
-2. Créez une branche pour votre fonctionnalité ou correction de bug :
+2. Créez une branche descriptive :
 
-   ```powershell
-   git checkout -b ma-nouvelle-fonctionnalite
-   ```
+```powershell
+git checkout -b feat/ma-fonctionnalite
+```
 
-3. Faites vos modifications et testez-les.
-4. Soumettez une pull request en expliquant vos changements.
+3. Faites vos modifications, testez localement.
+4. Ouvrez une pull request en décrivant le problème et la solution.
+
+Conseils :
+
+- Respectez le style existant (EJS/Tailwind pour le front, Node/Electron pour le main).
+- Ajoutez des tests ou instructions de vérification si vous modifiez une logique importante.
+
+## Structure utile du dépôt
+
+- `index.js` — point d'entrée (initialisation d'Electron et de l'auto-updater).
+- `app/` — vues EJS, assets, scripts frontend.
+- `app/assets/js/` — scripts UI et utilitaires.
+- `package.json` — scripts et configuration de build.
+
+## Licence
+
+Consultez `LICENSE.txt` pour les détails de la licence et les conditions d'utilisation.
+
+## Notes techniques et dépannage
+
+- Auto-updater Windows — en cas d'erreurs ENOENT liées au renommage d'installateurs temporaires, vérifiez l'antivirus et le dossier :
+
+  `%USERPROFILE%\\.multigames-studio-launcher-updater\\pending`
+
+- Pour tout problème de build, vérifiez la version de Node (20.x) et les dépendances dev (`electron-builder`, `electron`).
 
 ---
 
-Pour toute question ou problème, n'hésitez pas à utiliser le système de rapport intégré (`Ctrl + Shift + L`) ou ouvrir une issue dans le dépôt GitHub.
+Si vous voulez que je peaufine la page d'accueil (ex. sections en anglais/français, badges, captures d'écran, ou un guide pas-à-pas pour packager), dites-moi ce que vous voulez ajouter et je le ferai.<p align="center">
