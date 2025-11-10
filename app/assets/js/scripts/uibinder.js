@@ -120,24 +120,43 @@ async function populateSidebarInstances() {
             }
 
             htmlString += `
-                <li class="server-instance-item group  glass-sidebar transition-all duration-200  p-4  rounded-l-2xl  ${isSelected ? 'bg-[#F8BA59] text-black' : 'bg-gray-900/10 text-white'}" title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
-                    <button ${disabledAttr} class="py-2 pl-3 server-instance-btn glass-sidebar ${isSelected ? 'w-64' : 'w-20'} ${disabledClasses}" 
+                <li class="server-instance-item group transition-all duration-300 ease-out p-1 mb-2" title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
+                    <button ${disabledAttr} class="server-instance-btn relative overflow-hidden ${isSelected ? 'w-64' : 'w-22'} ${disabledClasses} 
+                        py-3 px-4 rounded-l-2xl transition-all duration-300 ease-out
+                        flex items-center gap-3
+                        ${isSelected 
+                            ? 'bg-gradient-to-br from-[#F8BA59]/30 via-[#F8BA59]/20 to-[#F8BA59]/10 backdrop-blur-xl border-2 border-[#F8BA59]/40 ' 
+                            : 'bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }
+                        ${isSelected ? 'text-white' : 'text-white/80 hover:text-white'}"
                         data-server-id="${serverId}"
                         title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
                         
-                        <!-- Icon -->
-                        <img src="${iconUrl}" 
-                             alt="${serverName}"
-                             class="w-14 h-14 rounded-xl"
-                             onerror="this.src='assets/images/SealCircle.png'" />
+                        <!-- Glassmorphism overlay effect -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"></div>
                         
-                        <!-- Content -->
-                        <div class="flex flex-col justify-center pl-2 min-w-0">
-                            <!-- Label: let CSS handle visibility/animation via .block/.hidden classes -->
-                            <span class="${isSelected ? 'block animate-slide-right' : 'hidden'} server-instance-label font-semibold text-xl leading-tight max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap" title="${serverName}">
+                        <!-- Icon container with glow effect -->
+                        <div class="relative flex-shrink-0 transition-transform duration-300 ${isSelected ? 'scale-110' : 'scale-100 group-hover:scale-105'}">
+                            <div class="${isSelected ? 'absolute inset-0 bg-[#F8BA59]/30 blur-xl rounded-full animate-pulse' : ''}"></div>
+                            <img src="${iconUrl}" 
+                                 alt="${serverName}"
+                                 class="relative w-14 h-14 rounded-xl shadow-lg transition-all duration-300 ${isSelected ? 'ring-2 ring-[#F8BA59]/50' : ''}"
+                                 onerror="this.src='assets/images/SealCircle.png'" />
+                        </div>
+                        
+                        <!-- Content with slide animation -->
+                        <div class="flex flex-col justify-center min-w-0 flex-1 transition-all duration-300" style="max-width: ${isSelected ? '180px' : '0px'};">
+                            <span class="${isSelected ? 'opacity-100 translate-x-0 text-[#F8BA59]' : 'opacity-0 -translate-x-4'} 
+                                server-instance-label font-bold text-lg leading-tight 
+                                transition-all duration-300 ease-out whitespace-nowrap overflow-hidden text-ellipsis
+                                ${isSelected ? 'block' : 'hidden'}" 
+                                title="${serverName}">
                                 ${serverName}
                             </span>
                         </div>
+                        
+                        <!-- Selected indicator glow -->
+                        ${isSelected ? '<div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-[#F8BA59]/20 to-transparent animate-shimmer pointer-events-none"></div>' : ''}
                     </button>
                 </li>
             `
@@ -181,188 +200,253 @@ function bindSidebarInstanceEvents() {
             }
             btn.blur()
 
-            // No JS micro-animations here; we rely on CSS width/opacity/transform transitions.
-            
-            // JS-driven animations (Web Animations API) to show the width change clearly
+            // Glassmorphism animations with smooth transitions
             try {
                 const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
                 const toPxForW64 = 16 * rootFontSize // 16rem -> px
                 const toPxForW20 = 5 * rootFontSize  // 5rem -> px
 
-                function animateWidth(elem, toPx, duration = 300) {
+                function animateWidth(elem, toPx, duration = 400) {
                     return new Promise((resolve) => {
                         if (!elem) return resolve()
                         const from = parseFloat(getComputedStyle(elem).width)
-                        // create animation
                         const anim = elem.animate([
                             { width: from + 'px' },
                             { width: toPx + 'px' }
                         ], {
                             duration,
-                            easing: 'cubic-bezier(.2,.9,.2,1)',
+                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Elastic ease-out
                             fill: 'forwards'
                         })
                         anim.onfinish = () => {
-                            // ensure final width is applied inline so re-renders keep it stable
                             elem.style.width = toPx + 'px'
                             resolve()
                         }
-                        // safety fallback
                         setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); elem.style.width = toPx + 'px'; resolve() } }, duration + 80)
                     })
                 }
 
-                function animateLabel(elem, show = true, duration = 260, setHiddenOnFinish = false) {
+                function animateGlassEffect(elem, selected = true, duration = 400) {
                     return new Promise((resolve) => {
                         if (!elem) return resolve()
-                        // ensure visible for animation
-                        try { elem.style.display = 'inline-block' } catch (e) {}
-                        // If showing, remove hidden class
-                        if (show) {
-                            try { elem.classList.remove('hidden') } catch (e) {}
-                        }
+                        
+                        const fromBg = getComputedStyle(elem).background
+                        const toBg = selected 
+                            ? 'linear-gradient(135deg, rgba(248, 186, 89, 0.3) 0%, rgba(248, 186, 89, 0.2) 50%, rgba(248, 186, 89, 0.1) 100%)'
+                            : 'rgba(255, 255, 255, 0.05)'
+                        
+                        const fromShadow = getComputedStyle(elem).boxShadow
+                        const toShadow = selected
+                            ? '0 8px 32px 0 rgba(248, 186, 89, 0.25)'
+                            : '0 4px 16px 0 rgba(0, 0, 0, 0.1)'
+                        
+                        const fromBorder = getComputedStyle(elem).borderColor
+                        const toBorder = selected
+                            ? 'rgba(248, 186, 89, 0.4)'
+                            : 'rgba(255, 255, 255, 0.1)'
 
-                        const computed = getComputedStyle(elem)
-                        const currentOpacity = parseFloat(computed.opacity || 0)
-                        const toOpacity = show ? 1 : 0
-                        const fromX = show ? -6 : 0
-                        const toX = show ? 0 : -6
-                        // compute target max-width: prefer inline max-width or computed max-width, fall back to 160px
-                        const targetMax = show ? (elem.style.maxWidth || computed.maxWidth || '160px') : '0px'
-                        const fromMax = show ? (elem.style.maxWidth || computed.maxWidth === 'none' ? '0px' : '0px') : (elem.style.maxWidth || computed.maxWidth || '160px')
-
-                        const keyframes = [
-                            { opacity: currentOpacity, transform: `translateX(${fromX}px)`, maxWidth: fromMax },
-                            { opacity: toOpacity, transform: `translateX(${toX}px)`, maxWidth: targetMax }
-                        ]
-
-                        const anim = elem.animate(keyframes, { duration, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
+                        const anim = elem.animate([
+                            { 
+                                background: fromBg,
+                                boxShadow: fromShadow,
+                                borderColor: fromBorder
+                            },
+                            { 
+                                background: toBg,
+                                boxShadow: toShadow,
+                                borderColor: toBorder
+                            }
+                        ], { 
+                            duration, 
+                            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                            fill: 'forwards' 
+                        })
+                        
                         anim.onfinish = () => {
                             try {
-                                elem.style.opacity = toOpacity
-                                elem.style.transform = `translateX(${toX}px)`
-                                elem.style.maxWidth = targetMax
-                                if (!show && setHiddenOnFinish) elem.classList.add('hidden')
+                                elem.style.background = toBg
+                                elem.style.boxShadow = toShadow
+                                elem.style.borderColor = toBorder
                             } catch (e) {}
                             resolve()
                         }
-                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.opacity = toOpacity; elem.style.transform = `translateX(${toX}px)`; elem.style.maxWidth = targetMax; if (!show && setHiddenOnFinish) elem.classList.add('hidden') } catch (e) {}; resolve() } }, duration + 60)
+                        setTimeout(() => { 
+                            if (anim.playState !== 'finished') { 
+                                anim.cancel()
+                                try {
+                                    elem.style.background = toBg
+                                    elem.style.boxShadow = toShadow
+                                    elem.style.borderColor = toBorder
+                                } catch (e) {}
+                                resolve()
+                            }
+                        }, duration + 80)
                     })
                 }
 
-                function animateImgScale(img, toScale = 1.04, duration = 260) {
-                    return new Promise((resolve) => {
-                        if (!img) return resolve()
-                        const anim = img.animate([
-                            { transform: 'scale(1)' },
-                            { transform: `scale(${toScale})` }
-                        ], { duration, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
-                        anim.onfinish = () => { img.style.transform = `scale(${toScale})`; resolve() }
-                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); img.style.transform = `scale(${toScale})`; resolve() } }, duration + 40)
-                    })
-                }
-
-                // Animate background and text colors to avoid instant white/black jumps
-                function animateBg(elem, toColor, duration = 300) {
+                function animateLabel(elem, show = true, duration = 350) {
                     return new Promise((resolve) => {
                         if (!elem) return resolve()
-                        const from = getComputedStyle(elem).backgroundColor
+
+                        const parentDiv = elem.parentElement
+                        const fromOpacity = show ? 0 : 1
+                        const toOpacity = show ? 1 : 0
+                        const fromTransform = show ? 'translateX(-16px)' : 'translateX(0)'
+                        const toTransform = show ? 'translateX(0)' : 'translateX(-16px)'
+                        const fromMaxWidth = show ? '0px' : '180px'
+                        const toMaxWidth = show ? '180px' : '0px'
+
+                        if (show) {
+                            elem.classList.remove('opacity-0', '-translate-x-4', 'hidden')
+                            elem.classList.add('opacity-100', 'translate-x-0', 'block')
+                            if (parentDiv) {
+                                parentDiv.style.maxWidth = '0px'
+                            }
+                        }
+
+                        // Animate parent container width
+                        const parentAnim = parentDiv ? parentDiv.animate([
+                            { maxWidth: fromMaxWidth },
+                            { maxWidth: toMaxWidth }
+                        ], { 
+                            duration, 
+                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            fill: 'forwards' 
+                        }) : null
+
+                        // Animate label itself
                         const anim = elem.animate([
-                            { backgroundColor: from },
-                            { backgroundColor: toColor }
-                        ], { duration, easing: 'ease-out', fill: 'forwards' })
-                        anim.onfinish = () => { try { elem.style.backgroundColor = toColor } catch (e) {} ; resolve() }
-                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.backgroundColor = toColor } catch (e) {}; resolve() } }, duration + 60)
+                            { 
+                                opacity: fromOpacity, 
+                                transform: fromTransform,
+                                filter: 'blur(4px)'
+                            },
+                            { 
+                                opacity: toOpacity, 
+                                transform: toTransform,
+                                filter: 'blur(0px)'
+                            }
+                        ], { 
+                            duration, 
+                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            fill: 'forwards' 
+                        })
+                        
+                        anim.onfinish = () => {
+                            try {
+                                elem.style.opacity = toOpacity
+                                elem.style.transform = toTransform
+                                elem.style.filter = 'blur(0px)'
+                                if (parentDiv) {
+                                    parentDiv.style.maxWidth = toMaxWidth
+                                }
+                                if (!show) {
+                                    elem.classList.add('opacity-0', '-translate-x-4', 'hidden')
+                                    elem.classList.remove('opacity-100', 'translate-x-0', 'block')
+                                }
+                            } catch (e) {}
+                            resolve()
+                        }
+                        
+                        setTimeout(() => { 
+                            if (anim.playState !== 'finished') { 
+                                anim.cancel()
+                                if (parentAnim && parentAnim.playState !== 'finished') {
+                                    parentAnim.cancel()
+                                }
+                                try {
+                                    elem.style.opacity = toOpacity
+                                    elem.style.transform = toTransform
+                                    elem.style.filter = 'blur(0px)'
+                                    if (parentDiv) {
+                                        parentDiv.style.maxWidth = toMaxWidth
+                                    }
+                                } catch (e) {}
+                                resolve()
+                            }
+                        }, duration + 80)
                     })
                 }
 
-                function animateColor(elem, toColor, duration = 300) {
+                function animateIcon(container, selected = true, duration = 400) {
                     return new Promise((resolve) => {
-                        if (!elem) return resolve()
-                        const from = getComputedStyle(elem).color
-                        // ensure starting color is inline to avoid flash
-                        try { elem.style.color = from } catch (e) {}
-                        const anim = elem.animate([
-                            { color: from },
-                            { color: toColor }
-                        ], { duration, easing: 'ease-out', fill: 'forwards' })
-                        anim.onfinish = () => { try { elem.style.color = toColor } catch (e) {}; resolve() }
-                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); try { elem.style.color = toColor } catch (e) {}; resolve() } }, duration + 60)
+                        if (!container) return resolve()
+                        
+                        const fromScale = selected ? 1 : 1.1
+                        const toScale = selected ? 1.1 : 1
+
+                        const anim = container.animate([
+                            { 
+                                transform: `scale(${fromScale})`,
+                                filter: selected ? 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
+                            },
+                            { 
+                                transform: `scale(${toScale})`,
+                                filter: selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
+                            }
+                        ], { 
+                            duration, 
+                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            fill: 'forwards' 
+                        })
+                        
+                        anim.onfinish = () => {
+                            try {
+                                container.style.transform = `scale(${toScale})`
+                                container.style.filter = selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
+                            } catch (e) {}
+                            resolve()
+                        }
+                        setTimeout(() => { 
+                            if (anim.playState !== 'finished') { 
+                                anim.cancel()
+                                try {
+                                    container.style.transform = `scale(${toScale})`
+                                    container.style.filter = selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
+                                } catch (e) {}
+                                resolve()
+                            }
+                        }, duration + 80)
                     })
                 }
 
                 const prevBtn = document.querySelector('.server-instance-btn.w-64')
-                const prevLabel = prevBtn && prevBtn.querySelector('span.font-semibold.text-xl')
-                const prevImg = prevBtn && prevBtn.querySelector('img')
-                const tgtLabel = btn.querySelector('span.font-semibold.text-xl')
-                const tgtImg = btn.querySelector('img')
-
-                // Determine elements for background/text animation
-                const prevLi = prevBtn && prevBtn.closest('li.server-instance-item')
-                const tgtLi = btn.closest('li.server-instance-item')
-
-                const selectionBg = 'rgb(248, 186, 89)' // #F8BA59
-                const selectionText = 'rgb(0, 0, 0)'
+                const prevLabel = prevBtn && prevBtn.querySelector('.server-instance-label')
+                const prevIconContainer = prevBtn && prevBtn.querySelector('div.flex-shrink-0')
+                const tgtLabel = btn.querySelector('.server-instance-label')
+                const tgtIconContainer = btn.querySelector('div.flex-shrink-0')
 
                 const tasks = []
 
-                // Animate previous selected's bg/text back to default
-                if (prevLi && prevLi !== tgtLi) {
-                    const defaultBg = getComputedStyle(tgtLi || prevLi).backgroundColor || 'rgba(17,24,39,0.1)'
-                    const defaultText = getComputedStyle(tgtLi || prevLi).color || 'rgb(255,255,255)'
-                    tasks.push(animateBg(prevLi, defaultBg, 260))
-                    tasks.push(animateColor(prevLi, defaultText, 260))
-                    // label fade out + image scale back
-                    tasks.push(animateLabel(prevLabel, false, 180, true))
-                    tasks.push(animateImgScale(prevImg, 1))
+                // Animate previous selected back to normal
+                if (prevBtn && prevBtn !== btn) {
+                    tasks.push(animateGlassEffect(prevBtn, false))
+                    tasks.push(animateLabel(prevLabel, false))
+                    tasks.push(animateIcon(prevIconContainer, false))
                     tasks.push(animateWidth(prevBtn, toPxForW20))
-                    // update width classes after animation so Tailwind styles don't jump in the middle
-                    tasks.push(new Promise(res => setTimeout(() => { prevBtn.classList.remove('w-64'); prevBtn.classList.add('w-20'); res() }, 360)))
+                    tasks.push(new Promise(res => setTimeout(() => { 
+                        prevBtn.classList.remove('w-64')
+                        prevBtn.classList.add('w-20')
+                        res()
+                    }, 450)))
                 }
 
-                // Animate target element's bg/text to selection colors
-                if (tgtLi && btn && !btn.classList.contains('w-64')) {
-                    const defaultBg = getComputedStyle(tgtLi).backgroundColor || 'rgba(17,24,39,0.1)'
-                    const defaultText = getComputedStyle(tgtLi).color || 'rgb(255,255,255)'
-                    // ensure label unhidden and starting styles prepared
-                    if (tgtLabel && tgtLabel.classList.contains('hidden')) {
-                        tgtLabel.classList.remove('hidden')
-                        tgtLabel.style.opacity = '0'
-                        tgtLabel.style.transform = 'translateX(-6px)'
-                    }
-                    // JS 'pop' animation for the label to guarantee it appears even if CSS class animations fail
-                    try {
-                        if (tgtLabel) {
-                            tgtLabel.style.display = 'inline-block'
-                            // remove any lingering inline maxWidth to compute correctly
-                            tgtLabel.style.maxWidth = tgtLabel.style.maxWidth || '0px'
-                            const popAnim = tgtLabel.animate([
-                                { opacity: 0, transform: 'translateX(-6px) scale(.98)', maxWidth: '0px' },
-                                { opacity: 1, transform: 'translateX(0) scale(1)', maxWidth: '160px' }
-                            ], { duration: 220, easing: 'cubic-bezier(.2,.9,.2,1)', fill: 'forwards' })
-                            popAnim.onfinish = () => {
-                                try {
-                                    tgtLabel.style.opacity = '1'
-                                    tgtLabel.style.transform = 'translateX(0)'
-                                    tgtLabel.style.maxWidth = '160px'
-                                    tgtLabel.classList.add('block')
-                                } catch (e) {}
-                            }
-                        }
-                    } catch (e) {
-                        console.warn('[UIBINDER] label pop animation failed', e)
-                    }
-                    tasks.push(animateBg(tgtLi, selectionBg, 260))
-                    tasks.push(animateColor(tgtLi, selectionText, 260))
-                    tasks.push(animateWidth(btn, toPxForW64))
+                // Animate new selection
+                if (btn && !btn.classList.contains('w-64')) {
+                    tasks.push(animateGlassEffect(btn, true))
                     tasks.push(animateLabel(tgtLabel, true))
-                    tasks.push(animateImgScale(tgtImg, 1.04))
-                    tasks.push(new Promise(res => setTimeout(() => { btn.classList.remove('w-20'); btn.classList.add('w-64'); res() }, 360)))
+                    tasks.push(animateIcon(tgtIconContainer, true))
+                    tasks.push(animateWidth(btn, toPxForW64))
+                    tasks.push(new Promise(res => setTimeout(() => { 
+                        btn.classList.remove('w-20')
+                        btn.classList.add('w-64')
+                        res()
+                    }, 450)))
                 }
 
                 await Promise.all(tasks)
             } catch (tcErr) {
-                console.warn('[UIBINDER] Width transition helper failed', tcErr)
+                console.warn('[UIBINDER] Glass animation failed', tcErr)
             }
 
             const serverId = button.getAttribute('data-server-id')
@@ -461,8 +545,9 @@ let currentView
 function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, onCurrentFade = () => {}, onNextFade = () => {}){
     currentView = next
     $(`${current}`).fadeOut(currentFadeTime, async () => {
+        $(current).addClass('hidden')
         await onCurrentFade()
-        $(`${next}`).fadeIn(nextFadeTime, async () => {
+        $(`${next}`).removeClass('hidden').fadeIn(nextFadeTime, async () => {
             await onNextFade()
         })
     })
@@ -772,14 +857,64 @@ function mergeModConfiguration(o, n, nReq = false){
     return n
 }
 
+// Cache pour éviter les validations trop fréquentes
+let lastValidationTime = 0
+const VALIDATION_COOLDOWN = 30000 // 30 secondes
+
 async function validateSelectedAccount(){
+    const now = Date.now()
+    
+    // Éviter les validations trop fréquentes
+    if (now - lastValidationTime < VALIDATION_COOLDOWN) {
+        console.debug('[UIBINDER] Validation skipped (cooldown active)')
+        return
+    }
+    
     const selectedAcc = ConfigManager.getSelectedAccount()
     if(selectedAcc != null){
+        lastValidationTime = now
+        console.debug('[UIBINDER] Starting account validation for', selectedAcc.displayName)
+        
         const val = await AuthManager.validateSelected()
         if(!val){
-            ConfigManager.removeAuthAccount(selectedAcc.uuid)
-            ConfigManager.save()
+            console.warn('[UIBINDER] Account validation failed for', selectedAcc.displayName)
+            
+            // Donner une chance de reconnecter avant de supprimer le compte
             const accLen = Object.keys(ConfigManager.getAuthAccounts()).length
+            
+            // Pour les comptes Microsoft, proposer une reconnexion au lieu de supprimer immédiatement
+            if (selectedAcc.type === 'microsoft') {
+                setOverlayContent(
+                    Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
+                    `Votre session Microsoft a expiré. Veuillez vous reconnecter pour continuer.`,
+                    'Se reconnecter',
+                    accLen > 1 ? Lang.queryJS('uibinder.validateAccount.selectAnotherAccountButton') : 'Annuler'
+                )
+                setOverlayHandler(() => {
+                    // Rediriger vers la connexion Microsoft
+                    loginOptionsViewOnLoginSuccess = getCurrentView()
+                    loginOptionsViewOnLoginCancel = VIEWS.loginOptions
+                    switchView(getCurrentView(), VIEWS.loginOptions, 500, 500)
+                })
+                setDismissHandler(() => {
+                    if (accLen > 1) {
+                        // Sélectionner un autre compte s'il y en a
+                        const accounts = ConfigManager.getAuthAccounts()
+                        const accountKeys = Object.keys(accounts).filter(key => key !== selectedAcc.uuid)
+                        if (accountKeys.length > 0) {
+                            ConfigManager.setSelectedAccount(accountKeys[0])
+                            ConfigManager.save()
+                        }
+                    }
+                })
+                toggleOverlay(true)
+                return
+            } else {
+                // Pour les comptes Mojang, garder l'ancien comportement
+                ConfigManager.removeAuthAccount(selectedAcc.uuid)
+                ConfigManager.save()
+            }
+            
             setOverlayContent(
                 Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
                 accLen > 0
@@ -872,13 +1007,23 @@ function setSelectedAccount(uuid){
     }
 }
 
-// When the app regains focus or becomes visible again, validate tokens immediately.
+// Validation automatique avec contrôle de fréquence
+let lastFocusValidation = 0
+const FOCUS_VALIDATION_COOLDOWN = 300000 // 5 minutes
+
+// When the app regains focus or becomes visible again, validate tokens with cooldown.
 try {
     window.addEventListener('focus', () => {
         try {
-            console.debug('[UIBINDER] window.focus -> validateSelectedAccount')
-            validateSelectedAccount()
-            if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+            const now = Date.now()
+            if (now - lastFocusValidation > FOCUS_VALIDATION_COOLDOWN) {
+                console.debug('[UIBINDER] window.focus -> validateSelectedAccount (after cooldown)')
+                lastFocusValidation = now
+                validateSelectedAccount()
+                if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+            } else {
+                console.debug('[UIBINDER] window.focus validation skipped (cooldown active)')
+            }
         } catch (e) {
             console.warn('Focus handler validation failed', e)
         }
@@ -887,9 +1032,15 @@ try {
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             try {
-                console.debug('[UIBINDER] visibilitychange visible -> validateSelectedAccount')
-                validateSelectedAccount()
-                if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+                const now = Date.now()
+                if (now - lastFocusValidation > FOCUS_VALIDATION_COOLDOWN) {
+                    console.debug('[UIBINDER] visibilitychange visible -> validateSelectedAccount (after cooldown)')
+                    lastFocusValidation = now
+                    validateSelectedAccount()
+                    if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
+                } else {
+                    console.debug('[UIBINDER] visibilitychange validation skipped (cooldown active)')
+                }
             } catch (e) {
                 console.warn('Visibility handler validation failed', e)
             }

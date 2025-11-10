@@ -3042,7 +3042,7 @@ input:checked + .toggleSwitchSlider:before {
 }
 
 /* News error (message) container. */
-#newsErrorContainer {
+# {
   height: 100%;
   display: flex;
   align-items: center;

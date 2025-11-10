@@ -3,12 +3,11 @@ const os = require("os");
 const semver = require("semver");
 
 const DropinModUtil = require("./assets/js/dropinmodutil");
-const {
-  MSFT_OPCODE,
-  MSFT_REPLY_TYPE,
-  MSFT_ERROR,
-} = require("./assets/js/ipcconstants");
 
+// Import IPC constants if not already loaded
+if (typeof MSFT_OPCODE === 'undefined') {
+  var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require("./assets/js/ipcconstants");
+}
 
 const settingsState = {
   invalid: new Set(),
@@ -793,7 +792,7 @@ function parseModulesForUI(mdls, submodules, servConf) {
       if (mdl.getRequired().value) {
         const subHtml =
           mdl.subModules.length > 0
-            ? `<div class="settingsSubModContainer ml-4">${Object.values(
+            ? `<div class="settingsSubModContainer ml-6 mt-2">${Object.values(
                 parseModulesForUI(
                   mdl.subModules,
                   true,
@@ -805,12 +804,15 @@ function parseModulesForUI(mdls, submodules, servConf) {
         reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
           submodules ? "settingsSubMod" : ""
         }" enabled>
-          <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group">
-            <div class="settingsModMainWrapper flex items-center">
-              <div class="settingsModStatus w-4 h-4 bg-green-500 rounded-full mr-4 flex-shrink-0"></div>
-              <div class="settingsModDetails flex-1">
-                <div class="text-lg font-bold text-white">${mdl.rawModule.name}</div>
-                <div class="text-sm group-hover:text-white text-gray-400">v${mdl.mavenComponents.version}</div>
+          <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="settingsModStatus w-3 h-3 bg-green-500 rounded-full flex-shrink-0 shadow-lg shadow-green-500/50"></div>
+              <div class="settingsModDetails flex-1 min-w-0">
+                <div class="text-base font-semibold text-white truncate">${mdl.rawModule.name}</div>
+                <div class="text-xs text-gray-400 mt-0.5">v${mdl.mavenComponents.version} • Required</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded border border-green-400/20">Required</span>
               </div>
             </div>
           </div>
@@ -821,7 +823,7 @@ function parseModulesForUI(mdls, submodules, servConf) {
         const val = typeof conf === "object" ? conf.value : conf;
         const subHtml =
           mdl.subModules.length > 0
-            ? `<div class="settingsSubModContainer ml-4">${Object.values(
+            ? `<div class="settingsSubModContainer ml-6 mt-2">${Object.values(
                 parseModulesForUI(mdl.subModules, true, conf.mods)
               ).join("")}</div>`
             : "";
@@ -829,23 +831,25 @@ function parseModulesForUI(mdls, submodules, servConf) {
         optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
           submodules ? "settingsSubMod" : ""
         }" ${val ? "enabled" : ""}>
-          <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group h-full flex flex-col justify-between">
-            <div class="settingsModMainWrapper flex items-start">
-              <div class="settingsModStatus w-4 h-4 ${
-                val ? "bg-green-500" : "bg-red-500"
-              } rounded-full mr-4 flex-shrink-0"></div>
-              <div class="settingsModDetails flex-1">
-                <div class="text-lg font-bold text-white">${mdl.rawModule.name}</div>
-                <div class="text-sm group-hover:text-white text-gray-400">v${mdl.mavenComponents.version}</div>
+          <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="settingsModStatus w-3 h-3 ${
+                  val ? "bg-green-500 shadow-green-500/50" : "bg-red-500 shadow-red-500/50"
+                } rounded-full flex-shrink-0 shadow-lg"></div>
+                <div class="settingsModDetails flex-1 min-w-0">
+                  <div class="text-base font-semibold text-white truncate">${mdl.rawModule.name}</div>
+                  <div class="text-xs text-gray-400 mt-0.5">v${mdl.mavenComponents.version} • ${val ? 'Enabled' : 'Disabled'}</div>
+                </div>
               </div>
-            </div>
-            <div class="mt-3 flex items-center justify-end">
-              <label class="toggleSwitch">
-                <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${
+              <div class="flex-shrink-0">
+                <label class="toggleSwitch relative inline-block">
+                  <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${
           val ? "checked" : ""
-        } class="hidden">
-                <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
-              </label>
+        } class="sr-only peer">
+                  <span class="toggleSwitchSlider block w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></span>
+                </label>
+              </div>
             </div>
           </div>
           ${subHtml}
@@ -942,22 +946,31 @@ async function resolveDropinModsForUI() {
 
   for (dropin of CACHE_DROPIN_MODS) {
     dropinMods += `<div id="${dropin.fullName}" class="settingsBaseMod settingsDropinMod ${!dropin.disabled ? "enabled" : ""}">
-            <div class="settingsModContent p-4 bg-gray-800 rounded-lg shadow-lg mb-4 group">
-              <div class="settingsModMainWrapper flex items-center justify-between">
-                <div class="settingsModStatus w-4 h-4 ${!dropin.disabled ? "bg-green-500" : "bg-red-500"} rounded-full mr-4"></div>
-                <div class="settingsModDetails flex-grow">
-                  <span class="settingsModName text-lg font-bold text-white">${dropin.name}</span>
-                  <div class="settingsDropinRemoveWrapper ml-4">
-                    <button class="settingsDropinRemoveButton bg-red-600 text-white py-2 px-4 rounded hover:bg-red-500" remmod="${dropin.fullName}">${Lang.queryJS("settings.dropinMods.removeButton")}</button>
-                  </div>
-                </div>
-              </div>
-              <label class="toggleSwitch">
-                <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} class="hidden">
-                <span class="toggleSwitchSlider block w-10 h-6 bg-gray-400 rounded-full shadow-inner"></span>
-              </label>
+      <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
+        <div class="flex items-center justify-between gap-4">
+          <!-- Left: Status + Name -->
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="settingsModStatus w-3 h-3 ${!dropin.disabled ? "bg-green-500" : "bg-red-500"} rounded-full flex-shrink-0 shadow-lg ${!dropin.disabled ? "shadow-green-500/50" : "shadow-red-500/50"}"></div>
+            <div class="settingsModDetails flex-1 min-w-0">
+              <div class="settingsModName text-base font-semibold text-white truncate">${dropin.name}</div>
+              <div class="text-xs text-gray-400 mt-0.5">${dropin.disabled ? 'Disabled' : 'Enabled'}</div>
             </div>
-          </div>`;
+          </div>
+          
+          <!-- Right: Toggle + Remove Button -->
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <label class="toggleSwitch relative inline-block">
+              <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} class="sr-only peer">
+              <span class="toggleSwitchSlider block w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></span>
+            </label>
+            <button class="settingsDropinRemoveButton bg-red-600/80 hover:bg-red-600 text-white py-1.5 px-3 rounded text-sm font-medium transition-all flex items-center gap-1.5" remmod="${dropin.fullName}">
+              <i class="bi bi-trash text-sm"></i>
+              <span class="hidden sm:inline">${Lang.queryJS("settings.dropinMods.removeButton")}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
   }
   
   document.getElementById("settingsDropinModsContent").innerHTML = dropinMods;

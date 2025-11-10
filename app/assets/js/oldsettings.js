@@ -3,11 +3,11 @@ const os = require("os");
 const semver = require("semver");
 
 const DropinModUtil = require("./assets/js/dropinmodutil");
-const {
-  MSFT_OPCODE,
-  MSFT_REPLY_TYPE,
-  MSFT_ERROR,
-} = require("./assets/js/ipcconstants");
+
+// Import IPC constants if not already loaded
+if (typeof MSFT_OPCODE === 'undefined') {
+  var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require("./assets/js/ipcconstants");
+}
 
 const settingsState = {
   invalid: new Set(),

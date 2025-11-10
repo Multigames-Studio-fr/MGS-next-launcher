@@ -216,6 +216,19 @@ ipcMain.on('instance-state', (event, state) => {
     }
 })
 
+// Gestionnaire pour redémarrer le launcher (utilisé après suppression de mods en double)
+ipcMain.on('relaunchApplication', (event) => {
+    try {
+        log.info('[IPC] relaunchApplication called - restarting app')
+        app.relaunch()
+        app.quit()
+    } catch (err) {
+        try {
+            log.error('[IPC] relaunchApplication failed:', err && err.message)
+        } catch (e) { /* ignore */ }
+    }
+})
+
 // Setup auto updater.
 function initAutoUpdater(event, data) {
     // Prevent multiple initializations (listeners added multiple times)

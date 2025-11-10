@@ -32,14 +32,20 @@
       logsWrapper: $('settingsMcLogsWrapper'),
       logsEl: $('settingsMcLogs'),
       clearBtn: $('settingsMcLogsClear'),
+      clearBtnMobile: $('settingsMcLogsClearMobile'),
       openBtn: $('settingsMcLogsOpenWindow'),
+      openBtnMobile: $('settingsMcLogsOpenWindowMobile'),
       pauseBtn: $('settingsMcLogsPause'),
+      pauseBtnMobile: $('settingsMcLogsPauseMobile'),
       saveBtn: $('settingsMcLogsSave'),
+      saveBtnMobile: $('settingsMcLogsSaveMobile'),
       copyBtn: $('settingsMcLogsCopy'),
+      copyBtnMobile: $('settingsMcLogsCopyMobile'),
       filterInput: $('settingsMcLogsFilter'),
       statsEl: $('settingsMcLogsStats'),
       noteEl: $('settingsMcLogsNote'),
-      checkBtn: $('settingsMcLogsCheck')
+      checkBtn: $('settingsMcLogsCheck'),
+      checkBtnMobile: $('settingsMcLogsCheckMobile')
     }
   }
 
@@ -54,22 +60,83 @@
   function updateStats() {
     safe(() => {
       const { logsEl, statsEl } = getEls()
-      const lines = logsEl && logsEl.textContent ? logsEl.textContent.split('\n').filter(Boolean).length : 0
-      if (statsEl) statsEl.textContent = lines + ' lines'
+      if (!logsEl || !statsEl) return
+      
+      // Count actual log lines (not including empty state)
+      const lines = logsEl.querySelectorAll('.log-line').length
+      statsEl.innerHTML = `<i class="bi bi-file-text mr-2 text-gray-400"></i><span>${lines} lines</span>`
     })
+  }
+
+  function colorizeLogLine(line) {
+    if (!line || line.trim() === '') return ''
+    
+    // Regex to parse Minecraft log format: [timestamp] [thread/LEVEL]: message
+    // Also handles formats like: 2025-11-10T13:59:28.957510200Z main ERROR message
+    const minecraftLogRegex = /^(\[[\d:]+\]|\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\s+(\[?[^\]\/]+\/?([A-Z]+)\]?):?\s*(.+)$/
+    const simpleLogRegex = /^\[(\d+:\d+:\d+)\]\s*\[([^\]]+)\]:\s*(.+)$/
+    
+    let match = line.match(minecraftLogRegex)
+    if (!match) {
+      match = line.match(simpleLogRegex)
+      if (match) {
+        const [, timestamp, source, message] = match
+        return `<span class="log-line"><span class="log-timestamp">[${timestamp}]</span> <span class="log-source">[${source}]</span>: <span class="log-message">${escapeHtml(message)}</span></span>`
+      }
+    }
+    
+    if (match) {
+      const timestamp = match[1] || ''
+      const threadAndLevel = match[2] || ''
+      const level = match[3] || 'INFO'
+      const message = match[4] || ''
+      
+      // Extract thread name (before the /)
+      const threadMatch = threadAndLevel.match(/\[?([^\]\/]+)/)
+      const thread = threadMatch ? threadMatch[1] : ''
+      
+      return `<span class="log-line"><span class="log-timestamp">${escapeHtml(timestamp)}</span> <span class="log-thread">[${escapeHtml(thread)}/<span class="log-level-${level}">${level}</span>]</span>: <span class="log-message">${escapeHtml(message)}</span></span>`
+    }
+    
+    // Fallback for non-matching lines
+    return `<span class="log-line"><span class="log-message">${escapeHtml(line)}</span></span>`
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
   }
 
   function truncateIfNeeded(logsEl){
     if(!logsEl) return
-    if(logsEl.textContent && logsEl.textContent.length > state.bufferSizeLimit){
-      logsEl.textContent = logsEl.textContent.slice(-state.bufferSizeLimit)
+    // Count children instead of textContent length
+    const children = logsEl.querySelectorAll('.log-line')
+    if(children.length > 5000){ // Keep last 5000 lines
+      const toRemove = children.length - 5000
+      for(let i = 0; i < toRemove; i++){
+        if(children[i]) children[i].remove()
+      }
     }
   }
 
   function appendLine(line){
     safe(() => {
-      const { logsEl, filterInput } = getEls()
+      const { logsEl, filterInput, noteEl } = getEls()
       if (!logsEl) return
+      
+      // Remove empty state if it exists
+      const emptyState = logsEl.querySelector('.log-empty-state')
+      if (emptyState) {
+        emptyState.remove()
+      }
+      
+      // Show streaming indicator
+      if (noteEl && noteEl.querySelector('span')) {
+        noteEl.style.display = 'flex'
+        noteEl.querySelector('span').textContent = 'Streaming live logs.'
+      }
+      
       const filter = filterInput && filterInput.value ? filterInput.value : ''
       if (filter) {
         try {
@@ -79,7 +146,13 @@
           // invalid regex - ignore filtering
         }
       }
-      logsEl.textContent += line + '\n'
+      
+      // Create colorized log line
+      const colorizedLine = colorizeLogLine(line)
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = colorizedLine
+      logsEl.appendChild(tempDiv.firstChild)
+      
       truncateIfNeeded(logsEl)
       logsEl.scrollTop = logsEl.scrollHeight
       updateStats()
@@ -123,28 +196,49 @@
           lines = hist.lines
           bufferLen = typeof hist.bufferLen === 'number' ? hist.bufferLen : hist.lines.length
         } else {
-          if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'No log history available.' }
+          if(noteEl && noteEl.querySelector('span')){ 
+            noteEl.style.display = 'flex'
+            noteEl.querySelector('span').textContent = 'No log history available.' 
+          }
           if(logsWrapper) logsWrapper.style.display = 'block'
+          // Show empty state
+          if(logsEl) logsEl.innerHTML = '<div class="log-empty-state"><i class="bi bi-journal-text"></i><p>No logs available yet. Start Minecraft to see logs here.</p></div>'
           return
         }
 
         if (lines.length === 0) {
           if(logsWrapper) logsWrapper.style.display = 'block'
-          if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'No logs yet. (bufferLen=' + bufferLen + ')' }
+          if(noteEl && noteEl.querySelector('span')){ 
+            noteEl.style.display = 'flex'
+            noteEl.querySelector('span').textContent = 'No logs yet. (bufferLen=' + bufferLen + ')' 
+          }
+          // Show empty state
+          if(logsEl) logsEl.innerHTML = '<div class="log-empty-state"><i class="bi bi-journal-text"></i><p>No logs available yet. Start Minecraft to see logs here.</p></div>'
           return
         }
 
-        const joined = lines.join('\n')
-        if (joined.length > 0) {
+        if (lines.length > 0) {
           if(logsWrapper) logsWrapper.style.display = 'block'
-          if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'Showing ' + lines.length + ' buffered log lines. (bufferLen=' + bufferLen + ')' }
+          if(noteEl && noteEl.querySelector('span')){ 
+            noteEl.style.display = 'flex'
+            noteEl.querySelector('span').textContent = 'Showing ' + lines.length + ' buffered log lines. (bufferLen=' + bufferLen + ')' 
+          }
           if (state.paused) {
             state.queued = state.queued.concat(lines)
           } else {
-            if (logsEl) logsEl.textContent += (logsEl.textContent && logsEl.textContent.length > 0 ? '\n' : '') + joined + '\n'
-            truncateIfNeeded(logsEl)
-            if (logsEl) logsEl.scrollTop = logsEl.scrollHeight
-            updateStats()
+            // Clear and rebuild with colorized lines
+            if (logsEl) {
+              logsEl.innerHTML = ''
+              for(const line of lines) {
+                const colorizedLine = colorizeLogLine(line)
+                const tempDiv = document.createElement('div')
+                tempDiv.innerHTML = colorizedLine
+                logsEl.appendChild(tempDiv.firstChild)
+              }
+              truncateIfNeeded(logsEl)
+              logsEl.scrollTop = logsEl.scrollHeight
+              updateStats()
+            }
           }
         }
       } catch (e) {
@@ -155,62 +249,135 @@
 
   function wireControls(){
     safe(() => {
-      const { clearBtn, openBtn, pauseBtn, saveBtn, copyBtn, filterInput, checkBtn, logsEl, noteEl } = getEls()
-      if (clearBtn) clearBtn.addEventListener('click', () => { if(getEls().logsEl) { getEls().logsEl.textContent = ''; updateStats() } })
-      if (openBtn) openBtn.addEventListener('click', () => { try{ ipcRenderer && ipcRenderer.send && ipcRenderer.send('open-mc-logs-window') } catch(e){} })
-      if (pauseBtn) pauseBtn.addEventListener('click', () => {
+      const els = getEls()
+      
+      // Clear button (desktop + mobile)
+      const clearHandler = () => { 
+        const els = getEls()
+        if(els.logsEl) { 
+          els.logsEl.innerHTML = '<div class="log-empty-state"><i class="bi bi-journal-text"></i><p>Logs cleared.</p></div>'
+          updateStats() 
+        } 
+      }
+      if (els.clearBtn) els.clearBtn.addEventListener('click', clearHandler)
+      if (els.clearBtnMobile) els.clearBtnMobile.addEventListener('click', clearHandler)
+      
+      // Open window button (desktop + mobile)
+      const openHandler = () => { try{ ipcRenderer && ipcRenderer.send && ipcRenderer.send('open-mc-logs-window') } catch(e){} }
+      if (els.openBtn) els.openBtn.addEventListener('click', openHandler)
+      if (els.openBtnMobile) els.openBtnMobile.addEventListener('click', openHandler)
+      
+      // Pause button (desktop + mobile)
+      const pauseHandler = (btn) => {
         state.paused = !state.paused
-        pauseBtn.textContent = state.paused ? 'Resume' : 'Pause'
-        if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = state.paused ? 'Paused — incoming lines are queued.' : 'Resumed — queued lines appended.' }
+        const icon = btn.querySelector('i')
+        const text = btn.querySelector('span:not(.sr-only)')
+        
+        if(state.paused) {
+          if(icon) icon.className = 'bi bi-play-fill text-current'
+          if(text) text.textContent = 'Resume'
+          btn.setAttribute('aria-pressed', 'true')
+        } else {
+          if(icon) icon.className = 'bi bi-pause-fill text-current'
+          if(text) text.textContent = 'Pause'
+          btn.setAttribute('aria-pressed', 'false')
+        }
+        
+        const noteEl = getEls().noteEl
+        if(noteEl && noteEl.querySelector('span')){ 
+          noteEl.style.display = 'flex'
+          noteEl.querySelector('span').textContent = state.paused ? 'Paused — incoming lines are queued.' : 'Resumed — queued lines appended.' 
+        }
         if(!state.paused) flushQueue()
-      })
+      }
+      if (els.pauseBtn) els.pauseBtn.addEventListener('click', () => pauseHandler(els.pauseBtn))
+      if (els.pauseBtnMobile) els.pauseBtnMobile.addEventListener('click', () => pauseHandler(els.pauseBtnMobile))
 
-      if (saveBtn) saveBtn.addEventListener('click', async () => {
+      // Save button (desktop + mobile)
+      const saveHandler = async () => {
         try {
-          const content = getEls().logsEl ? getEls().logsEl.textContent : ''
+          const els = getEls()
+          // Extract text content from all log lines
+          const lines = els.logsEl ? Array.from(els.logsEl.querySelectorAll('.log-line')).map(el => el.textContent).join('\n') : ''
+          
           if (ipcRenderer && ipcRenderer.invoke) {
-            const res = await ipcRenderer.invoke('save-mc-log', content)
-            if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = res && res.path ? ('Saved to ' + res.path) : (res && res.result === true ? 'Saved' : 'Save failed') }
+            const res = await ipcRenderer.invoke('save-mc-log', lines)
+            if(els.noteEl && els.noteEl.querySelector('span')){ 
+              els.noteEl.style.display = 'flex'
+              els.noteEl.querySelector('span').textContent = res && res.path ? ('Saved to ' + res.path) : (res && res.result === true ? 'Saved' : 'Save failed') 
+            }
           } else {
             // fallback: download as file in browser context
-            downloadAsFile('mc-logs.txt', content)
-            if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'Saved (browser)'}
+            downloadAsFile('mc-logs.txt', lines)
+            if(els.noteEl && els.noteEl.querySelector('span')){ 
+              els.noteEl.style.display = 'flex'
+              els.noteEl.querySelector('span').textContent = 'Saved (browser)'
+            }
           }
         } catch(e) { console.debug('[SettingsLogs] save error', e) }
-      })
+      }
+      if (els.saveBtn) els.saveBtn.addEventListener('click', saveHandler)
+      if (els.saveBtnMobile) els.saveBtnMobile.addEventListener('click', saveHandler)
 
-      if (copyBtn) copyBtn.addEventListener('click', async () => {
+      // Copy button (desktop + mobile)
+      const copyHandler = async () => {
         try {
-          const content = getEls().logsEl ? getEls().logsEl.textContent : ''
-          if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(content)
+          const els = getEls()
+          // Extract text content from all log lines
+          const lines = els.logsEl ? Array.from(els.logsEl.querySelectorAll('.log-line')).map(el => el.textContent).join('\n') : ''
+          
+          if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(lines)
           else try { document.execCommand('copy') } catch(e){}
-          if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'Copied to clipboard.' }
+          if(els.noteEl && els.noteEl.querySelector('span')){ 
+            els.noteEl.style.display = 'flex'
+            els.noteEl.querySelector('span').textContent = 'Copied to clipboard.' 
+          }
         } catch(e) { console.debug('[SettingsLogs] copy error', e) }
-      })
+      }
+      if (els.copyBtn) els.copyBtn.addEventListener('click', copyHandler)
+      if (els.copyBtnMobile) els.copyBtnMobile.addEventListener('click', copyHandler)
 
-      if (filterInput) filterInput.addEventListener('input', () => {
+      // Filter input
+      if (els.filterInput) els.filterInput.addEventListener('input', () => {
         // debounce re-filter
-        state.lastFilter = filterInput.value
+        state.lastFilter = els.filterInput.value
         if (state.filterTimeout) clearTimeout(state.filterTimeout)
         state.filterTimeout = setTimeout(() => {
           // simpler approach: clear view and request history to rebuild filtered view
-          if (getEls().logsEl) getEls().logsEl.textContent = ''
+          const els = getEls()
+          if (els.logsEl) els.logsEl.innerHTML = ''
           updateStats()
           try { requestHistory() } catch(e){}
         }, state.filterDebounceMs)
       })
 
-      if (checkBtn) checkBtn.addEventListener('click', async () => {
+      // Check button (desktop + mobile)
+      const checkHandler = async () => {
         try {
           if (!ipcRenderer) return
           const res = await ipcRenderer.invoke('request-mc-log-history')
-          if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = 'Buffer response: ' + (res && res.bufferLen != null ? ('bufferLen=' + res.bufferLen) : (Array.isArray(res) ? 'legacy array len=' + res.length : JSON.stringify(res))) }
+          const els = getEls()
+          if(els.noteEl && els.noteEl.querySelector('span')){ 
+            els.noteEl.style.display = 'flex'
+            els.noteEl.querySelector('span').textContent = 'Buffer response: ' + (res && res.bufferLen != null ? ('bufferLen=' + res.bufferLen) : (Array.isArray(res) ? 'legacy array len=' + res.length : JSON.stringify(res))) 
+          }
         } catch(e) { console.debug('[SettingsLogs] manual check buffer error', e) }
-      })
+      }
+      if (els.checkBtn) els.checkBtn.addEventListener('click', checkHandler)
+      if (els.checkBtnMobile) els.checkBtnMobile.addEventListener('click', checkHandler)
 
       // listen for ack
       if (ipcRenderer && ipcRenderer.on) {
-        try { ipcRenderer.on('mc-log-history-ack', (_, info) => { safe(() => { if(getEls().noteEl) getEls().noteEl.style.display = 'block'; if(getEls().noteEl) getEls().noteEl.textContent = 'History ack received (bufferLen=' + (info && typeof info.bufferLen === 'number' ? info.bufferLen : 'unknown') + ')' }) }) } catch(e){}
+        try { 
+          ipcRenderer.on('mc-log-history-ack', (_, info) => { 
+            safe(() => { 
+              if(getEls().noteEl && getEls().noteEl.querySelector('span')) {
+                getEls().noteEl.style.display = 'flex'
+                getEls().noteEl.querySelector('span').textContent = 'History ack received (bufferLen=' + (info && typeof info.bufferLen === 'number' ? info.bufferLen : 'unknown') + ')' 
+              }
+            }) 
+          }) 
+        } catch(e){}
       }
 
     })

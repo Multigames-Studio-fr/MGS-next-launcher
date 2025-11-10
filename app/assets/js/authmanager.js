@@ -117,15 +117,16 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
 }
 
 /**
- * Calculate the expiry date. Advance the expiry time by 10 seconds
- * to reduce the liklihood of working with an expired token.
+ * Calculate the expiry date. Set token expiration to 1 year to avoid frequent disconnections.
  * 
  * @param {number} nowMs Current time milliseconds.
- * @param {number} epiresInS Expires in (seconds)
+ * @param {number} epiresInS Expires in (seconds) - ignored, using 1 year instead
  * @returns 
  */
 function calculateExpiryDate(nowMs, epiresInS) {
-    return nowMs + ((epiresInS-10)*1000)
+    // Fixer l'expiration à 1 an pour éviter les déconnexions fréquentes
+    const oneYearInMs = 365 * 24 * 60 * 60 * 1000 // 1 an en millisecondes
+    return nowMs + oneYearInMs
 }
 
 /**
@@ -305,6 +306,15 @@ async function validateSelectedMicrosoftAccount(){
             return true
         } catch(err) {
             log.warn('MS full refresh failed after retries', err)
+            // Ne pas supprimer le compte immédiatement, permettre une reconnexion manuelle
+            if (err && err.microsoftErrorCode) {
+                log.warn('Microsoft error code:', err.microsoftErrorCode)
+                // Certaines erreurs peuvent être temporaires (réseau, serveur, etc.)
+                if (err.microsoftErrorCode === 'NETWORK_ERROR' || err.microsoftErrorCode === 'UNKNOWN') {
+                    log.info('Temporary error detected, keeping account for retry')
+                    return false
+                }
+            }
             return false
         }
     } else {
@@ -325,6 +335,14 @@ async function validateSelectedMicrosoftAccount(){
         }
         catch(err) {
             log.warn('MC refresh failed after retries', err)
+            // Ne pas supprimer le compte pour les erreurs temporaires
+            if (err && err.microsoftErrorCode) {
+                log.warn('Microsoft error code:', err.microsoftErrorCode)
+                if (err.microsoftErrorCode === 'NETWORK_ERROR' || err.microsoftErrorCode === 'UNKNOWN') {
+                    log.info('Temporary error detected, keeping account for retry')
+                    return false
+                }
+            }
             return false
         }
     }

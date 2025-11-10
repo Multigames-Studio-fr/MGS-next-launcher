@@ -6,7 +6,7 @@
         <!-- Overlay sombre global -->
         <div class="absolute inset-0 bg-black/60 z-0"></div>
         <!-- Overlay glassmorphism global -->
-       
+
         <style>
             :root {
                 --primary: #451F21;
@@ -37,46 +37,57 @@
                 box-sizing: border-box;
                 transition-property: width, background-color, box-shadow, transform;
                 transition-duration: 300ms;
-                transition-timing-function: cubic-bezier(.2,.9,.2,1);
-                overflow: hidden; /* hide label overflow when shrinking */
+                transition-timing-function: cubic-bezier(.2, .9, .2, 1);
+                overflow: hidden;
+                /* hide label overflow when shrinking */
                 align-items: center;
                 will-change: width, transform;
             }
 
             /* Explicit numeric widths to ensure smooth transitions between Tailwind classes */
-            .server-instance-btn.w-20 { width: 5rem; }
-            .server-instance-btn.w-64 { width: 16rem; }
+            .server-instance-btn.w-20 {
+                width: 5rem;
+            }
+
+            .server-instance-btn.w-64 {
+                width: 16rem;
+            }
 
             /* Icon micro-interaction: scale when the button is wide (selected by Tailwind w-64 class) */
             .server-instance-btn img {
-                transition: transform 260ms cubic-bezier(.2,.9,.2,1), box-shadow 260ms;
+                transition: transform 260ms cubic-bezier(.2, .9, .2, 1), box-shadow 260ms;
                 will-change: transform;
             }
+
             .server-instance-btn.w-64 img {
                 transform: scale(1.04);
-                box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
             }
 
             /* Animate the label even if it is toggled with Tailwind's 'hidden'/'block' classes.
                We override the display set by Tailwind with a more specific selector and animate
                opacity/transform/max-width for a smooth reveal without changing JS. */
-            .server-instance-btn > div > span.font-semibold.text-xl.leading-tight {
-                display: inline-block; /* override Tailwind 'hidden' display:none when necessary */
+            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight {
+                display: inline-block;
+                /* override Tailwind 'hidden' display:none when necessary */
                 opacity: 0;
                 transform: translateX(-6px);
                 max-width: 0;
-                transition: opacity 220ms linear, transform 260ms cubic-bezier(.2,.9,.2,1), max-width 260ms cubic-bezier(.2,.9,.2,1);
+                transition: opacity 220ms linear, transform 260ms cubic-bezier(.2, .9, .2, 1), max-width 260ms cubic-bezier(.2, .9, .2, 1);
                 white-space: nowrap;
                 vertical-align: middle;
                 pointer-events: none;
             }
-            .server-instance-btn > div > span.font-semibold.text-xl.leading-tight.block {
+
+            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight.block {
                 opacity: 1;
                 transform: translateX(0);
-                max-width: 160px; /* matches the tailwind max width used in markup */
+                max-width: 160px;
+                /* matches the tailwind max width used in markup */
                 pointer-events: auto;
             }
-            .server-instance-btn > div > span.font-semibold.text-xl.leading-tight.hidden {
+
+            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight.hidden {
                 opacity: 0;
                 transform: translateX(-6px);
                 max-width: 0;
@@ -85,16 +96,20 @@
 
             /* Fix the player info area width so avatar/username layout doesn't shift during animations */
             .player-top-info {
-                min-width: 12.5rem; /* fixed width for player info block */
+                min-width: 12.5rem;
+                /* fixed width for player info block */
                 max-width: 12.5rem;
                 box-sizing: border-box;
             }
 
             /* Respect reduced motion */
-            @media (prefers-reduced-motion: reduce){
+            @media (prefers-reduced-motion: reduce) {
+
                 .server-instance-btn,
-                .server-instance-btn > div > span.font-semibold.text-xl.leading-tight,
-                .server-instance-btn img { transition: none !important; }
+                .server-instance-btn>div>span.font-semibold.text-xl.leading-tight,
+                .server-instance-btn img {
+                    transition: none !important;
+                }
             }
         </style>
 
@@ -102,11 +117,11 @@
         <!-- Main content glassmorphism -->
         <main
             class="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-8 md:px-12 lg:px-20 xl:px-32 glass-main-content">
-            
+
             <div class="absolute top-0 left-0 z-40 p-6">
-                <img src="./assets/images/logoup.png" class="h-30 " alt="Logo" >
+                <img src="./assets/images/logoup.png" class="h-30 " alt="Logo">
             </div>
-           
+
             <div style="padding-top: 150px;" class="max-w-3xl space-y-6">
 
                 <h1
@@ -119,10 +134,9 @@
                 <div class="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 text-sm sm:text-base">
                     <span class="text-white/70 text-sm">Version :</span>
                     <span class="text-white font-bold server-version">--</span>
-                    <span class="text-white/70 text-sm">Loader :</span>
-                    <span class="text-white font-bold server-loader">--</span>
+
                 </div>
-                   <br>
+                <br>
                 <div class="play-instance flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <button id="launch_button"
                         class="play-btn flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-[#FF6A1A] hover:bg-[#F8BA59] text-white font-bold text-lg sm:text-xl md:text-2xl shadow-xl transition-all duration-200 w-full sm:w-auto">
@@ -135,7 +149,9 @@
                     <!-- Stop button (visible when instance running) - styled like play button -->
                     <button id="stop_button" style="display:none;"
                         class="play-btn stop-btn flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-lg sm:text-xl md:text-2xl shadow-xl transition-all duration-200 w-full sm:w-auto">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h12v12H6z" />
+                        </svg>
                         Arrêter
                     </button>
 
@@ -154,21 +170,23 @@
                     <!-- News button: ouvre la section Actualités -->
                     <button id="openNewsButton" title="Actualités"
                         class="settings-btn news-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-[#181818] hover:bg-[#F8BA59]/80 text-white transition shadow-lg">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
                             <path d="M4 6h16M4 12h10M4 18h16"></path>
                         </svg>
                     </button>
 
                 </div>
-             <br>
+                <br>
                 <!-- Remplace tout le bloc .play-instance par le bloc .info-starting-game ci-dessous -->
                 <div id="launch_details"
-                    class="info-starting-game hidden game-launch-overlay h-20 z-50 pointer-events-none">
+                    class="info-starting-game hidden game-launch-overlay h-20 z-50 pointer-events-none"
+                    style="display: none; opacity: 0;">
                     <br>
                     <div class="flex flex-col  justify-center w-full pb-12 gap-3">
                         <div class="flex items-center gap-3">
                             <span class="inline-flex ">
-                                <svg class="w-6 h-6 text-[#F8BA59]" viewBox="0 0 24 24" fill="none"
+                                <svg class="w-6 h-6 text-[#F8BA59] animate-spin" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10" stroke-opacity=".4" />
                                     <path d="M12 6v6l3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -221,32 +239,35 @@
 
             <!-- Contenu de la sidebar -->
             <!-- Contenu de la sidebar -->
-               
-            <div class="flex flex-col justify-between h-full min-h-screen w-64 ">
+
+            <div class="flex flex-col justify-between h-full min-h-screen w-74 ">
                 <!-- Haut : Avatar -->
-                   
+
                 <div class="relative mb-3 ">
                     <div
                         class="glass-sidebar bg-[#181818]/60 rounded-l-2xl sm:rounded-l-3xl py-3 px-3 flex  gap-3 border border-white/10">
-                        <div id="avatarContainer" class="player-head w-15 h-15 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
-                            
+                        <div id="avatarContainer"
+                            class="player-head w-15 h-15 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+
                         </div>
                         <!-- Ajout du pseudo ici -->
                         <div class="flex flex-col ">
                             <div id="username" class=" text-white text-2xl font-semibold "></div>
                             <div class="flex items-center gap-2" aria-live="polite" aria-atomic="true">
-                                <span class="server-status-dot status-dot-pulse w-3 h-3 rounded-full bg-green-400 border-2 border-white" role="img" aria-label="Statut : en ligne"></span>
+                                <span
+                                    class="server-status-dot status-dot-pulse w-3 h-3 rounded-full bg-green-400 border-2 border-white"
+                                    role="img" aria-label="Statut : en ligne"></span>
                                 <span class="text-white text-sm">En ligne</span>
                             </div>
                         </div>
-                       
+
 
                     </div>
 
-                    
+
                     <!-- username/avatar init removed (centralized later) -->
                 </div>
-                   
+
 
                 <!-- Milieu : Liste des serveurs centrée -->
                 <div class="flex flex-col gap-3 mt-6 sm:mt-8 md:mt-10 w-full max-w-sm mx-auto">
@@ -260,29 +281,37 @@
 
                 <!-- Bas : Réseaux sociaux -->
                 <div class="flex flex-row gap-4 justify-center mt-8 mb-20">
-                    <a href="https://discord.gg/tonserveur" target="_blank" title="Discord"
+                    <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"/>
+                            <path
+                                d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612" />
                         </svg>
                     </a>
-                    <a href="https://twitter.com/tonserveur" target="_blank" title="Twitter"
+                    <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                             <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
+                            <path
+                                d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z" />
                         </svg>
                     </a>
-                    <a href="https://facebook.com/tonserveur" target="_blank" title="Facebook"
+                    <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube"
                         class="text-white hover:text-[#F8BA59] transition">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
-
+                            <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"/>
+                        </svg>
+                    </a>
+                    <a href="https://x.com/MultigamesStd" target="_blank" title="X"
+                        class="text-white hover:text-[#F8BA59] transition">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z" />
                         </svg>
                     </a>
                     <!-- Ajoute d'autres réseaux si besoin -->
                 </div>
             </div>
-               
+
 
 
 
@@ -316,17 +345,26 @@
 
     <!-- Styles et scripts pour la nouvelle interface -->
     <style>
-    /* Apparition douce du contenu principal */
-    main .max-w-2xl { min-height: 1px; }
+        /* Apparition douce du contenu principal */
+        main .max-w-2xl {
+            min-height: 1px;
+        }
 
-    .fade-in { opacity: 0; transform: translateY(4px); }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(4px);
+        }
 
         /* News styles moved to partial: app/news.ejs */
 
-    /* Boutons principaux : effet de survol doux et léger */
-    .play-btn,
-    .settings-btn,
-    .w-14.h-14 { display: inline-flex; align-items: center; justify-content: center; }
+        /* Boutons principaux : effet de survol doux et léger */
+        .play-btn,
+        .settings-btn,
+        .w-14.h-14 {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         .play-btn:hover {
             background: #F8BA59;
@@ -339,15 +377,22 @@
             color: #181818;
         }
 
-    /* Animation sur le select d'instance */
-    .instance-select { min-width: 1px; }
+        /* Animation sur le select d'instance */
+        .instance-select {
+            min-width: 1px;
+        }
 
         .instance-select:focus {
             border-color: #F8BA59;
         }
 
-    /* Animation sur le dot de statut serveur */
-    .server-status-dot { width: 8px; height: 8px; display: inline-block; border-radius: 9999px; }
+        /* Animation sur le dot de statut serveur */
+        .server-status-dot {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            border-radius: 9999px;
+        }
 
         /* Button glass style */
         .glass-btn {
@@ -410,67 +455,136 @@
         /* --- ADDED: Animations CSS utilities --- */
         /* Place these rules near the other styles */
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         @keyframes slideRight {
-            from { opacity: 0; transform: translateX(18px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
+
         @keyframes popIn {
-            from { opacity: 0; transform: scale(.96) translateY(4px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from {
+                opacity: 0;
+                transform: scale(.96) translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .animate-fade {
-            animation: fadeUp 520ms cubic-bezier(.2,.9,.2,1) both;
+            animation: fadeUp 520ms cubic-bezier(.2, .9, .2, 1) both;
         }
+
         .animate-slide-right {
-            animation: slideRight 420ms cubic-bezier(.2,.9,.2,1) both;
+            animation: slideRight 420ms cubic-bezier(.2, .9, .2, 1) both;
         }
+
         .animated-pop {
-            animation: popIn 420ms cubic-bezier(.2,.9,.2,1) both;
+            animation: popIn 420ms cubic-bezier(.2, .9, .2, 1) both;
         }
 
         /* --- ADDED: Extra animations & polish --- */
         @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-            100% { transform: translateY(0); }
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
         }
+
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255,106,26,0); transform: scale(1); }
-            50% { box-shadow: 0 0 30px 8px rgba(248,186,89,0.06); transform: scale(1.01); }
-            100% { box-shadow: 0 0 0 0 rgba(255,106,26,0); transform: scale(1); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 106, 26, 0);
+                transform: scale(1);
+            }
+
+            50% {
+                box-shadow: 0 0 30px 8px rgba(248, 186, 89, 0.06);
+                transform: scale(1.01);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 106, 26, 0);
+                transform: scale(1);
+            }
         }
+
         @keyframes progressShimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
+
         @keyframes wobble {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(1deg); }
-            75% { transform: rotate(-1deg); }
-            100% { transform: rotate(0deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(1deg);
+            }
+
+            75% {
+                transform: rotate(-1deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
         }
 
         /* Logo float */
-        .logo-float { animation: float 6s ease-in-out infinite; will-change: transform; }
+        .logo-float {
+            animation: float 6s ease-in-out infinite;
+            will-change: transform;
+        }
 
         /* Button hover pulse (non-intrusive) */
-        .button-pulse { animation: pulse 1.6s ease-in-out infinite; }
+        .button-pulse {
+            animation: pulse 1.6s ease-in-out infinite;
+        }
 
         /* News card 3D tilt + hover lift */
         .news-card {
             transform-origin: center;
             transform-style: preserve-3d;
-            transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s ease;
+            transition: transform .22s cubic-bezier(.2, .9, .2, 1), box-shadow .22s ease;
             backface-visibility: hidden;
             will-change: transform;
         }
+
         .news-card:hover {
             transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
         }
 
         /* progress bar shimmer overlay */
@@ -478,16 +592,18 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.05) 100%);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.05) 100%);
             background-size: 300% 100%;
             pointer-events: none;
             animation: progressShimmer 2.2s linear infinite;
             mix-blend-mode: overlay;
         }
-        .glass-sidebar{
+
+        .glass-sidebar {
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+
         /* small floating micro-anim for sidebar status dot */
         .glass-sidebar .status-dot-pulse {
             display: inline-block;
@@ -495,12 +611,191 @@
         }
 
         /* stagger reveal utilities (intersection-based) */
-        [data-reveal] { opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; }
-        [data-reveal].revealed { opacity: 1; transform: translateY(0); }
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .5s ease, transform .5s ease;
+        }
+
+        [data-reveal].revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
         /* accessibility: respect reduced motion */
+        /* --- Instance change animations --- */
+        @keyframes instanceFadeOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+        }
+
+        @keyframes instanceFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes launchPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 8px 24px rgba(248, 186, 89, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 12px 32px rgba(248, 186, 89, 0.5);
+            }
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(248, 186, 89, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(248, 186, 89, 0.7);
+            }
+        }
+
+        /* Animation classes */
+        .instance-fade-out {
+            animation: instanceFadeOut 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        .instance-fade-in {
+            animation: instanceFadeIn 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        .launch-pulse {
+            animation: launchPulse 1.5s ease-in-out infinite;
+        }
+
+        .slide-up-anim {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .glow-pulse {
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        /* Stagger delays for smooth cascading */
+        .server-title {
+            animation-delay: 0.1s;
+        }
+
+        .server-desc {
+            animation-delay: 0.2s;
+        }
+
+        .server-version {
+            animation-delay: 0.3s;
+        }
+
+        .play-instance {
+            animation-delay: 0.4s;
+        }
+
+        /* Launch button special effects */
+        .play-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .play-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(248, 186, 89, 0.4);
+        }
+
+        .play-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Initial state for animations */
+        .play-instance,
+        #launch_details {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Hide launch details by default */
+        #launch_details {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Progress bar entrance animation */
+        #launch_details.show {
+            display: flex !important;
+            
+            opacity: 1;
+        }
+
+        /* Spinning animation for loading icon */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
         @media (prefers-reduced-motion: reduce) {
-            .animate-fade, .animate-slide-right, .animated-pop, .logo-float, .button-pulse, .news-card, #launch_progress_bar::after {
+
+            .animate-fade,
+            .animate-slide-right,
+            .animated-pop,
+            .logo-float,
+            .button-pulse,
+            .news-card,
+            #launch_progress_bar::after,
+            .instance-fade-out,
+            .instance-fade-in,
+            .launch-pulse,
+            .slide-up-anim,
+            .glow-pulse {
                 animation: none !important;
                 transition: none !important;
                 transform: none !important;
@@ -519,7 +814,7 @@
             position: fixed;
             inset: 0;
             z-index: 80;
-            background: linear-gradient(180deg, rgba(8,8,8,0.98), rgba(8,8,8,0.99));
+            background: linear-gradient(180deg, rgba(8, 8, 8, 0.98), rgba(8, 8, 8, 0.99));
             padding: 28px;
             overflow: auto;
             display: block !important;
@@ -531,7 +826,7 @@
             margin: 0 auto;
         }
 
-    /* ...existing code... */
+        /* ...existing code... */
     </style>
 
     <script src="./assets/js/scripts/landing-inline.js"></script>

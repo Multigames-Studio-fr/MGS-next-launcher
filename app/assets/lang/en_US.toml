@@ -1,11 +1,11 @@
 [ejs.landing]
 updateAvailableTooltip = "Mise à jour disponible"
 usernamePlaceholder = "Nom d'utilisateur"
-usernameEditButton = "Éditer"
+usernameEditButton = "Modifier"
 settingsTooltip = "Paramètres"
 serverStatus = "ÉTAT DU SERVEUR"
 serverStatusPlaceholder = "HORS LIGNE"
-mojangStatus = "status"
+mojangStatus = "Statut"
 mojangStatusTooltipTitle = "Services"
 mojangStatusNETitle = "Non Essentiel"
 newsButton = "ACTUALITÉS"
@@ -35,13 +35,13 @@ loginPasswordDisclaimer1 = "Votre mot de passe est envoyé directement à Mojang
 loginPasswordDisclaimer2 = "{appName} n'est pas affilié à Mojang AB."
 
 [ejs.loginOptions]
-loginOptionsTitle = "Se connecter avec ..."
+loginOptionsTitle = "Se connecter avec..."
 loginWithMicrosoft = "Microsoft"
-loginWithMojang = "Mojang (compte dépasser)"
-cancelButton = "Cancel"
+loginWithMojang = "Mojang (compte dépassé)"
+cancelButton = "Annuler"
 
 [ejs.overlay]
-serverSelectHeader = "les autre serveurs"
+serverSelectHeader = "Serveurs disponibles"
 serverSelectConfirm = "Sélectionner"
 serverSelectCancel = "Annuler"
 accountSelectHeader = "Sélectionner un compte"
@@ -49,7 +49,7 @@ accountSelectConfirm = "Sélectionner"
 accountSelectCancel = "Annuler"
 
 [ejs.settings]
-HeaderText = "para"
+HeaderText = "Paramètres"
 navAccount = "Compte"
 navMinecraft = "Minecraft"
 navMods = "Mods"
@@ -57,6 +57,7 @@ navJava = "Java"
 navLauncher = "Lanceur"
 navAbout = "À propos"
 navUpdates = "Mises à jour"
+navLogs = "Logs"
 navDone = "Terminé"
 tabAccountHeaderText = "Paramètres du compte"
 tabAccountHeaderDesc = "Ajoutez de nouveaux comptes ou gérez les comptes existants."
@@ -77,18 +78,21 @@ mcLogsPanelTitle = "Console Minecraft"
 mcLogsPanelDesc = "Affiche en direct la sortie standard et les erreurs du jeu lorsque celui-ci est lancé. Vous pouvez ouvrir cette sortie dans une fenêtre séparée."
 mcLogsOpenWindow = "Ouvrir dans une fenêtre"
 mcLogsClear = "Effacer"
-navLogs = "Logs"
-logsTabHeaderText = "Logs"
+logsTabHeaderText = "Logs Minecraft"
 logsTabHeaderDesc = "Consultez les logs Minecraft en direct et ouvrez-les dans une fenêtre séparée si nécessaire."
 tabModsHeaderText = "Paramètres des mods"
 tabModsHeaderDesc = "Activez ou désactivez les mods."
-switchServerButton = "Basculer"
+switchServerButton = "Changer de serveur"
 requiredMods = "Mods requis"
+requiredModsNote = "Ces mods sont obligatoires"
+requiredModsDesc = "Les mods requis ne peuvent pas être désactivés."
 optionalMods = "Mods optionnels"
-dropinMods = "Mods Drop-in"
+optionalModsNote = "Personnalisez votre expérience"
+dropinMods = "Mods personnalisés"
 addMods = "Ajouter des mods"
 dropinRefreshNote = "(F5 pour rafraîchir)"
 shaderpacks = "Shaderpacks"
+shaderpackSummary = "Personnalisation visuelle"
 shaderpackDesc = "Activez ou désactivez les shaders. Veuillez noter que les shaders fonctionneront uniquement correctement sur des configurations puissantes. Vous pouvez ajouter des packs personnalisés ici."
 selectShaderpack = "Sélectionner un Shaderpack"
 tabJavaHeaderText = "Paramètres Java"
@@ -132,21 +136,20 @@ checkForUpdates = "Vérifier les mises à jour"
 whatsNew = "Quoi de neuf"
 updateReleaseNotes = "Notes de mise à jour"
 
-navHeaderText = "Paramètre"
-sourceGithubLink = "Source (GitHub)"
-supportLink = "Support"
+navHeaderText = "Paramètres"
+sourceGithubLink = "https://github.com/Multigames-Studio-fr/Multigames-studio-lancheur"
+supportLink = "https://discord.gg/multigames-studio"
 [ejs.waiting]
 waitingText = "En attente de Microsoft.."
 
 [ejs.welcome]
 continueButton = "CONTINUER"
-
-welcomeHeader = "welcomeHeader"
-welcomeDescription = "welcomeDescription"
-welcomeDescCTA = "welcomeDescCTA"
+welcomeHeader = "Bienvenue sur MultiGames Studio"
+welcomeDescription = "Votre plateforme de jeu ultime pour Minecraft"
+welcomeDescCTA = "Commencez votre aventure dès maintenant !"
 [js.discord]
-waiting = "En attente du client.."
-state = "MultiGames Studio V2.2.0"
+waiting = "En attente du client..."
+state = "MultiGames Studio"
 
 [js.index]
 microsoftLoginTitle = "Connexion Microsoft"
@@ -167,7 +170,7 @@ title = "Erreur inconnue lors de la connexion"
 desc = "Une erreur inconnue s'est produite. Veuillez consulter la console pour plus de détails."
 
 [js.landing.launch]
-pleaseWait = "Veuillez patienter.."
+pleaseWait = "Veuillez patienter..."
 failureTitle = "Erreur lors du lancement"
 failureText = "Consultez la console (CTRL + Shift + i) pour plus de détails."
 okay = "D'accord"
@@ -177,7 +180,7 @@ noAccountSelected = "Aucun compte sélectionné"
 
 [js.landing.selectedServer]
 noSelection = "Aucun serveur sélectionné"
-loading = "Chargement.."
+loading = "Chargement..."
 
 [js.landing.serverStatus]
 server = "SERVEUR"
@@ -185,12 +188,12 @@ offline = "HORS LIGNE"
 players = "JOUEURS"
 
 [js.landing.systemScan]
-checking = "Vérification des informations système.."
+checking = "Vérification des informations système..."
 noCompatibleJava = "Aucune installation Java compatible trouvée"
 installJavaMessage = "Pour lancer Minecraft, vous avez besoin d'une installation Java {major} 64 bits. Souhaitez-vous que nous installions une copie ?"
 installJava = "Installer Java"
 installJavaManually = "Installer manuellement"
-javaDownloadPrepare = "Préparation du téléchargement de Java.."
+javaDownloadPrepare = "Préparation du téléchargement de Java..."
 javaDownloadFailureTitle = "Erreur lors du téléchargement de Java"
 javaDownloadFailureText = "Consultez la console (CTRL + Shift + i) pour plus de détails."
 javaRequired = "Java est requis<br>pour le lancement"
@@ -205,30 +208,28 @@ extractingJava = "Extraction de Java"
 javaInstalled = "Java installé !"
 
 [js.landing.dlAsync]
-loadingServerInfo = "Chargement des informations sur le serveur.."
+loadingServerInfo = "Chargement des informations sur le serveur..."
 fatalError = "Erreur fatale"
 unableToLoadDistributionIndex = "Impossible de charger une copie de l'index de distribution. Consultez la console (CTRL + Shift + i) pour plus de détails."
-pleaseWait = "Veuillez patienter.."
+pleaseWait = "Veuillez patienter..."
 errorDuringLaunchTitle = "Erreur lors du lancement"
 seeConsoleForDetails = "Consultez la console (CTRL + Shift + i) pour plus de détails."
-validatingFileIntegrity = "Validation"
+validatingFileIntegrity = "Validation de l'intégrité des fichiers..."
 errorDuringFileVerificationTitle = "Erreur lors de la vérification du fichier"
-downloadingFiles = "Téléchargement"
+downloadingFiles = "Téléchargement des fichiers..."
 errorDuringFileDownloadTitle = "Erreur lors du téléchargement du fichier"
-preparingToLaunch = "Préparation du lancement.."
-launchingGame = "Lancement du jeu.."
+preparingToLaunch = "Préparation du lancement..."
+launchingGame = "Lancement du jeu..."
 launchWrapperNotDownloaded = "Le fichier principal, LaunchWrapper, n'a pas été téléchargé correctement. Par conséquent, le jeu ne peut pas démarrer.<br><br>Pour résoudre ce problème, désactivez temporairement votre logiciel antivirus et relancez le jeu.<br><br>Si vous avez le temps, veuillez <a href=\"https://github.com/dscalzi/HeliosLauncher/issues\">soumettre un problème</a> et nous faire savoir quel logiciel antivirus vous utilisez. Nous les contacterons et essaierons de régler les choses."
 doneEnjoyServer = "Terminé. Profitez du serveur !"
 checkConsoleForDetails = "Veuillez consulter la console (CTRL + Shift + i) pour plus de détails."
-
-
-errorDuringLaunchText = "errorDuringLaunchText"
+errorDuringLaunchText = "Une erreur s'est produite lors du lancement du jeu"
 [js.landing.news]
 checking = "Vérification des actualités"
 
 [js.landing.discord]
-loading = "Chargement du jeu.."
-joining = "il navigue sur minecraft!"
+loading = "Chargement du jeu..."
+joining = "Navigation dans Minecraft !"
 joined = "Exploration du royaume !"
 
 [js.overlay]
@@ -276,7 +277,7 @@ okButton = "D'accord"
 mainServer = "Serveur principal"
 
 [js.settings.java]
-selectedJava = "Sélectionné : Java {version} ({fournisseur})"
+selectedJava = "Sélectionné : Java {version} ({vendor})"
 invalidSelection = "Sélection invalide"
 requiresJava = "Nécessite Java {major} x64."
 availableOptions = "Options disponibles pour Java {major} (VM HotSpot)"
@@ -290,13 +291,12 @@ releaseNotesFailed = "Échec du chargement des notes de version."
 [js.settings.updates]
 newReleaseTitle = "Nouvelle version disponible"
 newPreReleaseTitle = "Nouvelle préversion disponible"
-downloadingButton = "Téléchargement en cours.."
+downloadingButton = "Téléchargement en cours..."
 downloadButton = 'Télécharger depuis GitHub<span style="font-size: 10px;color: gray;text-shadow: none !important;">Fermez le lanceur et exécutez le fichier dmg pour mettre à jour.</span>'
 latestVersionTitle = "Vous utilisez la dernière version"
 checkForUpdatesButton = "Vérifier les mises à jour"
-checkingForUpdatesButton = "Vérification des mises à jour en cours.."
-
-installNowButton = "installNowButton"
+checkingForUpdatesButton = "Vérification des mises à jour..."
+installNowButton = "Installer maintenant"
 [js.uibinder.startup]
 fatalErrorTitle = "Erreur fatale : Impossible de charger l'index de distribution"
 fatalErrorMessage = "Une connexion n'a pas pu être établie avec nos serveurs pour télécharger l'index de distribution. Aucune copie locale n'était disponible pour le chargement. <br><br>L'index de distribution est un fichier essentiel qui fournit les dernières informations sur le serveur. Le lanceur ne peut pas démarrer sans lui. Assurez-vous d'être connecté à Internet et relancez l'application."

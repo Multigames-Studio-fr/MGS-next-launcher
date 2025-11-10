@@ -1,109 +1,138 @@
-<div id="waitingContainer" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-    <div id="waitingContent"
-        class="w-full max-w-md bg-[#0b0b0b]/88 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center shadow-2xl mx-auto">
-        <!-- Spinner -->
-        <div class="loader">
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
-            <div class="loader-square"></div>
+<div class="h-full">
+
+    <div id="waitingContainer" class="hidden h-full fixed inset-0 z-50 flex items-center justify-center" style="background: url('./assets/images/backgrounds/0.jpg') center/cover no-repeat;">
+    <!-- Overlay sombre -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+    
+    <!-- Contenu principal -->
+    <div id="waitingContent" class="relative z-10 w-full max-w-lg mx-auto px-6">
+        <!-- Carte principale avec effet glass -->
+        <div class="bg-[#181818]/60 backdrop-blur-md border border-gray-700/50 rounded-2xl p-8 shadow-2xl">
+            <!-- En-tête avec icône -->
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-yellow-500/20">
+                    <i class="bi bi-hourglass-split text-2xl text-white animate-pulse"></i>
+                </div>
+                <h2 id="waitingTextContainer" class="text-2xl font-bold text-white mb-2 text-center">
+                    <%- lang('waiting.waitingText') %>
+                </h2>
+                <p class="text-sm text-gray-400 text-center">Veuillez patienter pendant la préparation...</p>
+            </div>
+
+            <!-- Loader animé -->
+            <div class="flex justify-center my-8">
+                <div class="loader">
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                    <div class="loader-square"></div>
+                </div>
+            </div>
+
+            <!-- Barre de progression stylisée -->
+            <div class="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden mb-6">
+                <div class="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 rounded-full animate-pulse" style="width: 70%; animation: progress 2s ease-in-out infinite;"></div>
+            </div>
+
+            <!-- Message d'aide -->
+            <div class="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <i class="bi bi-info-circle text-blue-400 text-lg flex-shrink-0 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-xs text-blue-300/90 leading-relaxed">
+                        Si cela prend trop de temps, vérifiez votre connexion internet ou relancez le lanceur.
+                    </p>
+                </div>
+            </div>
         </div>
 
-        <!-- Texte d'attente (conserver ID) -->
-        <div id="waitingTextContainer">
-            <h2 class="text-lg md:text-xl font-semibold text-white mb-1"><%- lang('waiting.waitingText') %></h2>
-            <p class="text-sm text-white/70">Veuillez patienter pendant la préparation...</p>
+        <!-- Branding subtil en bas -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-gray-500">MultiGames Studio Launcher</p>
         </div>
-
-        <!-- Optionnel: petit footer ou hint -->
-        <div class="mt-4 text-xs text-white/50">Si cela prend trop de temps, vérifiez votre connexion ou relancez le
-            launcher.</div>
     </div>
+
     <style>
+        /* Animation pour la barre de progression */
+        @keyframes progress {
+            0%, 100% {
+                transform: translateX(-10%);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateX(10%);
+                opacity: 1;
+            }
+        }
+
+        /* Animation du loader carré */
         @keyframes square-animation {
             0% {
                 left: 0;
                 top: 0;
             }
-
             10.5% {
                 left: 0;
                 top: 0;
             }
-
             12.5% {
                 left: 22px;
                 top: 0;
             }
-
             23% {
                 left: 22px;
                 top: 0;
             }
-
             25% {
                 left: 44px;
                 top: 0;
             }
-
             35.5% {
                 left: 44px;
                 top: 0;
             }
-
             37.5% {
                 left: 44px;
                 top: 22px;
             }
-
             48% {
                 left: 44px;
                 top: 22px;
             }
-
             50% {
                 left: 22px;
                 top: 22px;
             }
-
             60.5% {
                 left: 22px;
                 top: 22px;
             }
-
             62.5% {
                 left: 22px;
                 top: 44px;
             }
-
             73% {
                 left: 22px;
                 top: 44px;
             }
-
             75% {
                 left: 0;
                 top: 44px;
             }
-
             85.5% {
                 left: 0;
                 top: 44px;
             }
-
             87.5% {
                 left: 0;
                 top: 22px;
             }
-
             98% {
                 left: 0;
                 top: 22px;
             }
-
             100% {
                 left: 0;
                 top: 0;
@@ -112,13 +141,10 @@
 
         .loader {
             position: relative;
-            /* placed inside .center so use flow positioning */
             display: inline-block;
             width: 64px;
             height: 64px;
             transform: rotate(45deg);
-            margin-top: 12px;
-            /* small spacing under logo/status */
         }
 
         .loader-square {
@@ -128,11 +154,9 @@
             width: 20px;
             height: 20px;
             margin: 1px;
-            border-radius: 0px;
-            background: white;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            border-radius: 2px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
             animation: square-animation 10s ease-in-out infinite both;
         }
 
@@ -167,5 +191,18 @@
         .loader-square:nth-of-type(7) {
             animation-delay: -10s;
         }
+
+        /* Animation de pulsation pour l'icône */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.05);
+            }
+        }
     </style>
+</div>
 </div>

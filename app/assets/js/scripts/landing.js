@@ -3,6 +3,7 @@
  */
 // Requirements
 const { URL }                 = require('url')
+// path is already declared in preloader.js
 const {
     MojangRestAPI,
     getServerStatus
@@ -30,6 +31,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
+const ModDeduplicator         = require('./assets/js/moddeduplicator')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -112,18 +114,58 @@ window.updateLaunchUIForServer = updateLaunchUIForServer
 function toggleLaunchArea(loading){
     const playInstance = document.querySelector('.play-instance')
     const launchDetails = document.getElementById('launch_details')
+    const launchBtn = document.getElementById('launch_button')
     
     if(loading){
-        if (playInstance) playInstance.style.display = 'none'
+        // Animate play buttons out
+        if (playInstance) {
+            playInstance.style.opacity = '0'
+            playInstance.style.transform = 'translateY(-10px)'
+            playInstance.style.transition = 'all 0.3s ease'
+            setTimeout(() => {
+                playInstance.style.display = 'none'
+            }, 300)
+        }
+        
+        // Animate launch details in
         if (launchDetails) {
             launchDetails.style.display = 'flex'
             launchDetails.classList.remove('hidden')
+            setTimeout(() => {
+                launchDetails.classList.add('show')
+                launchDetails.style.opacity = '1'
+                launchDetails.style.transform = 'translateY(0)'
+            }, 50)
+        }
+        
+        // Add pulse animation to launch button
+        if (launchBtn) {
+            launchBtn.classList.add('launch-pulse')
         }
     } else {
-        if (playInstance) playInstance.style.display = 'flex'
+        // Animate launch details out
         if (launchDetails) {
-            launchDetails.style.display = 'none'
-            launchDetails.classList.add('hidden')
+            launchDetails.style.opacity = '0'
+            launchDetails.style.transform = 'translateY(-10px)'
+            setTimeout(() => {
+                launchDetails.style.display = 'none'
+                launchDetails.classList.add('hidden')
+                launchDetails.classList.remove('show', 'shown')
+            }, 300)
+        }
+        
+        // Animate play buttons in
+        if (playInstance) {
+            playInstance.style.display = 'flex'
+            setTimeout(() => {
+                playInstance.style.opacity = '1'
+                playInstance.style.transform = 'translateY(0)'
+            }, 50)
+        }
+        
+        // Remove pulse animation
+        if (launchBtn) {
+            launchBtn.classList.remove('launch-pulse')
         }
     }
 }
@@ -135,9 +177,29 @@ function toggleLaunchArea(loading){
  */
 function setLaunchDetails(details){
     const newDetailsText = document.getElementById('launch_details_text')
+    const detailsContainer = document.getElementById('launch_details')
     
-    // Update new UI
-    if (newDetailsText) newDetailsText.innerHTML = details
+    // Add entrance animation if showing for first time
+    if (detailsContainer && !detailsContainer.classList.contains('shown')) {
+        detailsContainer.classList.remove('hidden')
+        detailsContainer.classList.add('show', 'shown')
+        
+        // Add pulse animation to launch button
+        const launchBtn = document.getElementById('launch_button')
+        if (launchBtn && !launchBtn.classList.contains('launch-pulse')) {
+            launchBtn.classList.add('launch-pulse')
+        }
+    }
+    
+    // Animate text change with fade
+    if (newDetailsText) {
+        newDetailsText.style.opacity = '0'
+        setTimeout(() => {
+            newDetailsText.innerHTML = details
+            newDetailsText.style.transition = 'opacity 0.3s ease'
+            newDetailsText.style.opacity = '1'
+        }, 150)
+    }
     
     // Keep old functionality for compatibility
     if (launch_details_text) launch_details_text.innerHTML = details
@@ -152,9 +214,28 @@ function setLaunchPercentage(percent){
     const progressBar = document.getElementById('launch_progress_bar')
     const progressLabel = document.getElementById('launch_progress_label')
     
-    // Update new UI
-    if (progressBar) progressBar.style.width = percent + '%'
-    if (progressLabel) progressLabel.innerHTML = percent + '%'
+    // Update new UI with smooth transition
+    if (progressBar) {
+        progressBar.style.transition = 'width 0.3s ease-out'
+        progressBar.style.width = percent + '%'
+        
+        // Add glow effect when reaching milestones
+        if (percent >= 100) {
+            progressBar.classList.add('glow-pulse')
+            setTimeout(() => {
+                progressBar.classList.remove('glow-pulse')
+            }, 2000)
+        }
+    }
+    
+    if (progressLabel) {
+        progressLabel.style.transition = 'opacity 0.2s ease'
+        progressLabel.style.opacity = '0'
+        setTimeout(() => {
+            progressLabel.innerHTML = percent + '%'
+            progressLabel.style.opacity = '1'
+        }, 100)
+    }
     
     // Keep old progress bar for compatibility
     if (launch_progress) {
@@ -333,26 +414,57 @@ function updateSelectedServer(serv){
     ConfigManager.setSelectedServer(serv != null ? serv.rawServer.id : null)
     ConfigManager.save()
     
-    // Update server info in the new UI
+    // Update server info in the new UI with animations
     const serverTitle = document.querySelector('.server-title')
     const serverDesc = document.querySelector('.server-desc')
     const serverVersion = document.querySelector('.server-version')
     const serverLoader = document.querySelector('.server-loader')
     const serverStatusName = document.querySelector('.server-status-name')
+    const playInstance = document.querySelector('.play-instance')
     
-    if (serv != null) {
-        if (serverTitle) serverTitle.textContent = serv.rawServer.name
-        if (serverDesc) serverDesc.innerHTML = serv.rawServer.description || 'Serveur Minecraft'
-        if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
-        if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
-        if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
-    } else {
-        if (serverTitle) serverTitle.textContent = 'Veuillez sélectionner une instance'
-        if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
-        if (serverVersion) serverVersion.textContent = '--'
-        if (serverLoader) serverLoader.textContent = '--'
-        if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
-    }
+    // Apply fade-out animation first
+    const elementsToAnimate = [serverTitle, serverDesc, serverVersion, serverLoader].filter(el => el)
+    elementsToAnimate.forEach(el => {
+        el.classList.add('instance-fade-out')
+    })
+    
+    // Wait for fade-out, then update content and fade-in
+    setTimeout(() => {
+        if (serv != null) {
+            if (serverTitle) serverTitle.textContent = serv.rawServer.name
+            if (serverDesc) serverDesc.innerHTML = serv.rawServer.description || 'Serveur Minecraft'
+            if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
+            if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
+            if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
+        } else {
+            if (serverTitle) serverTitle.textContent = 'Veuillez sélectionner une instance'
+            if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
+            if (serverVersion) serverVersion.textContent = '--'
+            if (serverLoader) serverLoader.textContent = '--'
+            if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
+        }
+        
+        // Remove fade-out and add fade-in
+        elementsToAnimate.forEach(el => {
+            el.classList.remove('instance-fade-out')
+            el.classList.add('instance-fade-in')
+        })
+        
+        // Add glow to play button if server selected
+        if (playInstance && serv != null) {
+            playInstance.classList.add('slide-up-anim')
+        }
+        
+        // Clean up animation classes after completion
+        setTimeout(() => {
+            elementsToAnimate.forEach(el => {
+                el.classList.remove('instance-fade-in')
+            })
+            if (playInstance) {
+                playInstance.classList.remove('slide-up-anim')
+            }
+        }, 600)
+    }, 400)
     
     // Update sidebar visual selection
     updateSidebarSelection(serv != null ? serv.rawServer.id : null)
@@ -786,6 +898,31 @@ async function dlAsync(login = true) {
 
     fullRepairModule.destroyReceiver()
 
+    // Vérification des mods de triche avant le lancement
+    setLaunchDetails('Vérification des mods de triche...')
+    try {
+        const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
+        const cleanResult = await ModDeduplicator.scanAndCleanCheatMods(modsDir)
+        
+        if (cleanResult.deleted > 0) {
+            loggerLaunchSuite.warn(`Supprimé ${cleanResult.deleted} mod(s) de triche détecté(s)`)
+            setLaunchDetails(`${cleanResult.deleted} mod(s) de triche supprimé(s). Redémarrage du launcher...`)
+            
+            // Attendre 3 secondes pour que l'utilisateur voie le message
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            
+            // Redémarrer le launcher
+            const { ipcRenderer } = require('electron')
+            ipcRenderer.send('relaunchApplication')
+            return
+        } else {
+            loggerLaunchSuite.info('Aucun mod de triche trouvé')
+        }
+    } catch (err) {
+        loggerLaunchSuite.error('Erreur lors de la vérification des mods de triche:', err)
+        // Continuer le lancement même en cas d'erreur
+    }
+
     setLaunchDetails(Lang.queryJS('landing.dlAsync.preparingToLaunch'))
 
     const mojangIndexProcessor = new MojangIndexProcessor(
@@ -858,6 +995,82 @@ async function dlAsync(login = true) {
             // Build Minecraft process.
             proc = pb.build()
 
+            // Variable pour tracker les détections de triche
+            let cheatDetected = false
+            let detectedCheatMod = null
+
+            // Démarrer la surveillance des mods de triche pendant le jeu
+            let modWatcher = null
+            try {
+                const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
+                modWatcher = ModDeduplicator.watchForCheatMods(modsDir, async (cheatMod) => {
+                    loggerLaunchSuite.warn(`Mod de triche détecté pendant le jeu: ${cheatMod.baseName}`)
+                    
+                    if (cheatDetected) return // Éviter les détections multiples
+                    cheatDetected = true
+                    detectedCheatMod = cheatMod
+                    
+                    // Fermer le jeu
+                    try {
+                        if (proc && typeof proc.kill === 'function') {
+                            proc.kill()
+                        }
+                    } catch (err) {
+                        loggerLaunchSuite.error('Erreur lors de la fermeture du jeu:', err)
+                    }
+                })
+            } catch (err) {
+                loggerLaunchSuite.error('Erreur lors du démarrage de la surveillance des mods:', err)
+            }
+
+            // Listener pour détecter les comportements de triche dans les logs
+            const cheatDetectionListener = async (data) => {
+                if (cheatDetected) return // Éviter les détections multiples
+                
+                const logLine = ('' + data).trim()
+                
+                // Analyser chaque ligne pour détecter un comportement de triche
+                if (ModDeduplicator.detectCheatBehaviorInLog(logLine)) {
+                    loggerLaunchSuite.warn(`Comportement de triche détecté dans les logs: ${logLine.substring(0, 200)}`)
+                    cheatDetected = true
+                    
+                    // Afficher une notification
+                    setLaunchDetails('⚠️ Mod de triche détecté ! Fermeture du jeu...')
+                    
+                    // Fermer le jeu
+                    try {
+                        if (proc && typeof proc.kill === 'function') {
+                            proc.kill()
+                            loggerLaunchSuite.info('Jeu fermé suite à la détection de triche')
+                        }
+                    } catch (err) {
+                        loggerLaunchSuite.error('Erreur lors de la fermeture du jeu:', err)
+                    }
+                    
+                    // Attendre que le jeu se ferme
+                    await new Promise(resolve => setTimeout(resolve, 2000))
+                    
+                    // Scanner et supprimer les mods de triche
+                    try {
+                        const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
+                        const cleanResult = await ModDeduplicator.scanAndCleanCheatMods(modsDir)
+                        
+                        if (cleanResult.deleted > 0) {
+                            loggerLaunchSuite.info(`${cleanResult.deleted} mod(s) de triche supprimé(s)`)
+                            setLaunchDetails(`${cleanResult.deleted} mod(s) de triche supprimé(s). Redémarrage du launcher...`)
+                            
+                            await new Promise(resolve => setTimeout(resolve, 2000))
+                            
+                            // Redémarrer le launcher
+                            const { ipcRenderer } = require('electron')
+                            ipcRenderer.send('relaunchApplication')
+                        }
+                    } catch (err) {
+                        loggerLaunchSuite.error('Erreur lors de la suppression des mods de triche:', err)
+                    }
+                }
+            }
+
             // Ensure log panel functions exist
             window.appendMinecraftLog = function (txt) {
                 try {
@@ -917,7 +1130,9 @@ async function dlAsync(login = true) {
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)
+            proc.stdout.on('data', cheatDetectionListener) // Ajouter le listener de détection de triche
             proc.stderr.on('data', gameErrorListener)
+            proc.stderr.on('data', cheatDetectionListener) // Vérifier aussi stderr
 
             // If configured, stream stdout/stderr to the logs panel
             try {
@@ -963,8 +1178,46 @@ async function dlAsync(login = true) {
 
             // Always listen for process close to notify UI watcher
             try {
-                proc.on('close', (code, signal) => {
+                proc.on('close', async (code, signal) => {
                     try {
+                        // Arrêter la surveillance des mods
+                        if (modWatcher) {
+                            try {
+                                modWatcher.close()
+                                loggerLaunchSuite.info('Surveillance des mods arrêtée')
+                            } catch (err) {
+                                loggerLaunchSuite.error('Erreur lors de l\'arrêt de la surveillance des mods:', err)
+                            }
+                        }
+                        
+                        // Si un mod de triche a été détecté, supprimer et redémarrer
+                        if (cheatDetected && !detectedCheatMod) {
+                            loggerLaunchSuite.warn('Jeu fermé suite à détection de triche dans les logs')
+                            
+                            // Le nettoyage et le redémarrage sont déjà gérés dans cheatDetectionListener
+                            // Pas besoin de dupliquer ici
+                        } else if (detectedCheatMod) {
+                            loggerLaunchSuite.warn(`Jeu fermé suite à détection du mod de triche: ${detectedCheatMod.baseName}`)
+                            
+                            setLaunchDetails(`Mod de triche détecté: ${detectedCheatMod.baseName}. Suppression...`)
+                            
+                            // Supprimer le mod détecté
+                            try {
+                                await ModDeduplicator.deleteCheatMods([detectedCheatMod.path])
+                                loggerLaunchSuite.info(`Mod de triche supprimé: ${detectedCheatMod.fileName}`)
+                                
+                                setLaunchDetails('Mod de triche supprimé. Redémarrage du launcher...')
+                                await new Promise(resolve => setTimeout(resolve, 2000))
+                                
+                                // Redémarrer le launcher
+                                const { ipcRenderer } = require('electron')
+                                ipcRenderer.send('relaunchApplication')
+                                return
+                            } catch (err) {
+                                loggerLaunchSuite.error('Erreur lors de la suppression du mod de triche:', err)
+                            }
+                        }
+                        
                         const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
                         console.info('[Landing] process closed, notifying instance stopped', { code, signal })
                         if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
