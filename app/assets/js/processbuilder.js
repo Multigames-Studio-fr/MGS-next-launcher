@@ -9,6 +9,7 @@ const os                    = require('os')
 const path                  = require('path')
 
 const ConfigManager            = require('./configmanager')
+const ResourcePackFixer        = require('./resourcepackfixer')
 
 const logger = LoggerUtil.getLogger('ProcessBuilder')
 
@@ -85,12 +86,35 @@ class ProcessBuilder {
         child.stdout.setEncoding('utf8')
         child.stderr.setEncoding('utf8')
 
-        child.stdout.on('data', (data) => {
-            data.trim().split('\n').forEach(x => console.log(`\x1b[32m[Minecraft]\x1b[0m ${x}`))
+        // Initialiser la surveillance des erreurs de packs de ressources
+        const detectedErrors = []
+        const logMonitor = ResourcePackFixer.createLogMonitor((error) => {
+            detectedErrors.push(error)
             
+            // Déclencher une action corrective si nécessaire
+            if (ResourcePackFixer.shouldTriggerCorrection(detectedErrors)) {
+                logger.warn('Problèmes de packs de ressources détectés, application d\'actions correctives...')
+                ResourcePackFixer.performCorrectiveActions(this.gameDir, detectedErrors)
+                    .then(result => {
+                        logger.info('Actions correctives terminées:', result)
+                    })
+                    .catch(err => {
+                        logger.error('Erreur lors des actions correctives:', err)
+                    })
+            }
+        })
+
+        child.stdout.on('data', (data) => {
+            data.trim().split('\n').forEach(line => {
+                console.log(`\x1b[32m[Minecraft]\x1b[0m ${line}`)
+                logMonitor(line) // Surveiller les erreurs
+            })
         })
         child.stderr.on('data', (data) => {
-            data.trim().split('\n').forEach(x => console.log(`\x1b[31m[Minecraft]\x1b[0m ${x}`))
+            data.trim().split('\n').forEach(line => {
+                console.log(`\x1b[31m[Minecraft]\x1b[0m ${line}`)
+                logMonitor(line) // Surveiller les erreurs
+            })
         })
         child.on('close', (code, signal) => {
             logger.info('Exited with code', code)

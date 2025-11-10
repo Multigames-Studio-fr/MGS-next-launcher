@@ -864,3 +864,79 @@ exports.getAllowPrerelease = function (def = false) {
 exports.setAllowPrerelease = function (allowPrerelease) {
   config.settings.launcher.allowPrerelease = allowPrerelease;
 };
+
+// Resource Pack Settings
+
+/**
+ * Get the resource pack settings.
+ *
+ * @param {boolean} def Optional. If true, the default value will be returned.
+ * @returns {Object} The resource pack settings object.
+ */
+exports.getResourcePackSettings = function (def = false) {
+  if (!def && config.settings.launcher.resourcePackSettings) {
+    return config.settings.launcher.resourcePackSettings;
+  }
+  
+  const defaultSettings = {
+    autoFixEnabled: true,
+    notificationsEnabled: true,
+    lastErrorCheck: null
+  };
+  
+  return defaultSettings;
+};
+
+/**
+ * Set the resource pack settings.
+ *
+ * @param {Object} settings The resource pack settings object.
+ */
+exports.setResourcePackSettings = function (settings) {
+  if (!config.settings.launcher.resourcePackSettings) {
+    config.settings.launcher.resourcePackSettings = {};
+  }
+  config.settings.launcher.resourcePackSettings = { ...config.settings.launcher.resourcePackSettings, ...settings };
+};
+
+/**
+ * Check if auto-fix for resource packs is enabled.
+ *
+ * @returns {boolean} Whether auto-fix is enabled.
+ */
+exports.getResourcePackAutoFix = function () {
+  const settings = this.getResourcePackSettings();
+  return settings.autoFixEnabled;
+};
+
+/**
+ * Set the auto-fix status for resource packs.
+ *
+ * @param {boolean} enabled Whether auto-fix should be enabled.
+ */
+exports.setResourcePackAutoFix = function (enabled) {
+  const settings = this.getResourcePackSettings();
+  settings.autoFixEnabled = enabled;
+  this.setResourcePackSettings(settings);
+};
+
+/**
+ * Check if resource pack error notifications are enabled.
+ *
+ * @returns {boolean} Whether notifications are enabled.
+ */
+exports.getResourcePackNotifications = function () {
+  const settings = this.getResourcePackSettings();
+  return settings.notificationsEnabled;
+};
+
+/**
+ * Set the notification status for resource pack errors.
+ *
+ * @param {boolean} enabled Whether notifications should be enabled.
+ */
+exports.setResourcePackNotifications = function (enabled) {
+  const settings = this.getResourcePackSettings();
+  settings.notificationsEnabled = enabled;
+  this.setResourcePackSettings(settings);
+};

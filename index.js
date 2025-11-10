@@ -1357,3 +1357,100 @@ ipcMain.handle('fetch-rss', async (event, url) => {
         }
     })
 })
+
+// IPC handlers for Resource Pack management
+ipcMain.handle('clean-resource-cache', async (event) => {
+    const path = require('path')
+    const ConfigManager = require('./app/assets/js/configmanager')
+    const ResourcePackFixer = require('./app/assets/js/resourcepackfixer')
+    
+    try {
+        const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
+        const result = await ResourcePackFixer.cleanResourcePackCache(instancePath)
+        
+        return {
+            success: true,
+            cacheCleared: result
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        }
+    }
+})
+
+ipcMain.handle('check-resource-errors', async (event) => {
+    const fs = require('fs-extra')
+    const path = require('path')
+    const ConfigManager = require('./app/assets/js/configmanager')
+    
+    try {
+        // Cette fonction simule une vérification des erreurs
+        // En pratique, elle pourrait analyser les logs existants
+        const logPath = path.join(ConfigManager.getDataDirectory(), 'instances')
+        
+        // Simulation d'une vérification - à remplacer par une vraie logique
+        const errors = []
+        
+        // Check for common resource pack issues
+        const instanceDirs = fs.existsSync(logPath) ? await fs.readdir(logPath) : []
+        
+        for (const instanceDir of instanceDirs) {
+            const downloadPath = path.join(logPath, instanceDir, 'downloads')
+            if (await fs.pathExists(downloadPath)) {
+                // Simulate finding some potential issues
+                // In reality, this would parse log files or check for corrupted resources
+                const dirs = await fs.readdir(downloadPath).catch(() => [])
+                if (dirs.length > 0) {
+                    // Add simulated error for demonstration
+                    errors.push({
+                        type: 'resource_pack_cache',
+                        details: `Cache trouvé dans ${instanceDir}`,
+                        path: downloadPath
+                    })
+                }
+            }
+        }
+        
+        return {
+            success: true,
+            errors: errors
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+            errors: []
+        }
+    }
+})
+
+ipcMain.handle('auto-fix-resources', async (event) => {
+    const path = require('path')
+    const ConfigManager = require('./app/assets/js/configmanager')
+    const ResourcePackFixer = require('./app/assets/js/resourcepackfixer')
+    
+    try {
+        const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
+        
+        // Get current errors
+        const checkResult = await ipcMain.emit('check-resource-errors')
+        const errors = checkResult?.errors || []
+        
+        // Perform corrective actions
+        const result = await ResourcePackFixer.performCorrectiveActions(instancePath, errors)
+        
+        return {
+            success: true,
+            cacheCleared: result.cacheCleared,
+            modelsRepaired: result.modelsRepaired,
+            errors: result.errors
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        }
+    }
+})

@@ -19,6 +19,7 @@
               { key: 'settings.navMods', rSc: 'settingsTabMods', icon: 'bi-puzzle' },
               { key: 'settings.navJava', rSc: 'settingsTabJava', icon: 'bi-file-code' },
               { key: 'settings.navLauncher', rSc: 'settingsTabLauncher', icon: 'bi-rocket' },
+              { key: 'settings.navResourcePacks', rSc: 'settingsTabResourcePacks', icon: 'bi-box' },
             ]; %>
 
             <% navItems.forEach(function(item) { %>
@@ -478,6 +479,86 @@
                 dialogTitle="<%- lang('settings.selectDataDirectory') %>" dialogDirectory="true" title="<%- lang('settings.selectDataDirectory') %>">
                 <span><%- lang('settings.chooseFolder') %></span>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="settingsTabResourcePacks" class="settingsTab hidden">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-white mb-2">Gestion des Packs de Ressources</h2>
+          <p class="text-sm text-gray-400">Gérer et réparer automatiquement les problèmes de packs de ressources corrompus</p>
+        </div>
+        
+        <div class="space-y-6">
+          <!-- État actuel -->
+          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-white mb-3">État des Packs de Ressources</h3>
+            <div id="resourcePackStatus" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">État :</span>
+                <span id="resourcePackStatusText" class="text-green-400">Aucun problème détecté</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Dernière vérification :</span>
+                <span id="lastCheckTime" class="text-gray-400">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions de réparation -->
+          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-white mb-3">Actions de Réparation</h3>
+            <div class="space-y-3">
+              <button id="cleanResourceCacheBtn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded transition-colors font-medium">
+                <i class="bi-trash mr-2"></i>
+                Nettoyer le Cache des Packs
+              </button>
+              
+              <button id="checkResourceErrorsBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors font-medium">
+                <i class="bi-search mr-2"></i>
+                Vérifier les Erreurs
+              </button>
+              
+              <button id="autoFixResourcesBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors font-medium">
+                <i class="bi-wrench mr-2"></i>
+                Réparation Automatique
+              </button>
+            </div>
+          </div>
+
+          <!-- Paramètres automatiques -->
+          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-white mb-3">Réparation Automatique</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex flex-col">
+                  <span class="text-white font-medium">Correction Automatique</span>
+                  <span class="text-sm text-gray-400">Réparer automatiquement les erreurs détectées</span>
+                </div>
+                <div class="settingsToggle">
+                  <input type="checkbox" id="autoFixEnabled" checked>
+                  <label for="autoFixEnabled"></label>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex flex-col">
+                  <span class="text-white font-medium">Notifications d'Erreurs</span>
+                  <span class="text-sm text-gray-400">Afficher les notifications lors de la détection d'erreurs</span>
+                </div>
+                <div class="settingsToggle">
+                  <input type="checkbox" id="errorNotificationsEnabled" checked>
+                  <label for="errorNotificationsEnabled"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Log des erreurs -->
+          <div class="glass-sidebar bg-[#181818]/60 border border-gray-700 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-white mb-3">Dernières Erreurs Détectées</h3>
+            <div id="recentErrors" class="max-h-40 overflow-y-auto">
+              <p class="text-gray-400 text-sm italic">Aucune erreur récente</p>
             </div>
           </div>
         </div>

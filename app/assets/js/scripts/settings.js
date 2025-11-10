@@ -1900,6 +1900,23 @@ async function prepareSettings(first = false) {
   prepareAccountsTab();
   await prepareJavaTab();
   prepareAboutTab();
+  prepareResourcePacksTab();
+}
+
+/**
+ * Prepare the resource packs tab.
+ */
+function prepareResourcePacksTab() {
+  try {
+    // Import the resource pack settings module
+    const resourcePackModule = require('./assets/js/scripts/settings-resourcepacks');
+    
+    if (typeof initResourcePackSettings === 'function') {
+      initResourcePackSettings();
+    }
+  } catch (error) {
+    console.error('Failed to load resource pack settings module:', error);
+  }
 }
 
 // Prepare the settings UI on startup.
