@@ -1,5 +1,5 @@
 appId: "multigames.studio.launcher"
-productName: "MultiGames Studio Launcher"
+productName: "MultiGamesStudioLauncher"
 artifactName: "${productName}-setup-${version}.${ext}"
 
 copyright: "Copyright © 2023-2024 MultiGames Studio"

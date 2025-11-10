@@ -60,6 +60,26 @@ const log = require('electron-log')
 autoUpdater.logger = log
 // Use debug level for more diagnostic information about updater behavior.
 autoUpdater.logger.transports.file.level = 'debug'
+
+// Configure updater cache directory to avoid permission issues
+if (process.platform === 'win32') {
+    // Fix for EPERM error: electron-updater creates a directory with invalid characters
+    // We need to ensure the app name is sanitized for Windows directory names
+    const sanitizedAppName = 'MultiGamesStudioLauncher'
+    app.setName(sanitizedAppName)
+    
+    // Pre-create the updater directory to avoid permission issues
+    try {
+        const os = require('os')
+        const updaterPath = path.join(os.homedir(), 'AppData', 'Local', sanitizedAppName + ' updater')
+        if (!fs.existsSync(updaterPath)) {
+            fs.mkdirSync(updaterPath, { recursive: true })
+            log.info('[AutoUpdater] Pre-created updater directory:', updaterPath)
+        }
+    } catch (e) {
+        log.warn('[AutoUpdater] Failed to pre-create updater directory:', e && e.message)
+    }
+}
 const ejse                              = require('ejs-electron')
 const fs                                = require('fs')
 const isDev                             = require('./app/assets/js/isdev')
@@ -137,7 +157,10 @@ function safeQuitAndInstall(caller) {
                         try {
                             const os = require('os')
                             const child = require('child_process')
-                            const pendingBase = path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
+                            // Use the sanitized app name for the updater directory path
+                            const pendingBase = process.platform === 'win32' 
+                                ? path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+                                : path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
                             let installerPath = null
                             try {
                                 if (fs.existsSync(pendingBase)) {
