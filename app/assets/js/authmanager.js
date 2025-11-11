@@ -14,6 +14,23 @@ const { LoggerUtil }         = require('helios-core')
 const { RestResponseStatus } = require('helios-core/common')
 const { MojangRestAPI, mojangErrorDisplayable, MojangErrorCode } = require('helios-core/mojang')
 const { MicrosoftAuth, microsoftErrorDisplayable, MicrosoftErrorCode } = require('helios-core/microsoft')
+
+// Defensive wrapper: some versions of helios-core may not export
+// `microsoftErrorDisplayable` as a function (or it may be undefined).
+// Provide a safe fallback that returns a simple error-like object with
+// a `microsoftErrorCode` property and a readable message so callers
+// can continue to handle errors without throwing TypeError.
+function makeMicrosoftDisplayable(code) {
+    try {
+        if (typeof microsoftErrorDisplayable === 'function') {
+            return microsoftErrorDisplayable(code)
+        }
+    } catch (e) {
+        // ignore and fallback
+    }
+    // Fallback object structure expected by callers in this module
+    return { microsoftErrorCode: code, message: typeof code === 'string' ? code : String(code || 'Microsoft error') }
+}
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 
 const log = LoggerUtil.getLogger('AuthManager')
@@ -78,7 +95,7 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         if(authMode !== AUTH_MODE.MC_REFRESH) {
             const accessTokenResponse = await MicrosoftAuth.getAccessToken(entryCode, authMode === AUTH_MODE.MS_REFRESH, AZURE_CLIENT_ID)
             if(accessTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-                return Promise.reject(microsoftErrorDisplayable(accessTokenResponse.microsoftErrorCode))
+                return Promise.reject(makeMicrosoftDisplayable(accessTokenResponse.microsoftErrorCode))
             }
             accessToken = accessTokenResponse.data
             accessTokenRaw = accessToken.access_token
@@ -88,19 +105,19 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         
         const xblResponse = await MicrosoftAuth.getXBLToken(accessTokenRaw)
         if(xblResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(xblResponse.microsoftErrorCode))
+            return Promise.reject(makeMicrosoftDisplayable(xblResponse.microsoftErrorCode))
         }
         const xstsResonse = await MicrosoftAuth.getXSTSToken(xblResponse.data)
         if(xstsResonse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(xstsResonse.microsoftErrorCode))
+            return Promise.reject(makeMicrosoftDisplayable(xstsResonse.microsoftErrorCode))
         }
         const mcTokenResponse = await MicrosoftAuth.getMCAccessToken(xstsResonse.data)
         if(mcTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(mcTokenResponse.microsoftErrorCode))
+            return Promise.reject(makeMicrosoftDisplayable(mcTokenResponse.microsoftErrorCode))
         }
         const mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
         if(mcProfileResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(mcProfileResponse.microsoftErrorCode))
+            return Promise.reject(makeMicrosoftDisplayable(mcProfileResponse.microsoftErrorCode))
         }
         return {
             accessToken,
@@ -112,7 +129,7 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         }
     } catch(err) {
         log.error(err)
-        return Promise.reject(microsoftErrorDisplayable(MicrosoftErrorCode.UNKNOWN))
+    return Promise.reject(makeMicrosoftDisplayable(MicrosoftErrorCode.UNKNOWN))
     }
 }
 

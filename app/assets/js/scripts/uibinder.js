@@ -195,7 +195,10 @@ function bindSidebarInstanceEvents() {
                 const title = btn.getAttribute('title') || ''
                 setOverlayContent('Accès restreint', title, 'OK')
                 setOverlayHandler(() => { toggleOverlay(false) })
-                toggleOverlay(true)
+                // Make this overlay dismissable so the user can use the
+                // dismiss button or Escape to close it if they prefer not to
+                // reconnect immediately.
+                toggleOverlay(true, true)
                 return
             }
             btn.blur()
