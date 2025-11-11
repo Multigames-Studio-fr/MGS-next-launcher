@@ -1197,6 +1197,20 @@ ipcMain.on('open-mc-logs-window', (event) => {
     }
 })
 
+// Allow renderer windows (like the update status window) to request the
+// update window be closed explicitly. This is a safe no-op if the
+// updateWindow doesn't exist or is already destroyed.
+ipcMain.on('closeUpdateWindow', (event) => {
+    try {
+        if (updateWindow && !updateWindow.isDestroyed()) {
+            try { updateWindow.close() } catch (e) {}
+            updateWindow = null
+        }
+    } catch (e) {
+        try { log.warn('[IPC] closeUpdateWindow failed', e && e.message) } catch (er) { }
+    }
+})
+
 // Provide recent log history to renderers on demand
 ipcMain.handle('request-mc-log-history', async (event) => {
     try {

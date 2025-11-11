@@ -251,8 +251,10 @@
       statusTitle.innerText = 'Erreur lors de la mise à jour'
       statusDesc.innerText = err && err.message ? err.message : String(err || 'Erreur inconnue')
       progressWrap.style.display = 'none'
-      actionRow.style.display = 'none'
-      setTimeout(() => { window.close && window.close() }, 3000)
+      // Allow the user to explicitly close the error popup. Keep the close
+      // button visible so they can dismiss the modal if automatic close fails.
+      actionRow.style.display = 'flex'
+      setTimeout(() => { try { window.close && window.close() } catch (e) {} }, 3000)
     }
 
     ipcRenderer.on('autoUpdateNotification', (ev, type, payload) => {
@@ -283,7 +285,23 @@
     })
 
     closeBtn.addEventListener('click', () => {
+      // Attempt to close the window from renderer; also notify main
+      // process as a fallback in case window.close doesn't close the
+      // frameless/update window on some platforms/configs.
       try { window.close() } catch (e) {}
+      try { ipcRenderer.send('closeUpdateWindow') } catch (e) {}
+    })
+
+    // Allow Escape key to dismiss the status window when visible.
+    document.addEventListener('keydown', (ev) => {
+      try {
+        if (ev.key === 'Escape') {
+          try { window.close() } catch (e) {}
+          try { ipcRenderer.send('closeUpdateWindow') } catch (e) {}
+        }
+      } catch (e) {
+        // ignore
+      }
     })
 
     // show a minimal status initially to match the screenshot (logo centered, no text visible)
