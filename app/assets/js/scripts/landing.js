@@ -913,18 +913,31 @@ async function dlAsync(login = true) {
         }
     })
 
-    loggerLaunchSuite.info('Validating files.')
-    setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
-    let invalidFileCount = 0
-    try {
-        invalidFileCount = await fullRepairModule.verifyFiles(percent => {
-            setLaunchPercentage(percent)
-        })
-        setLaunchPercentage(100)
-    } catch (err) {
-        loggerLaunchSuite.error('Error during file validation.')
-        showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileVerificationTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
-        return
+    // If the UI reports offline, skip validation and downloads to avoid
+    // network-related validation errors (Transmitter errors) while offline.
+    const offlineDetectedForValidation = (typeof navigator !== 'undefined' && !navigator.onLine)
+
+    if (offlineDetectedForValidation) {
+        loggerLaunchSuite.info('Offline detected — skipping file validation and downloads.')
+        // Update UI to reflect offline skipping
+        try{
+            setLaunchDetails(Lang.queryJS('landing.dlAsync.offlineSkippingValidation') || 'Mode hors-ligne détecté — validation et téléchargement ignorés.')
+        } catch(e){ /* ignore */ }
+        var invalidFileCount = 0
+    } else {
+        loggerLaunchSuite.info('Validating files.')
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
+        let invalidFileCount = 0
+        try {
+            invalidFileCount = await fullRepairModule.verifyFiles(percent => {
+                setLaunchPercentage(percent)
+            })
+            setLaunchPercentage(100)
+        } catch (err) {
+            loggerLaunchSuite.error('Error during file validation.')
+            showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileVerificationTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
+            return
+        }
     }
     
 

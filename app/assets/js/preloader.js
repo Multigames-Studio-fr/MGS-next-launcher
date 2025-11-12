@@ -42,8 +42,25 @@ function onDistroLoad(data){
     ipcRenderer.send('distributionIndexDone', data != null)
 }
 
-// Ensure Distribution is downloaded and cached.
-DistroAPI.getDistribution()
+// Ensure Distribution is downloaded and cached. If connected to the Internet, try
+// to force a remote refresh; otherwise fall back to cached copy.
+if(typeof DistroAPI.forceRefreshIfOnline === 'function'){
+    DistroAPI.forceRefreshIfOnline()
+    .then(heliosDistro => {
+        logger.info('Loaded distribution index (forceRefreshIfOnline).')
+
+        onDistroLoad(heliosDistro)
+    })
+    .catch(err => {
+        logger.info('Failed to load an older version of the distribution index (forceRefreshIfOnline).')
+        logger.info('Application cannot run.')
+        logger.error(err)
+
+        onDistroLoad(null)
+    })
+} else {
+    // Fallback for older behaviour
+    DistroAPI.getDistribution()
     .then(heliosDistro => {
         logger.info('Loaded distribution index.')
 
@@ -56,6 +73,7 @@ DistroAPI.getDistribution()
 
         onDistroLoad(null)
     })
+}
 
 // Clean up temp dir incase previous launches ended unexpectedly. 
 fs.remove(path.join(os.tmpdir(), ConfigManager.getTempNativeFolder()), (err) => {
