@@ -57,6 +57,22 @@ jobs:
         id: get_version
         run: echo "version=${{ steps.auto_version.outputs.version }}" >> $GITHUB_OUTPUT
       
+      - name: Generate full changelog
+        id: gen_changelog
+        run: |
+          # Récupérer le dernier tag (ou v0.0.0 si aucun)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LAST_VERSION=${LAST_TAG#v}
+
+          echo "# Full Changelog: ${LAST_TAG}...HEAD" > release_body.md
+          echo "" >> release_body.md
+
+          # Générer le changelog entre le dernier tag et HEAD (format compact)
+          git --no-pager log --pretty=format:'- %s (%h) - %an' ${LAST_TAG}..HEAD >> release_body.md || true
+
+          echo "" >> release_body.md
+          echo "Changelog generated from ${LAST_TAG} to HEAD" >> release_body.md
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -67,7 +83,9 @@ jobs:
           name: MultiGames Studio Launcher v${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: ${{ contains(steps.get_version.outputs.version, 'beta') || contains(steps.get_version.outputs.version, 'alpha') }}
-          generate_release_notes: true
+          # Use the generated full changelog file instead of auto-generated release notes
+          body_path: release_body.md
+          generate_release_notes: false
 
   build-launcher:
     needs: create-release
