@@ -729,6 +729,12 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
     })
 
     msftAuthWindow.removeMenu()
+    // Use the 'common' tenant here to match token endpoint usage and avoid
+    // cross-tenant refresh errors (AADSTS7000012). Using 'consumers' during
+    // authorization with a token request against 'consumers' can produce a
+    // grant tied to a different tenant when users sign in with other account
+    // types; 'common' accepts all consumer/organizational accounts and keeps
+    // the authorize/token flows consistent with the redirect URI below.
     msftAuthWindow.loadURL(`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?prompt=select_account&client_id=${AZURE_CLIENT_ID}&response_type=code&scope=XboxLive.signin%20offline_access&redirect_uri=https://login.microsoftonline.com/common/oauth2/nativeclient`)
 })
 

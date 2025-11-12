@@ -894,21 +894,28 @@ async function validateSelectedAccount(){
                     accLen > 1 ? Lang.queryJS('uibinder.validateAccount.selectAnotherAccountButton') : 'Annuler'
                 )
                 setOverlayHandler(() => {
-                    // Rediriger vers la connexion Microsoft
+                    // Close overlay then redirect to Microsoft login
+                    try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in overlayHandler', e) }
                     loginOptionsViewOnLoginSuccess = getCurrentView()
                     loginOptionsViewOnLoginCancel = VIEWS.loginOptions
                     switchView(getCurrentView(), VIEWS.loginOptions, 500, 500)
                 })
                 setDismissHandler(() => {
-                    if (accLen > 1) {
-                        // Sélectionner un autre compte s'il y en a
-                        const accounts = ConfigManager.getAuthAccounts()
-                        const accountKeys = Object.keys(accounts).filter(key => key !== selectedAcc.uuid)
-                        if (accountKeys.length > 0) {
-                            ConfigManager.setSelectedAccount(accountKeys[0])
-                            ConfigManager.save()
+                    try {
+                        if (accLen > 1) {
+                            // Sélectionner un autre compte s'il y en a
+                            const accounts = ConfigManager.getAuthAccounts()
+                            const accountKeys = Object.keys(accounts).filter(key => key !== selectedAcc.uuid)
+                            if (accountKeys.length > 0) {
+                                ConfigManager.setSelectedAccount(accountKeys[0])
+                                ConfigManager.save()
+                            }
                         }
+                    } catch (e) {
+                        console.warn('dismiss handler failed', e)
                     }
+                    // Always close the overlay after dismiss action
+                    try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in dismissHandler', e) }
                 })
                 toggleOverlay(true)
                 return

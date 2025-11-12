@@ -8,6 +8,7 @@ const {
     MojangRestAPI,
     getServerStatus
 }                             = require('helios-core/mojang')
+const cryptoNode              = require('crypto')
 const {
     RestResponseStatus,
     isDisplayableError,
@@ -283,7 +284,20 @@ document.getElementById('launch_button').addEventListener('click', async e => {
             const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
             if(details != null){
                 loggerLanding.info('Jvm Details', details)
-                await dlAsync()
+                // If we appear to be offline but a local account is selected, use offline mode
+                try {
+                    const hasSelectedAccount = ConfigManager.getSelectedAccount() != null
+                    const offlineDetected = (typeof navigator !== 'undefined' && !navigator.onLine)
+                    if(offlineDetected && hasSelectedAccount){
+                        setLaunchDetails(Lang.queryJS('landing.launch.offlineMode') || 'Lancement en mode hors-ligne...')
+                        await dlAsync('offline')
+                    } else {
+                        await dlAsync()
+                    }
+                } catch (e) {
+                    // Fallback to normal launch
+                    await dlAsync()
+                }
 
             } else {
                 await asyncSystemScan(server.effectiveJavaOptions)
@@ -719,9 +733,22 @@ async function asyncSystemScan(effectiveJavaOptions, launchAfter = true){
         ConfigManager.save()
 
         // We need to make sure that the updated value is on the settings UI.
-        // Just incase the settings UI is already open.
-        settingsJavaExecVal.value = javaExec
-        await populateJavaExecDetails(settingsJavaExecVal.value)
+        // The settings DOM may not be mounted when this runs, so query
+        // the element at runtime and guard against null.
+        try {
+            const sj = document.getElementById('settingsJavaExecVal')
+            if (sj) {
+                sj.value = javaExec
+                if (typeof populateJavaExecDetails === 'function') await populateJavaExecDetails(sj.value)
+            } else {
+                // If the settings input is not present, still attempt to
+                // update the details UI if the function is available.
+                if (typeof populateJavaExecDetails === 'function') await populateJavaExecDetails(javaExec)
+            }
+        } catch (e) {
+            // Defensive: don't let a UI update break the launch flow.
+            console.debug('[Landing] Failed to update settings Java exec UI', e)
+        }
 
         // TODO Callback hell, refactor
         // TODO Move this out, separate concerns.
@@ -806,6 +833,31 @@ const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
 const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+)$/
 const MIN_LINGER = 5000
 
+/**
+ * Generate a deterministic offline-style UUID from a player name.
+ * Uses MD5('OfflinePlayer:' + name) and formats as UUID.
+ */
+function generateOfflineUUID(name){
+    try {
+        const h = cryptoNode.createHash('md5').update('OfflinePlayer:' + name).digest('hex')
+        return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`
+    } catch (e) {
+        // fallback simple uuid-like string
+        return '00000000-0000-0000-0000-000000000000'
+    }
+}
+
+function createOfflineAuth(selectedAccount){
+    const name = selectedAccount && selectedAccount.displayName ? selectedAccount.displayName : 'Player'
+    const uuid = selectedAccount && selectedAccount.uuid ? selectedAccount.uuid : generateOfflineUUID(name)
+    return {
+        displayName: name,
+        uuid: uuid,
+        accessToken: '0',
+        type: 'mojang'
+    }
+}
+
 async function dlAsync(login = true) {
 
     // Login parameter is temporary for debug purposes. Allows testing the validation/downloads without
@@ -828,6 +880,7 @@ async function dlAsync(login = true) {
 
     const serv = distro.getServerById(ConfigManager.getSelectedServer())
 
+    // login can be: true (online), false (no auth, debug), or 'offline' (use local account in offline mode)
     if(login) {
         if(ConfigManager.getSelectedAccount() == null){
             loggerLanding.error('You must be logged into an account.')
@@ -937,8 +990,17 @@ async function dlAsync(login = true) {
     const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
     const versionData = await mojangIndexProcessor.getVersionJson()
 
-    if(login) {
-        const authUser = ConfigManager.getSelectedAccount()
+        if(login) {
+        // If requested, support an explicit offline mode when there is no network but
+        // a local selected account exists. In that case build a lightweight offline
+        // auth object so the game can be launched without contacting Mojang/MS.
+        let authUser = null
+        if(login === 'offline'){
+            const sa = ConfigManager.getSelectedAccount()
+            authUser = createOfflineAuth(sa)
+        } else {
+            authUser = ConfigManager.getSelectedAccount()
+        }
         loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
         let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion())
         setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
