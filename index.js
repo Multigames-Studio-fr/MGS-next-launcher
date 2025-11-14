@@ -321,6 +321,70 @@ function initAutoUpdater(event, data) {
         // ignore
     }
 
+    // Defensive automatic cleanup: scan updater pending dirs and remove
+    // obvious stale/temp installer files when possible. This is best-effort
+    // and will only delete files we can open exclusively (i.e. not locked).
+    try {
+        const os = require('os')
+        const homedir = os.homedir()
+        const pendingCandidates = [
+            path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
+            path.join(homedir, '.multigames-studio-launcher-updater', 'pending'),
+            path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+        ]
+
+        for (const pendingDir of pendingCandidates) {
+            try {
+                if (!fs.existsSync(pendingDir)) continue
+                let files = fs.readdirSync(pendingDir).filter(f => typeof f === 'string')
+                if (!files || files.length === 0) continue
+
+                for (const f of files) {
+                    try {
+                        const full = path.join(pendingDir, f)
+                        // only target likely installer/temp names to avoid removing unrelated files
+                        if (!/multigames-studio-launcher-Setup-.*\.exe$/i.test(f) && !/^temp-.*multigames-studio-launcher-Setup-.*\.exe$/i.test(f)) {
+                            continue
+                        }
+
+                        let opened = null
+                        try {
+                            // Try to open the file exclusively; if this succeeds the file
+                            // is not held by another process and is safe to remove.
+                            opened = fs.openSync(full, 'r+')
+                            try { fs.closeSync(opened); opened = null } catch (e) { /* ignore */ }
+                        } catch (e) {
+                            // Could be locked or permission denied - skip deletion
+                            try { log.info('[AutoUpdater] cleanup: file appears locked or inaccessible, skipping', full, e && e.code) } catch (le) {}
+                            continue
+                        }
+
+                        // Attempt to remove the unlocked file
+                        try {
+                            fs.unlinkSync(full)
+                            try { log.info('[AutoUpdater] cleanup: removed stale installer', full) } catch (le) {}
+                        } catch (e) {
+                            // If unlink fails due to permissions, attempt to make it writable then unlink
+                            try {
+                                try { fs.chmodSync(full, 0o666) } catch (ce) { }
+                                fs.unlinkSync(full)
+                                try { log.info('[AutoUpdater] cleanup: removed after chmod', full) } catch (le) {}
+                            } catch (e2) {
+                                try { log.warn('[AutoUpdater] cleanup: failed to remove', full, e2 && e2.message) } catch (le) {}
+                            }
+                        }
+                    } catch (e) {
+                        try { log.warn('[AutoUpdater] cleanup inner-loop error', e && e.message) } catch (le) {}
+                    }
+                }
+            } catch (e) {
+                try { log.warn('[AutoUpdater] pending cleanup failed for', pendingDir, e && e.message) } catch (le) {}
+            }
+        }
+    } catch (e) {
+        try { log.warn('[AutoUpdater] automatic pending cleanup failed', e && e.message) } catch (le) {}
+    }
+
     if(data){
         autoUpdater.allowPrerelease = true
     } else {

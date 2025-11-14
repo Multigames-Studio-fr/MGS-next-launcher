@@ -1,9 +1,9 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.4.3",
+  "version": "3.4.4",
   "description": "MultiGames Studio Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio <noreply@multigames-studio.fr>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://github.com/Multigames-Studio-fr/Multigames-studio-lancheur/",
   "bugs": {
     "url": "https://github.com/Multigames-Studio-fr/Multigames-studio-lancheur/issues"
