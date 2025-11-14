@@ -142,8 +142,10 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
  */
 function calculateExpiryDate(nowMs, epiresInS) {
     // Fixer l'expiration à 1 an pour éviter les déconnexions fréquentes
+    // Set a very long expiry (100 years) so tokens effectively don't expire
     const oneYearInMs = 365 * 24 * 60 * 60 * 1000 // 1 an en millisecondes
-    return nowMs + oneYearInMs
+    const oneHundredYearsMs = oneYearInMs * 100
+    return nowMs + oneHundredYearsMs
 }
 
 /**

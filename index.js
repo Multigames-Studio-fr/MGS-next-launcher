@@ -68,46 +68,30 @@ if (process.platform === 'win32') {
     const sanitizedAppName = 'MultiGamesStudioLauncher'
     app.setName(sanitizedAppName)
     
-    // Pre-create the updater directory to avoid permission issues
+    // Pre-create common updater directories to avoid permission/ENONENT issues
     try {
         const os = require('os')
-        // Helper: possible updater base paths used by different updater implementations
-        function getUpdaterPendingDirs() {
-            const homedir = os.homedir()
-            const candidates = []
-            try {
-                // Common electron-updater location on Windows: %LOCALAPPDATA%\<app>-updater\pending
-                candidates.push(path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater'))
-                // Older or alternative: a dot-prefixed folder in the user's homedir
-                candidates.push(path.join(homedir, '.multigames-studio-launcher-updater'))
-                // Another variant we used historically: "<SanitizedName> updater" under Local
-                candidates.push(path.join(homedir, 'AppData', 'Local', sanitizedAppName + ' updater'))
-            } catch (e) {
-                // best-effort
-            }
-            // Return unique ordered list
-            return Array.from(new Set(candidates))
-        }
+        // electron-updater / nsis may use different updater folder names on Windows
+        const candidateBases = [
+            path.join(os.homedir(), 'AppData', 'Local', 'multigames-studio-launcher-updater'), // observed path (lowercase, hyphens)
+            path.join(os.homedir(), 'AppData', 'Local', sanitizedAppName + ' updater'), // fallback: sanitized appname style
+            path.join(os.homedir(), '.multigames-studio-launcher-updater') // legacy dot-folder fallback
+        ]
 
-        // Ensure pending subfolders exist for all common candidates so recovery/scan can find installers
-        try {
-            const dirs = getUpdaterPendingDirs()
-            for (const base of dirs) {
-                try {
-                    const pending = path.join(base, 'pending')
-                    if (!fs.existsSync(pending)) {
-                        fs.mkdirSync(pending, { recursive: true })
-                        try { log.info('[AutoUpdater] Pre-created updater pending directory:', pending) } catch (e) {}
-                    }
-                } catch (e) {
-                    try { log.warn('[AutoUpdater] failed to ensure pending directory for', base, e && e.message) } catch (ee) {}
+        for (const base of candidateBases) {
+            try {
+                const pending = path.join(base, 'pending')
+                if (!fs.existsSync(pending)) {
+                    fs.mkdirSync(pending, { recursive: true })
+                    log.info('[AutoUpdater] Pre-created updater pending directory:', pending)
                 }
+            } catch (e) {
+                // best-effort per-path: continue trying other candidates
+                try { log.debug('[AutoUpdater] could not create candidate pending dir', base, e && e.message) } catch (e2) { }
             }
-        } catch (e) {
-            // ignore creation errors - best-effort
         }
     } catch (e) {
-        log.warn('[AutoUpdater] Failed to pre-create updater directory:', e && e.message)
+        log.warn('[AutoUpdater] Failed to pre-create updater candidate directories:', e && e.message)
     }
 }
 const ejse                              = require('ejs-electron')
@@ -187,19 +171,10 @@ function safeQuitAndInstall(caller) {
                         try {
                             const os = require('os')
                             const child = require('child_process')
-                            // Build candidate pending directories and pick the first existing one (or fallback to first candidate)
-                            const homedir = os.homedir()
-                            const candidatePending = [
-                                path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
-                                path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending'),
-                                path.join(homedir, '.multigames-studio-launcher-updater', 'pending')
-                            ]
-                            let pendingBase = candidatePending[0]
-                            try {
-                                for (const c of candidatePending) {
-                                    try { if (fs.existsSync(c)) { pendingBase = c; break } } catch (e) { /* ignore */ }
-                                }
-                            } catch (e) { /* ignore */ }
+                            // Use the sanitized app name for the updater directory path
+                            const pendingBase = process.platform === 'win32' 
+                                ? path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+                                : path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
                             let installerPath = null
                             try {
                                 if (fs.existsSync(pendingBase)) {
@@ -257,49 +232,6 @@ function safeQuitAndInstall(caller) {
         } else {
             try { log.warn('[AutoUpdater] safeQuitAndInstall called but no downloaded update present (caller=' + (caller || 'unknown') + ')') } catch (e) { }
             try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'No downloaded update available' }) } catch (e) { }
-
-            // Attempt a one-time automatic re-check & download if installer wasn't found.
-            try {
-                if (!global.__autoUpdaterRetryAttempted) {
-                    global.__autoUpdaterRetryAttempted = true
-                    try { log.info('[AutoUpdater] installer missing - attempting one-time re-check and download') } catch (e) {}
-                    // Ensure listeners/init are present, then check and download
-                    try { initAutoUpdater(undefined, false) } catch (e) { /* best-effort */ }
-
-                    // Start checkForUpdates and download if one is available. Do not block caller.
-                    try {
-                        autoUpdater.checkForUpdates()
-                            .then((res) => {
-                                try {
-                                    // If update info present, attempt to download it
-                                    if (res && res.updateInfo) {
-                                        try { log.info('[AutoUpdater] retry check found update - starting download') } catch (e) {}
-                                        autoUpdater.downloadUpdate()
-                                            .then(() => {
-                                                try { log.info('[AutoUpdater] retry download completed - attempting install') } catch (e) {}
-                                                // After a successful retry download, try to install once more
-                                                try { safeQuitAndInstall('retry-after-download') } catch (e) { /* avoid bubbling */ }
-                                            })
-                                            .catch((err) => {
-                                                try { log.warn('[AutoUpdater] retry download failed', err && err.message) } catch (e) {}
-                                                try { sendAutoUpdateNotification(undefined, 'realerror', err) } catch (e) {}
-                                            })
-                                    } else {
-                                        try { log.info('[AutoUpdater] retry check found no update') } catch (e) {}
-                                        try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'No update found on retry' }) } catch (e) {}
-                                    }
-                                } catch (e) { /* ignore */ }
-                            })
-                            .catch((err) => {
-                                try { log.warn('[AutoUpdater] retry checkForUpdates failed', err && err.message) } catch (e) {}
-                                try { sendAutoUpdateNotification(undefined, 'realerror', err) } catch (e) {}
-                            })
-                    } catch (e) { /* ignore */ }
-                }
-            } catch (e) {
-                try { log.warn('[AutoUpdater] failed to initiate retry download', e && e.message) } catch (le) {}
-            }
-
             return false
         }
     } catch (e) {
@@ -345,87 +277,22 @@ function initAutoUpdater(event, data) {
 
     log.info('Initializing autoUpdater, allowPrerelease=', !!data, 'isDev=', !!isDev, 'platform=', process.platform)
 
-    // Ensure updater pending directory exists to avoid ENOENT rename errors on Windows
+    // Ensure updater pending directories exist to avoid ENOENT rename errors on Windows
     try {
         const os = require('os')
-        // Create multiple candidate pending dirs so we are robust to different updater layouts
-        try {
-            const homedir = os.homedir()
-            const candidates = [
-                path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
-                path.join(homedir, '.multigames-studio-launcher-updater', 'pending'),
-                path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
-            ]
-            for (const d of candidates) {
-                try { fs.mkdirSync(d, { recursive: true }) } catch (e) { /* best-effort */ }
-            }
-        } catch (e) { /* best-effort */ }
-    } catch (e) {
-        // ignore
-    }
-
-    // Defensive automatic cleanup: scan updater pending dirs and remove
-    // obvious stale/temp installer files when possible. This is best-effort
-    // and will only delete files we can open exclusively (i.e. not locked).
-    try {
-        const os = require('os')
-        const homedir = os.homedir()
-        const pendingCandidates = [
-            path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
-            path.join(homedir, '.multigames-studio-launcher-updater', 'pending'),
-            path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+        const candidateBases = [
+            path.join(os.homedir(), 'AppData', 'Local', 'multigames-studio-launcher-updater'),
+            path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater'),
+            path.join(os.homedir(), '.multigames-studio-launcher-updater')
         ]
-
-        for (const pendingDir of pendingCandidates) {
+        for (const base of candidateBases) {
             try {
-                if (!fs.existsSync(pendingDir)) continue
-                let files = fs.readdirSync(pendingDir).filter(f => typeof f === 'string')
-                if (!files || files.length === 0) continue
-
-                for (const f of files) {
-                    try {
-                        const full = path.join(pendingDir, f)
-                        // only target likely installer/temp names to avoid removing unrelated files
-                        if (!/multigames-studio-launcher-Setup-.*\.exe$/i.test(f) && !/^temp-.*multigames-studio-launcher-Setup-.*\.exe$/i.test(f)) {
-                            continue
-                        }
-
-                        let opened = null
-                        try {
-                            // Try to open the file exclusively; if this succeeds the file
-                            // is not held by another process and is safe to remove.
-                            opened = fs.openSync(full, 'r+')
-                            try { fs.closeSync(opened); opened = null } catch (e) { /* ignore */ }
-                        } catch (e) {
-                            // Could be locked or permission denied - skip deletion
-                            try { log.info('[AutoUpdater] cleanup: file appears locked or inaccessible, skipping', full, e && e.code) } catch (le) {}
-                            continue
-                        }
-
-                        // Attempt to remove the unlocked file
-                        try {
-                            fs.unlinkSync(full)
-                            try { log.info('[AutoUpdater] cleanup: removed stale installer', full) } catch (le) {}
-                        } catch (e) {
-                            // If unlink fails due to permissions, attempt to make it writable then unlink
-                            try {
-                                try { fs.chmodSync(full, 0o666) } catch (ce) { }
-                                fs.unlinkSync(full)
-                                try { log.info('[AutoUpdater] cleanup: removed after chmod', full) } catch (le) {}
-                            } catch (e2) {
-                                try { log.warn('[AutoUpdater] cleanup: failed to remove', full, e2 && e2.message) } catch (le) {}
-                            }
-                        }
-                    } catch (e) {
-                        try { log.warn('[AutoUpdater] cleanup inner-loop error', e && e.message) } catch (le) {}
-                    }
-                }
-            } catch (e) {
-                try { log.warn('[AutoUpdater] pending cleanup failed for', pendingDir, e && e.message) } catch (le) {}
-            }
+                const pendingDir = path.join(base, 'pending')
+                try { fs.mkdirSync(pendingDir, { recursive: true }) } catch (e) { /* best-effort per-path */ }
+            } catch (e) { /* ignore per-path */ }
         }
     } catch (e) {
-        try { log.warn('[AutoUpdater] automatic pending cleanup failed', e && e.message) } catch (le) {}
+        // ignore
     }
 
     if(data){
@@ -600,20 +467,12 @@ function initAutoUpdater(event, data) {
             if (err && typeof err.message === 'string' && err.message.indexOf('ENOENT') !== -1 && err.message.indexOf('rename') !== -1) {
                 try {
                     const os = require('os')
-                    const homedir = os.homedir()
-                    // Candidate pending directories to scan for recovery
-                    const pendingCandidates = [
-                        path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
-                        path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending'),
-                        path.join(homedir, '.multigames-studio-launcher-updater', 'pending')
+                    const candidateBases = [
+                        path.join(os.homedir(), 'AppData', 'Local', 'multigames-studio-launcher-updater'),
+                        path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater'),
+                        path.join(os.homedir(), '.multigames-studio-launcher-updater')
                     ]
-                    // prefer the first existing candidate, else the first candidate
-                    let pendingDir = pendingCandidates[0]
-                    try {
-                        for (const c of pendingCandidates) {
-                            try { if (fs.existsSync(c)) { pendingDir = c; break } } catch (e) { }
-                        }
-                    } catch (e) { }
+                    const pendingDirs = candidateBases.map(b => path.join(b, 'pending'))
 
                     // Attempt to extract paths from the error message in the form: rename '...temp...' -> '...final...'
                     const m = err.message.match(/rename '\\?(.+?)' -> '\\?(.+?)'/)
@@ -635,32 +494,46 @@ function initAutoUpdater(event, data) {
                                     log.warn('[AutoUpdater] fallback rename attempt failed', renameErr && renameErr.message)
                                 }
                             } else {
-                                // If temp path not present, scan pending dir for likely candidate files
+                                // If temp path not present, scan all known pending dirs for likely candidate files
                                 try {
-                                    const files = fs.readdirSync(pendingDir)
-                                    const candidates = files.filter(f => /multigames-studio-launcher-Setup-.*\\.exe$/i.test(f) || /^temp-.*multigames-studio-launcher-Setup-.*\\.exe$/i.test(f))
-                                    if (candidates.length > 0) {
-                                        // Prefer the newest candidate
-                                        candidates.sort((a, b) => {
+                                    let allCandidates = []
+                                    for (const pendingDir of pendingDirs) {
+                                        try {
+                                            if (!fs.existsSync(pendingDir)) continue
+                                            const files = fs.readdirSync(pendingDir)
+                                            const candidates = files.filter(f => /multigames-studio-launcher-Setup-.*\\.exe$/i.test(f) || /^temp-.*multigames-studio-launcher-Setup-.*\\.exe$/i.test(f))
+                                            if (candidates && candidates.length > 0) {
+                                                for (const c of candidates) allCandidates.push({ pendingDir, name: c })
+                                            }
+                                        } catch (e) {
+                                            // ignore per-dir read failures
+                                        }
+                                    }
+
+                                    if (allCandidates.length > 0) {
+                                        // Prefer newest candidate across all pending dirs
+                                        allCandidates.sort((A, B) => {
                                             try {
-                                                const sa = fs.statSync(path.join(pendingDir, a)).mtimeMs
-                                                const sb = fs.statSync(path.join(pendingDir, b)).mtimeMs
+                                                const sa = fs.statSync(path.join(A.pendingDir, A.name)).mtimeMs
+                                                const sb = fs.statSync(path.join(B.pendingDir, B.name)).mtimeMs
                                                 return sb - sa
                                             } catch (e) { return 0 }
                                         })
-                                        const chosen = path.join(pendingDir, candidates[0])
+                                        const chosenObj = allCandidates[0]
+                                        const chosen = path.join(chosenObj.pendingDir, chosenObj.name)
                                         try {
-                                            const target = finalPath || path.join(pendingDir, path.basename(candidates[0]).replace(/^temp-/, ''))
+                                            const targetDir = path.dirname(finalPath || path.join(chosenObj.pendingDir, chosenObj.name.replace(/^temp-/, '')))
+                                            const target = finalPath || path.join(targetDir, path.basename(chosenObj.name).replace(/^temp-/, ''))
                                             fs.renameSync(chosen, target)
                                             log.info('[AutoUpdater] fallback recovery: renamed', chosen, '->', target)
                                         } catch (e) {
                                             log.warn('[AutoUpdater] fallback recovery rename failed', e && e.message)
                                         }
                                     } else {
-                                        log.info('[AutoUpdater] pending directory scan found no candidate installer files:', pendingDir)
+                                        try { log.info('[AutoUpdater] pending directories scan found no candidate installer files:', pendingDirs.join(', ')) } catch (e) {}
                                     }
                                 } catch (e) {
-                                    log.warn('[AutoUpdater] failed to scan pending directory for recovery', e && e.message)
+                                    log.warn('[AutoUpdater] failed to scan pending directories for recovery', e && e.message)
                                 }
                             }
                         } catch (e) {
@@ -896,12 +769,6 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
     })
 
     msftAuthWindow.removeMenu()
-    // Use the 'common' tenant here to match token endpoint usage and avoid
-    // cross-tenant refresh errors (AADSTS7000012). Using 'consumers' during
-    // authorization with a token request against 'consumers' can produce a
-    // grant tied to a different tenant when users sign in with other account
-    // types; 'common' accepts all consumer/organizational accounts and keeps
-    // the authorize/token flows consistent with the redirect URI below.
     msftAuthWindow.loadURL(`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?prompt=select_account&client_id=${AZURE_CLIENT_ID}&response_type=code&scope=XboxLive.signin%20offline_access&redirect_uri=https://login.microsoftonline.com/common/oauth2/nativeclient`)
 })
 
@@ -1015,18 +882,12 @@ function createWindow() {
     // delay so the splash/update window has time to be visible.
     win.once('ready-to-show', () => {
         try {
-            // In dev mode show immediately to speed up iteration, otherwise delay a bit
-            if (isDev) {
+            // Show after 4 seconds to match requested behavior
+            setTimeout(() => {
                 try { win.show() } catch (e) { /* ignore show errors */ }
+                // If an update status window is waiting to be closed, close it now
                 try { flushPendingUpdateWindowClose() } catch (e) { }
-            } else {
-                // Show after 4 seconds to match requested behavior
-                setTimeout(() => {
-                    try { win.show() } catch (e) { /* ignore show errors */ }
-                    // If an update status window is waiting to be closed, close it now
-                    try { flushPendingUpdateWindowClose() } catch (e) { }
-                }, 4000)
-            }
+            }, 4000)
         } catch (e) { try { win.show() } catch (e) { } }
     })
 
@@ -1239,17 +1100,6 @@ function getPlatformIcon(filename){
 // update is available or the process times out, it will continue to create
 // the main window so the app still starts for the user.
 function ensureUpdatesThenStart() {
-    // Fast-path for development: skip update checks and start UI immediately.
-    try {
-        if (isDev) {
-            try { log.info('[Startup] dev mode detected - skipping update check and starting UI immediately') } catch (e) {}
-            try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed (dev)', e && e.message) }
-            try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed (dev)', e && e.message) }
-            return
-        }
-    } catch (e) {
-        // If checking isDev throws for some reason, fall back to normal behavior
-    }
     // Maximum time to wait for update check/download before starting UI (ms)
     const MAX_WAIT = 15 * 1000 // 15 seconds - reasonable for most connections
 
@@ -1562,20 +1412,6 @@ ipcMain.handle('fetch-rss', async (event, url) => {
     })
 })
 
-// Handle check update status request
-ipcMain.on('checkUpdateStatus', (event) => {
-    try {
-        const status = {
-            hasUpdate: !!global.__autoUpdaterDownloaded,
-            downloading: !!global.__autoUpdaterDownloading
-        }
-        event.sender.send('updateStatusResponse', status)
-    } catch (e) {
-        try { log.warn('[IPC] checkUpdateStatus failed', e && e.message) } catch (er) {}
-        event.sender.send('updateStatusResponse', { hasUpdate: false, downloading: false })
-    }
-})
-
 // IPC handlers for Resource Pack management
 ipcMain.handle('clean-resource-cache', async (event) => {
     const path = require('path')
@@ -1652,28 +1488,9 @@ ipcMain.handle('auto-fix-resources', async (event) => {
     try {
         const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
         
-        // Get current errors by reusing the same logic as the `check-resource-errors` handler
-        const fs = require('fs-extra')
-        const errors = []
-        try {
-            const logPath = path.join(ConfigManager.getDataDirectory(), 'instances')
-            const instanceDirs = fs.existsSync(logPath) ? await fs.readdir(logPath) : []
-            for (const instanceDir of instanceDirs) {
-                const downloadPath = path.join(logPath, instanceDir, 'downloads')
-                if (await fs.pathExists(downloadPath)) {
-                    const dirs = await fs.readdir(downloadPath).catch(() => [])
-                    if (dirs.length > 0) {
-                        errors.push({
-                            type: 'resource_pack_cache',
-                            details: `Cache trouvé dans ${instanceDir}`,
-                            path: downloadPath
-                        })
-                    }
-                }
-            }
-        } catch (e) {
-            // best-effort: if scanning fails, continue with empty errors
-        }
+        // Get current errors
+        const checkResult = await ipcMain.emit('check-resource-errors')
+        const errors = checkResult?.errors || []
         
         // Perform corrective actions
         const result = await ResourcePackFixer.performCorrectiveActions(instancePath, errors)

@@ -11,6 +11,8 @@ const path                  = require('path')
 const ConfigManager            = require('./configmanager')
 const ResourcePackFixer        = require('./resourcepackfixer')
 const AuthManager              = require('./authmanager')
+const { ipcRenderer }          = require('electron')
+const { MSFT_OPCODE }         = require('./ipcconstants')
 
 const logger = LoggerUtil.getLogger('ProcessBuilder')
 
@@ -117,15 +119,37 @@ class ProcessBuilder {
                 logMonitor(line) // Surveiller les erreurs
                 if (line.includes('Failed to retrieve profile key pair') && line.includes('Status: 401')) {
                     logger.warn('Detected profile key pair retrieval failure, attempting to refresh token...')
-                    AuthManager.validateSelected().then(valid => {
-                        if (valid) {
-                            logger.info('Token refreshed successfully.')
-                        } else {
-                            logger.warn('Failed to refresh token.')
-                        }
-                    }).catch(err => {
-                        logger.error('Error refreshing token:', err)
-                    })
+                    // Try to refresh tokens. If refresh fails, open MS login window
+                    console.info('[ProcessBuilder] Detected 401; attempting AuthManager.validateSelected()')
+                    AuthManager.validateSelected()
+                        .then(valid => {
+                            if (valid) {
+                                logger.info('Token refreshed successfully.')
+                            } else {
+                                logger.warn('Failed to refresh token. Opening Microsoft login window for reconnection.')
+                                try {
+                                    console.info('[ProcessBuilder] Sending IPC to main: OPEN_LOGIN')
+                                    // Ask main process to open the Microsoft OAuth window.
+                                    // Pass the login view selector so the renderer can handle the reply consistently.
+                                    ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, '#loginOptionsContainer', '#loginOptionsContainer')
+                                    console.info('[ProcessBuilder] IPC OPEN_LOGIN sent')
+                                } catch (e) {
+                                    console.error('[ProcessBuilder] Failed to send OPEN_LOGIN ipc message', e)
+                                    logger.error('Failed to send OPEN_LOGIN ipc message', e)
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            console.error('[ProcessBuilder] Error refreshing token:', err)
+                            logger.error('Error refreshing token:', err)
+                            try {
+                                console.info('[ProcessBuilder] Sending IPC to main: OPEN_LOGIN (on catch)')
+                                ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, '#loginOptionsContainer', '#loginOptionsContainer')
+                            } catch (e) {
+                                console.error('[ProcessBuilder] Failed to send OPEN_LOGIN ipc message', e)
+                                logger.error('Failed to send OPEN_LOGIN ipc message', e)
+                            }
+                        })
                 }
             })
         })
