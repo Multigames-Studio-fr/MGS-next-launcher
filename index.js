@@ -71,10 +71,40 @@ if (process.platform === 'win32') {
     // Pre-create the updater directory to avoid permission issues
     try {
         const os = require('os')
-        const updaterPath = path.join(os.homedir(), 'AppData', 'Local', sanitizedAppName + ' updater')
-        if (!fs.existsSync(updaterPath)) {
-            fs.mkdirSync(updaterPath, { recursive: true })
-            log.info('[AutoUpdater] Pre-created updater directory:', updaterPath)
+        // Helper: possible updater base paths used by different updater implementations
+        function getUpdaterPendingDirs() {
+            const homedir = os.homedir()
+            const candidates = []
+            try {
+                // Common electron-updater location on Windows: %LOCALAPPDATA%\<app>-updater\pending
+                candidates.push(path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater'))
+                // Older or alternative: a dot-prefixed folder in the user's homedir
+                candidates.push(path.join(homedir, '.multigames-studio-launcher-updater'))
+                // Another variant we used historically: "<SanitizedName> updater" under Local
+                candidates.push(path.join(homedir, 'AppData', 'Local', sanitizedAppName + ' updater'))
+            } catch (e) {
+                // best-effort
+            }
+            // Return unique ordered list
+            return Array.from(new Set(candidates))
+        }
+
+        // Ensure pending subfolders exist for all common candidates so recovery/scan can find installers
+        try {
+            const dirs = getUpdaterPendingDirs()
+            for (const base of dirs) {
+                try {
+                    const pending = path.join(base, 'pending')
+                    if (!fs.existsSync(pending)) {
+                        fs.mkdirSync(pending, { recursive: true })
+                        try { log.info('[AutoUpdater] Pre-created updater pending directory:', pending) } catch (e) {}
+                    }
+                } catch (e) {
+                    try { log.warn('[AutoUpdater] failed to ensure pending directory for', base, e && e.message) } catch (ee) {}
+                }
+            }
+        } catch (e) {
+            // ignore creation errors - best-effort
         }
     } catch (e) {
         log.warn('[AutoUpdater] Failed to pre-create updater directory:', e && e.message)
@@ -157,10 +187,19 @@ function safeQuitAndInstall(caller) {
                         try {
                             const os = require('os')
                             const child = require('child_process')
-                            // Use the sanitized app name for the updater directory path
-                            const pendingBase = process.platform === 'win32' 
-                                ? path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
-                                : path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
+                            // Build candidate pending directories and pick the first existing one (or fallback to first candidate)
+                            const homedir = os.homedir()
+                            const candidatePending = [
+                                path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
+                                path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending'),
+                                path.join(homedir, '.multigames-studio-launcher-updater', 'pending')
+                            ]
+                            let pendingBase = candidatePending[0]
+                            try {
+                                for (const c of candidatePending) {
+                                    try { if (fs.existsSync(c)) { pendingBase = c; break } } catch (e) { /* ignore */ }
+                                }
+                            } catch (e) { /* ignore */ }
                             let installerPath = null
                             try {
                                 if (fs.existsSync(pendingBase)) {
@@ -266,9 +305,18 @@ function initAutoUpdater(event, data) {
     // Ensure updater pending directory exists to avoid ENOENT rename errors on Windows
     try {
         const os = require('os')
-        const updaterBase = path.join(os.homedir(), '.multigames-studio-launcher-updater')
-        const pendingDir = path.join(updaterBase, 'pending')
-        try { fs.mkdirSync(pendingDir, { recursive: true }) } catch (e) { /* best-effort */ }
+        // Create multiple candidate pending dirs so we are robust to different updater layouts
+        try {
+            const homedir = os.homedir()
+            const candidates = [
+                path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
+                path.join(homedir, '.multigames-studio-launcher-updater', 'pending'),
+                path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+            ]
+            for (const d of candidates) {
+                try { fs.mkdirSync(d, { recursive: true }) } catch (e) { /* best-effort */ }
+            }
+        } catch (e) { /* best-effort */ }
     } catch (e) {
         // ignore
     }
@@ -445,8 +493,20 @@ function initAutoUpdater(event, data) {
             if (err && typeof err.message === 'string' && err.message.indexOf('ENOENT') !== -1 && err.message.indexOf('rename') !== -1) {
                 try {
                     const os = require('os')
-                    const updaterBase = path.join(os.homedir(), '.multigames-studio-launcher-updater')
-                    const pendingDir = path.join(updaterBase, 'pending')
+                    const homedir = os.homedir()
+                    // Candidate pending directories to scan for recovery
+                    const pendingCandidates = [
+                        path.join(homedir, 'AppData', 'Local', (process.env.APPNAME || 'multigames-studio-launcher') + '-updater', 'pending'),
+                        path.join(homedir, 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending'),
+                        path.join(homedir, '.multigames-studio-launcher-updater', 'pending')
+                    ]
+                    // prefer the first existing candidate, else the first candidate
+                    let pendingDir = pendingCandidates[0]
+                    try {
+                        for (const c of pendingCandidates) {
+                            try { if (fs.existsSync(c)) { pendingDir = c; break } } catch (e) { }
+                        }
+                    } catch (e) { }
 
                     // Attempt to extract paths from the error message in the form: rename '...temp...' -> '...final...'
                     const m = err.message.match(/rename '\\?(.+?)' -> '\\?(.+?)'/)
@@ -848,12 +908,18 @@ function createWindow() {
     // delay so the splash/update window has time to be visible.
     win.once('ready-to-show', () => {
         try {
-            // Show after 4 seconds to match requested behavior
-            setTimeout(() => {
+            // In dev mode show immediately to speed up iteration, otherwise delay a bit
+            if (isDev) {
                 try { win.show() } catch (e) { /* ignore show errors */ }
-                // If an update status window is waiting to be closed, close it now
                 try { flushPendingUpdateWindowClose() } catch (e) { }
-            }, 4000)
+            } else {
+                // Show after 4 seconds to match requested behavior
+                setTimeout(() => {
+                    try { win.show() } catch (e) { /* ignore show errors */ }
+                    // If an update status window is waiting to be closed, close it now
+                    try { flushPendingUpdateWindowClose() } catch (e) { }
+                }, 4000)
+            }
         } catch (e) { try { win.show() } catch (e) { } }
     })
 
@@ -1066,6 +1132,17 @@ function getPlatformIcon(filename){
 // update is available or the process times out, it will continue to create
 // the main window so the app still starts for the user.
 function ensureUpdatesThenStart() {
+    // Fast-path for development: skip update checks and start UI immediately.
+    try {
+        if (isDev) {
+            try { log.info('[Startup] dev mode detected - skipping update check and starting UI immediately') } catch (e) {}
+            try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed (dev)', e && e.message) }
+            try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed (dev)', e && e.message) }
+            return
+        }
+    } catch (e) {
+        // If checking isDev throws for some reason, fall back to normal behavior
+    }
     // Maximum time to wait for update check/download before starting UI (ms)
     const MAX_WAIT = 15 * 1000 // 15 seconds - reasonable for most connections
 
@@ -1378,6 +1455,20 @@ ipcMain.handle('fetch-rss', async (event, url) => {
     })
 })
 
+// Handle check update status request
+ipcMain.on('checkUpdateStatus', (event) => {
+    try {
+        const status = {
+            hasUpdate: !!global.__autoUpdaterDownloaded,
+            downloading: !!global.__autoUpdaterDownloading
+        }
+        event.sender.send('updateStatusResponse', status)
+    } catch (e) {
+        try { log.warn('[IPC] checkUpdateStatus failed', e && e.message) } catch (er) {}
+        event.sender.send('updateStatusResponse', { hasUpdate: false, downloading: false })
+    }
+})
+
 // IPC handlers for Resource Pack management
 ipcMain.handle('clean-resource-cache', async (event) => {
     const path = require('path')
@@ -1454,9 +1545,28 @@ ipcMain.handle('auto-fix-resources', async (event) => {
     try {
         const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
         
-        // Get current errors
-        const checkResult = await ipcMain.emit('check-resource-errors')
-        const errors = checkResult?.errors || []
+        // Get current errors by reusing the same logic as the `check-resource-errors` handler
+        const fs = require('fs-extra')
+        const errors = []
+        try {
+            const logPath = path.join(ConfigManager.getDataDirectory(), 'instances')
+            const instanceDirs = fs.existsSync(logPath) ? await fs.readdir(logPath) : []
+            for (const instanceDir of instanceDirs) {
+                const downloadPath = path.join(logPath, instanceDir, 'downloads')
+                if (await fs.pathExists(downloadPath)) {
+                    const dirs = await fs.readdir(downloadPath).catch(() => [])
+                    if (dirs.length > 0) {
+                        errors.push({
+                            type: 'resource_pack_cache',
+                            details: `Cache trouvé dans ${instanceDir}`,
+                            path: downloadPath
+                        })
+                    }
+                }
+            }
+        } catch (e) {
+            // best-effort: if scanning fails, continue with empty errors
+        }
         
         // Perform corrective actions
         const result = await ResourcePackFixer.performCorrectiveActions(instancePath, errors)

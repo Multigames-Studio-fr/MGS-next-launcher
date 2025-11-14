@@ -10,6 +10,7 @@ const path                  = require('path')
 
 const ConfigManager            = require('./configmanager')
 const ResourcePackFixer        = require('./resourcepackfixer')
+const AuthManager              = require('./authmanager')
 
 const logger = LoggerUtil.getLogger('ProcessBuilder')
 
@@ -114,6 +115,18 @@ class ProcessBuilder {
             data.trim().split('\n').forEach(line => {
                 console.log(`\x1b[31m[Minecraft]\x1b[0m ${line}`)
                 logMonitor(line) // Surveiller les erreurs
+                if (line.includes('Failed to retrieve profile key pair') && line.includes('Status: 401')) {
+                    logger.warn('Detected profile key pair retrieval failure, attempting to refresh token...')
+                    AuthManager.validateSelected().then(valid => {
+                        if (valid) {
+                            logger.info('Token refreshed successfully.')
+                        } else {
+                            logger.warn('Failed to refresh token.')
+                        }
+                    }).catch(err => {
+                        logger.error('Error refreshing token:', err)
+                    })
+                }
             })
         })
         child.on('close', (code, signal) => {

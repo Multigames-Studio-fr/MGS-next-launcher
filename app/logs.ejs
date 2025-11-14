@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <title><%= lang('logs.title') %></title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'"> 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"> 
     <style>
         html,body{height:100%;margin:0;background:#0b0b0b;color:#e6e6e6;font-family:system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
         #toolbar{height:40px;padding:6px;display:flex;gap:8px;align-items:center;background:#111}
@@ -23,42 +23,6 @@
     </div>
     <div id="logbox"></div>
 
-    <script>
-        const { ipcRenderer } = require('electron')
-        const logbox = document.getElementById('logbox')
-        const clearBtn = document.getElementById('clearBtn')
-        const pauseBtn = document.getElementById('pauseBtn')
-        const saveBtn = document.getElementById('saveBtn')
-        let paused = false
-
-        function appendLine(line){
-            try{
-                if(paused) return
-                logbox.textContent += line + '\n'
-                // keep last ~50000 chars
-                if(logbox.textContent.length > 50000){
-                    logbox.textContent = logbox.textContent.slice(-50000)
-                }
-                logbox.scrollTop = logbox.scrollHeight
-            }catch(e){ }
-        }
-
-        ipcRenderer.on('mc-log-line', (_, line) => {
-            appendLine(line)
-        })
-
-        clearBtn.addEventListener('click', () => { logbox.textContent = '' })
-    pauseBtn.addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? "<%= lang('logs.resume') %>" : "<%= lang('logs.pause') %>" })
-        saveBtn.addEventListener('click', async () => {
-            const { dialog } = require('electron').remote || require('@electron/remote')
-            const fs = require('fs')
-            try{
-                const { filePath } = await dialog.showSaveDialog({ defaultPath: 'minecraft-logs.txt' })
-                if(filePath){
-                    fs.writeFileSync(filePath, logbox.textContent, 'utf8')
-                }
-            }catch(e){ }
-        })
-    </script>
+    <script src="./assets/js/logs-window.js"></script>
 </body>
 </html>

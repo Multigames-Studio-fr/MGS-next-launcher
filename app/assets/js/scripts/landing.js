@@ -34,6 +34,15 @@ const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
 const ModDeduplicator         = require('./assets/js/moddeduplicator')
 
+// DOM sanitization to avoid injecting untrusted HTML into the renderer
+let DOMPurify = { sanitize: (s) => s }
+try {
+    const createDOMPurify = require('dompurify')
+    DOMPurify = createDOMPurify(window)
+} catch (e) {
+    // If DOMPurify isn't available, fallback to identity function (best-effort)
+}
+
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
 const launch_details          = document.getElementById('launch_details')
@@ -52,6 +61,174 @@ let newsActive = false
 
 // Per-instance runtime state map: { serverId: { started: boolean, pid: number|null, timestamp: number } }
 const instanceStateMap = {}
+// Transition counter to cancel in-flight instance-change animations when a new change arrives
+let instanceTransitionCounter = 0
+// Per-element tokens for text swap cancellation
+const textAnimationTokens = new WeakMap()
+// Per-element tokens for button selection animation cancellation
+const buttonAnimationTokens = new WeakMap()
+
+/**
+ * Animate swapping selection between two sidebar buttons.
+ * Handles cancellation via per-element tokens and updates 'selected' class and image borders.
+ */
+async function animateButtonSwap(prevBtn, nextBtn){
+    // simple helper to wait for animationend (with fallback)
+    const waitAnim = (el, cls, fallback = 260) => new Promise(resolve => {
+        if(!el) return resolve()
+        let done = false
+        const onEnd = () => { if(done) return; done = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() }
+        try{ el.addEventListener('animationend', onEnd) }catch(e){}
+        el.classList.add(cls)
+        setTimeout(() => { if(!done){ done = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() } }, fallback + 40)
+    })
+
+    // tokens
+    const tokenPrev = prevBtn ? (buttonAnimationTokens.get(prevBtn) || 0) + 1 : null
+    const tokenNext = nextBtn ? (buttonAnimationTokens.get(nextBtn) || 0) + 1 : null
+    if(prevBtn) buttonAnimationTokens.set(prevBtn, tokenPrev)
+    if(nextBtn) buttonAnimationTokens.set(nextBtn, tokenNext)
+
+    try {
+        // exit previous
+        if(prevBtn){
+            // animate label out if present (slide-label style)
+            try {
+                const labelPrev = prevBtn.querySelector('.font-semibold.text-xl.leading-tight')
+                if(labelPrev) labelPrev.classList.add('label-slide-out')
+            } catch (e) { /* ignore */ }
+
+            await waitAnim(prevBtn, 'instance-btn-exit', 220)
+            // cancelled?
+            if(buttonAnimationTokens.get(prevBtn) !== tokenPrev) {
+                prevBtn.classList.remove('instance-btn-exit')
+            } else {
+                // remove selected state
+                prevBtn.classList.remove('selected')
+                const img = prevBtn.querySelector('img')
+                if(img){ img.classList.remove('border-[#F8BA59]'); img.classList.add('border-white/20') }
+                // cleanup label animation classes
+                try {
+                    const labelPrev = prevBtn.querySelector('.font-semibold.text-xl.leading-tight')
+                    if(labelPrev) labelPrev.classList.remove('label-slide-out','label-slide-in')
+                } catch (e) {}
+                prevBtn.classList.remove('instance-btn-exit')
+            }
+        }
+
+        // prepare next: add selected then enter animation
+        if(nextBtn){
+            // If token changed meanwhile, abort
+            if(buttonAnimationTokens.get(nextBtn) !== tokenNext) return
+            // prepare label state
+            try {
+                const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight')
+                if(labelNext) labelNext.classList.remove('label-slide-out','label-slide-in')
+            } catch (e) {}
+            // mark selected state before enter so CSS selectors apply
+            nextBtn.classList.add('selected')
+            const img = nextBtn.querySelector('img')
+            if(img){ img.classList.remove('border-white/20'); img.classList.add('border-[#F8BA59]') }
+
+            // animate label in if present
+            try {
+                const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight')
+                if(labelNext) labelNext.classList.add('label-slide-in')
+            } catch (e) {}
+
+            await waitAnim(nextBtn, 'instance-btn-enter', 260)
+            // cleanup
+            if(buttonAnimationTokens.get(nextBtn) === tokenNext){
+                nextBtn.classList.remove('instance-btn-enter')
+                try { const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight'); if(labelNext) labelNext.classList.remove('label-slide-in') } catch (e) {}
+            } else {
+                nextBtn.classList.remove('instance-btn-enter')
+                nextBtn.classList.remove('selected')
+                try { const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight'); if(labelNext) labelNext.classList.remove('label-slide-in') } catch (e) {}
+            }
+        }
+    } catch (e) {
+        // best-effort cleanup
+        try { if(prevBtn) prevBtn.classList.remove('instance-btn-exit') } catch (err) {}
+        try { if(nextBtn) nextBtn.classList.remove('instance-btn-enter') } catch (err) {}
+    } finally {
+        if(prevBtn) buttonAnimationTokens.delete(prevBtn)
+        if(nextBtn) buttonAnimationTokens.delete(nextBtn)
+    }
+}
+
+/**
+ * Animate swapping the HTML/text of an element with exit -> content swap -> enter.
+ * Uses per-element token to cancel in-flight swaps if a new swap is requested.
+ * @param {Element} el DOM element
+ * @param {string} newHTML sanitized HTML to insert
+ * @param {object} opts options: exitClass, enterClass, exitFallback, enterFallback
+ */
+function animateTextSwap(el, newHTML, opts = {}){
+    const {
+        exitClass = 'text-exit',
+        enterClass = 'text-enter',
+        exitFallback = 260,
+        enterFallback = 300
+    } = opts
+
+    if(!el) return Promise.resolve()
+
+    const prev = textAnimationTokens.get(el) || 0
+    const token = prev + 1
+    textAnimationTokens.set(el, token)
+
+    const waitAnimation = (element, className, fallback) => {
+        return new Promise(resolve => {
+            let called = false
+            const onEnd = (e) => {
+                if(called) return
+                called = true
+                try { element.removeEventListener('animationend', onEnd) } catch (e) {}
+                resolve()
+            }
+            try { element.addEventListener('animationend', onEnd) } catch (e) {}
+            // ensure class is applied
+            element.classList.add(className)
+            setTimeout(() => {
+                if(!called) {
+                    called = true
+                    try { element.removeEventListener('animationend', onEnd) } catch (e) {}
+                    resolve()
+                }
+            }, fallback + 40)
+        })
+    }
+
+    return (async () => {
+        // exit
+        await waitAnimation(el, exitClass, exitFallback)
+        // cancelled?
+        if(textAnimationTokens.get(el) !== token) {
+            // cleanup classes
+            try { el.classList.remove(exitClass, enterClass) } catch (e) {}
+            return
+        }
+
+        // swap content
+        try { el.innerHTML = newHTML } catch (e) { el.textContent = newHTML }
+
+        // remove exit and force reflow
+        try { el.classList.remove(exitClass) } catch (e) {}
+        void el.offsetHeight
+
+        // enter
+        await waitAnimation(el, enterClass, enterFallback)
+
+        // final cleanup
+        if(textAnimationTokens.get(el) === token) {
+            try { el.classList.remove(enterClass) } catch (e) {}
+            textAnimationTokens.delete(el)
+        } else {
+            try { el.classList.remove(exitClass, enterClass) } catch (e) {}
+        }
+    })()
+}
 
 /**
  * Update the landing UI for a given server id based on instanceStateMap
@@ -267,10 +444,43 @@ function setLaunchEnabled(val){
     document.getElementById('launch_button').disabled = !val
 }
 
+// Function to check update status
+async function checkUpdateStatus() {
+    return new Promise((resolve) => {
+        try {
+            const { ipcRenderer } = require('electron')
+            ipcRenderer.send('checkUpdateStatus')
+            ipcRenderer.once('updateStatusResponse', (event, status) => {
+                resolve(status)
+            })
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                resolve({ hasUpdate: false, downloading: false })
+            }, 5000)
+        } catch (e) {
+            loggerLanding.warn('Failed to check update status, assuming no update', e)
+            resolve({ hasUpdate: false, downloading: false })
+        }
+    })
+}
+
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
     try {
+        // Vérifier l'état des mises à jour avant de lancer
+        const updateStatus = await checkUpdateStatus()
+        if (updateStatus.hasUpdate || updateStatus.downloading) {
+            loggerLanding.warn('Update in progress or available, preventing launch')
+            showLaunchFailure(
+                'Mise à jour en cours',
+                updateStatus.downloading 
+                    ? 'Une mise à jour est en cours de téléchargement. Veuillez attendre la fin du téléchargement avant de lancer le jeu.'
+                    : 'Une mise à jour est disponible. Veuillez installer la mise à jour avant de lancer le jeu.'
+            )
+            return
+        }
+
         const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
         const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
         if(jExe == null){
@@ -286,17 +496,30 @@ document.getElementById('launch_button').addEventListener('click', async e => {
                 loggerLanding.info('Jvm Details', details)
                 // If we appear to be offline but a local account is selected, use offline mode
                 try {
-                    const hasSelectedAccount = ConfigManager.getSelectedAccount() != null
                     const offlineDetected = (typeof navigator !== 'undefined' && !navigator.onLine)
-                    if(offlineDetected && hasSelectedAccount){
-                        setLaunchDetails(Lang.queryJS('landing.launch.offlineMode') || 'Lancement en mode hors-ligne...')
-                        await dlAsync('offline')
-                    } else {
-                        await dlAsync()
+                    if (offlineDetected) {
+                        // Prevent launching when offline. Show an informative modal/message.
+                        try {
+                            // Prefer a UI modal if present
+                            const offlineModal = document.getElementById('offlineModal')
+                            if (offlineModal) {
+                                offlineModal.classList.remove('hidden')
+                            } else {
+                                // Fallback: show existing launch failure UI
+                                showLaunchFailure('Connexion requise', 'Vous êtes hors-ligne. Veuillez vous connecter à Internet pour lancer le jeu.')
+                            }
+                        } catch (err) {
+                            // Fallback to launch failure if modal manipulation fails
+                            showLaunchFailure('Connexion requise', 'Vous êtes hors-ligne. Veuillez vous connecter à Internet pour lancer le jeu.')
+                        }
+                        return
                     }
-                } catch (e) {
-                    // Fallback to normal launch
+
+                    // Online: proceed with normal launch flow
                     await dlAsync()
+                } catch (e) {
+                    // If any unexpected error occurs, attempt normal launch as best-effort
+                    try { await dlAsync() } catch (err) { loggerLanding.error('Launch failed after fallback', err) }
                 }
 
             } else {
@@ -395,33 +618,38 @@ updateSelectedAccount(ConfigManager.getSelectedAccount())
  * Update the visual selection in the sidebar
  */
 function updateSidebarSelection(selectedServerId) {
-    const instanceButtons = document.querySelectorAll('.server-instance-btn')
-    
-    instanceButtons.forEach(button => {
-        const serverId = button.getAttribute('data-server-id')
-        const img = button.querySelector('img')
-        
-        if (serverId === selectedServerId) {
-            button.classList.add('selected')
-            if (img) {
-                img.classList.remove('border-white/20')
-                img.classList.add('border-[#F8BA59]')
+    const prevBtn = document.querySelector('.server-instance-btn.selected')
+    const nextBtn = document.querySelector('.server-instance-btn[data-server-id="' + (selectedServerId || '') + '"]')
+
+    // If neither buttons found fallback to basic loop
+    if(!prevBtn && !nextBtn){
+        const instanceButtons = document.querySelectorAll('.server-instance-btn')
+        instanceButtons.forEach(button => {
+            const serverId = button.getAttribute('data-server-id')
+            const img = button.querySelector('img')
+            if (serverId === selectedServerId) {
+                button.classList.add('selected')
+                if (img) { img.classList.remove('border-white/20'); img.classList.add('border-[#F8BA59]') }
+            } else {
+                button.classList.remove('selected')
+                if (img) { img.classList.remove('border-[#F8BA59]'); img.classList.add('border-white/20') }
             }
-        } else {
-            button.classList.remove('selected')
-            if (img) {
-                img.classList.remove('border-[#F8BA59]')
-                img.classList.add('border-white/20')
-            }
-        }
-    })
+        })
+        return
+    }
+
+    // If same button selected, do nothing
+    if(prevBtn === nextBtn) return
+
+    // Animate swap with cancellation support
+    animateButtonSwap(prevBtn, nextBtn).catch(e => { console.debug('animateButtonSwap error', e) })
 }
 
 // Make function globally accessible
 window.updateSidebarSelection = updateSidebarSelection
 
 // Bind selected server
-function updateSelectedServer(serv){
+async function updateSelectedServer(serv){
     if(getCurrentView() === VIEWS.settings){
         fullSettingsSave()
     }
@@ -435,50 +663,101 @@ function updateSelectedServer(serv){
     const serverLoader = document.querySelector('.server-loader')
     const serverStatusName = document.querySelector('.server-status-name')
     const playInstance = document.querySelector('.play-instance')
+    // Token for cancelling outdated transitions
+    const myTransitionToken = ++instanceTransitionCounter
     
-    // Apply fade-out animation first
-    const elementsToAnimate = [serverTitle, serverDesc, serverVersion, serverLoader].filter(el => el)
-    elementsToAnimate.forEach(el => {
-        el.classList.add('instance-fade-out')
-    })
-    
-    // Wait for fade-out, then update content and fade-in
-    setTimeout(() => {
+    // Helper: add animation class and wait for animationend on elements (with a fallback timeout)
+    const animateAndWait = (els, addClass, fallback = 360) => {
+        return new Promise(resolve => {
+            if (!els || els.length === 0) return resolve()
+            let remaining = els.length
+            const onEnd = (e) => {
+                try { e.currentTarget.removeEventListener('animationend', onEnd) } catch (e) {}
+                remaining--
+                if (remaining <= 0) resolve()
+            }
+            els.forEach(el => {
+                try {
+                    el.addEventListener('animationend', onEnd)
+                } catch (e) {}
+                // trigger animation
+                el.classList.add(addClass)
+            })
+            // fallback in case animationend doesn't fire
+            setTimeout(() => resolve(), fallback)
+        })
+    }
+
+    // Apply slide-out for title/desc and fade-out for meta, then update, then slide-in/fade-in
+    const textEls = [serverTitle, serverDesc].filter(el => el)
+    const metaEls = [serverVersion, serverLoader].filter(el => el)
+
+    try {
+        // Start animations in parallel: meta fades out first. Text uses per-element layered animation.
+        const outPromises = []
+        if (metaEls.length) outPromises.push(animateAndWait(metaEls, 'instance-fade-out', 260))
+        await Promise.all(outPromises)
+
+        // If a newer transition started, abort and cleanup
+        if (myTransitionToken !== instanceTransitionCounter) {
+            // remove any out classes left behind
+            textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
+            metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
+            return
+        }
+
+        // Update content while out of view (use two-layer swap if available)
         if (serv != null) {
-            if (serverTitle) serverTitle.textContent = serv.rawServer.name
-            if (serverDesc) serverDesc.innerHTML = serv.rawServer.description || 'Serveur Minecraft'
+            const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
+            const descHtml = DOMPurify.sanitize(serv.rawServer.description || 'Serveur Minecraft')
+            // Use layered swap when possible
+            if (serverTitle) await animateTextLayerSwap(serverTitle, titleHtml)
+            if (serverDesc) await animateTextLayerSwap(serverDesc, descHtml)
             if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
             if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
             if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
         } else {
-            if (serverTitle) serverTitle.textContent = 'Veuillez sélectionner une instance'
-            if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
+            if (serverTitle) await animateTextLayerSwap(serverTitle, 'Veuillez sélectionner une instance')
+            if (serverDesc) await animateTextLayerSwap(serverDesc, 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.')
             if (serverVersion) serverVersion.textContent = '--'
             if (serverLoader) serverLoader.textContent = '--'
             if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
         }
-        
-        // Remove fade-out and add fade-in
-        elementsToAnimate.forEach(el => {
+
+        // Trigger meta elements fade-in
+        metaEls.forEach(el => {
             el.classList.remove('instance-fade-out')
+            void el.offsetHeight
             el.classList.add('instance-fade-in')
         })
-        
-        // Add glow to play button if server selected
+
+        // Add glow/slide to play button if server selected
         if (playInstance && serv != null) {
             playInstance.classList.add('slide-up-anim')
         }
-        
-        // Clean up animation classes after completion
-        setTimeout(() => {
-            elementsToAnimate.forEach(el => {
-                el.classList.remove('instance-fade-in')
-            })
-            if (playInstance) {
-                playInstance.classList.remove('slide-up-anim')
-            }
-        }, 600)
-    }, 400)
+
+        // Wait for meta fade-in to complete
+        const inPromises = []
+        if (metaEls.length) inPromises.push(animateAndWait(metaEls, 'instance-fade-in', 300))
+        await Promise.all(inPromises)
+
+        // If a newer transition started while animating in, stop and cleanup
+        if (myTransitionToken !== instanceTransitionCounter) {
+            textEls.forEach(el => { try { el.classList.remove('instance-slide-in','instance-slide-out') } catch (e) {} })
+            metaEls.forEach(el => { try { el.classList.remove('instance-fade-in','instance-fade-out') } catch (e) {} })
+            return
+        }
+    } catch (e) {
+        // Ensure classes are cleaned up
+        textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
+        metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
+    } finally {
+        textEls.forEach(el => { try { el.classList.remove('instance-slide-in') } catch (e) {} })
+        metaEls.forEach(el => { try { el.classList.remove('instance-fade-in') } catch (e) {} })
+        if (playInstance) {
+            playInstance.classList.remove('slide-up-anim')
+        }
+    }
     
     // Update sidebar visual selection
     updateSidebarSelection(serv != null ? serv.rawServer.id : null)
@@ -486,7 +765,8 @@ function updateSelectedServer(serv){
     // Update old UI for compatibility
     const serverSelectionButton = document.getElementById('server_selection_button')
     if (serverSelectionButton) {
-        serverSelectionButton.innerHTML = '&#8226; ' + (serv != null ? serv.rawServer.name : Lang.queryJS('landing.noSelection'))
+        const selName = serv != null ? (serv.rawServer.name || '') : Lang.queryJS('landing.noSelection')
+        serverSelectionButton.innerHTML = '&#8226; ' + DOMPurify.sanitize(selName)
     }
     
     if(getCurrentView() === VIEWS.settings){
@@ -581,8 +861,10 @@ const refreshMojangStatuses = async function(){
         }
     }
     
-    document.getElementById('mojangStatusEssentialContainer').innerHTML = tooltipEssentialHTML
-    document.getElementById('mojangStatusNonEssentialContainer').innerHTML = tooltipNonEssentialHTML
+    const mojangEssEl = document.getElementById('mojangStatusEssentialContainer')
+    const mojangNonEssEl = document.getElementById('mojangStatusNonEssentialContainer')
+    if (mojangEssEl) mojangEssEl.innerHTML = DOMPurify.sanitize(tooltipEssentialHTML)
+    if (mojangNonEssEl) mojangNonEssEl.innerHTML = DOMPurify.sanitize(tooltipNonEssentialHTML)
     document.getElementById('mojang_status_icon').style.color = MojangRestAPI.statusToHex(status)
 }
 
@@ -1012,6 +1294,8 @@ async function dlAsync(login = true) {
             const sa = ConfigManager.getSelectedAccount()
             authUser = createOfflineAuth(sa)
         } else {
+            // Refresh token before launching to prevent authentication errors
+            await validateSelectedAccount()
             authUser = ConfigManager.getSelectedAccount()
         }
         loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
@@ -1636,13 +1920,19 @@ document.addEventListener('keydown', (e) => {
  * @param {number} index The article index.
  */
 function displayArticle(articleObject, index){
-    newsArticleTitle.innerHTML = articleObject.title
+    // Set textual fields using textContent to avoid accidental HTML injection
+    if (newsArticleTitle) newsArticleTitle.textContent = articleObject.title || ''
     newsArticleTitle.href = articleObject.link
-    newsArticleAuthor.innerHTML = 'by ' + articleObject.author
-    newsArticleDate.innerHTML = articleObject.date
-    newsArticleComments.innerHTML = articleObject.comments
-    newsArticleComments.href = articleObject.commentsLink
-    newsArticleContentScrollable.innerHTML = '<div id="newsArticleContentWrapper"><div class="newsArticleSpacerTop"></div>' + articleObject.content + '<div class="newsArticleSpacerBot"></div></div>'
+    if (newsArticleAuthor) newsArticleAuthor.textContent = 'by ' + (articleObject.author || '')
+    if (newsArticleDate) newsArticleDate.textContent = articleObject.date || ''
+    if (newsArticleComments) {
+        newsArticleComments.textContent = articleObject.comments || ''
+        newsArticleComments.href = articleObject.commentsLink || '#'
+    }
+
+    // Sanitize HTML content for article body before injecting
+    const safeContent = DOMPurify.sanitize(articleObject.content || '')
+    if (newsArticleContentScrollable) newsArticleContentScrollable.innerHTML = '<div id="newsArticleContentWrapper"><div class="newsArticleSpacerTop"></div>' + safeContent + '<div class="newsArticleSpacerBot"></div></div>'
     Array.from(newsArticleContentScrollable.getElementsByClassName('bbCodeSpoilerButton')).forEach(v => {
         v.onclick = () => {
             const text = v.parentElement.getElementsByClassName('bbCodeSpoilerText')[0]
@@ -2198,4 +2488,93 @@ try {
     }
 } catch(e) {
     // ignore if not running in electron.
+}
+
+/**
+ * Animate swapping using two-layer approach. Requires the element to contain
+ * two child spans with classes `text-layer current` and `text-layer next`.
+ */
+function animateTextLayerSwap(containerEl, newHTML, opts = {}){
+    if(!containerEl) return Promise.resolve()
+    // find layers
+    const current = containerEl.querySelector('.text-layer.current')
+    const next = containerEl.querySelector('.text-layer.next')
+    if(!current || !next) {
+        // fallback to single-element swap
+        return animateTextSwap(containerEl, newHTML, opts)
+    }
+
+    const tokenPrev = textAnimationTokens.get(containerEl) || 0
+    const token = tokenPrev + 1
+    textAnimationTokens.set(containerEl, token)
+
+    const exitClass = opts.exitClass || 'text-exit'
+    const enterClass = opts.enterClass || 'text-enter'
+    const exitFallback = opts.exitFallback || 220
+    const enterFallback = opts.enterFallback || 260
+
+    const waitAnim = (el, cls, fallback) => new Promise(resolve => {
+        let called = false
+        const onEnd = () => {
+            if(called) return
+            called = true
+            try { el.removeEventListener('animationend', onEnd) } catch (e) {}
+            resolve()
+        }
+        try { el.addEventListener('animationend', onEnd) } catch(e) {}
+        el.style.display = ''
+        // apply class
+        el.classList.add(cls)
+        setTimeout(() => {
+            if(!called){ called = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() }
+        }, fallback + 40)
+    })
+
+    return (async () => {
+        // Start exit on current and prepare next content
+        const sanitized = DOMPurify.sanitize(newHTML || '')
+        next.innerHTML = sanitized
+
+        // start exit animation
+        await waitAnim(current, exitClass, exitFallback)
+
+        if(textAnimationTokens.get(containerEl) !== token){
+            // cancelled
+            try { current.classList.remove(exitClass); next.classList.remove(enterClass) } catch(e) {}
+            return
+        }
+
+        // switch classes: make next enter, current hidden
+        current.style.display = 'none'
+        current.classList.remove('current')
+        current.classList.remove('text-exit')
+        next.classList.add('current')
+        next.classList.remove('next')
+        next.classList.remove('text-enter')
+
+        // ensure next animates
+        await waitAnim(next, enterClass, enterFallback)
+
+        if(textAnimationTokens.get(containerEl) === token){
+            // cleanup and rotate DOM roles: swap roles to keep structure stable
+            try {
+                // Make former current into next for future swaps
+                current.classList.add('next')
+                current.classList.remove('current')
+                next.classList.add('current')
+                next.classList.remove('next')
+                // swap content positions: move former current after next
+                try { containerEl.appendChild(current) } catch(e) {}
+                current.style.display = 'none'
+                next.style.display = ''
+                // remove animation classes
+                current.classList.remove(exitClass)
+                next.classList.remove(enterClass)
+            } catch (e) {}
+            textAnimationTokens.delete(containerEl)
+        } else {
+            // cancelled while entering
+            try { current.classList.remove(exitClass); next.classList.remove(enterClass) } catch(e) {}
+        }
+    })()
 }
