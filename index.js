@@ -257,6 +257,49 @@ function safeQuitAndInstall(caller) {
         } else {
             try { log.warn('[AutoUpdater] safeQuitAndInstall called but no downloaded update present (caller=' + (caller || 'unknown') + ')') } catch (e) { }
             try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'No downloaded update available' }) } catch (e) { }
+
+            // Attempt a one-time automatic re-check & download if installer wasn't found.
+            try {
+                if (!global.__autoUpdaterRetryAttempted) {
+                    global.__autoUpdaterRetryAttempted = true
+                    try { log.info('[AutoUpdater] installer missing - attempting one-time re-check and download') } catch (e) {}
+                    // Ensure listeners/init are present, then check and download
+                    try { initAutoUpdater(undefined, false) } catch (e) { /* best-effort */ }
+
+                    // Start checkForUpdates and download if one is available. Do not block caller.
+                    try {
+                        autoUpdater.checkForUpdates()
+                            .then((res) => {
+                                try {
+                                    // If update info present, attempt to download it
+                                    if (res && res.updateInfo) {
+                                        try { log.info('[AutoUpdater] retry check found update - starting download') } catch (e) {}
+                                        autoUpdater.downloadUpdate()
+                                            .then(() => {
+                                                try { log.info('[AutoUpdater] retry download completed - attempting install') } catch (e) {}
+                                                // After a successful retry download, try to install once more
+                                                try { safeQuitAndInstall('retry-after-download') } catch (e) { /* avoid bubbling */ }
+                                            })
+                                            .catch((err) => {
+                                                try { log.warn('[AutoUpdater] retry download failed', err && err.message) } catch (e) {}
+                                                try { sendAutoUpdateNotification(undefined, 'realerror', err) } catch (e) {}
+                                            })
+                                    } else {
+                                        try { log.info('[AutoUpdater] retry check found no update') } catch (e) {}
+                                        try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'No update found on retry' }) } catch (e) {}
+                                    }
+                                } catch (e) { /* ignore */ }
+                            })
+                            .catch((err) => {
+                                try { log.warn('[AutoUpdater] retry checkForUpdates failed', err && err.message) } catch (e) {}
+                                try { sendAutoUpdateNotification(undefined, 'realerror', err) } catch (e) {}
+                            })
+                    } catch (e) { /* ignore */ }
+                }
+            } catch (e) {
+                try { log.warn('[AutoUpdater] failed to initiate retry download', e && e.message) } catch (le) {}
+            }
+
             return false
         }
     } catch (e) {
