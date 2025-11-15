@@ -3,6 +3,70 @@
 // Minimal DOM ready hook placeholder
 window.addEventListener('DOMContentLoaded', () => {});
 
+// Offline modal: inform the user they must be online.
+(function(){
+    function initOfflineModal(){
+        try {
+            const offlineModal = document.getElementById('offlineModal');
+            const retryBtn = document.getElementById('retryOfflineButton');
+            // IDs of main controls to disable
+            const controls = ['launch_button','stop_button','settingsMediaButton','openNewsButton'];
+
+            function setDisabled(disabled){
+                controls.forEach(id=>{
+                    const el = document.getElementById(id);
+                    if(!el) return;
+                    if(disabled){
+                        el.setAttribute('disabled','disabled');
+                        el.classList.add('opacity-40','pointer-events-none');
+                    } else {
+                        el.removeAttribute('disabled');
+                        el.classList.remove('opacity-40','pointer-events-none');
+                    }
+                });
+
+                // Also disable instance buttons if present
+                document.querySelectorAll('.server-instance-btn').forEach(b=>{
+                    if(disabled){
+                        b.setAttribute('disabled','disabled');
+                        b.classList.add('opacity-40','pointer-events-none');
+                    } else {
+                        b.removeAttribute('disabled');
+                        b.classList.remove('opacity-40','pointer-events-none');
+                    }
+                });
+            }
+
+            function update(){
+                if(!navigator.onLine){
+                    if(offlineModal) offlineModal.classList.remove('hidden');
+                    setDisabled(true);
+                } else {
+                    if(offlineModal) offlineModal.classList.add('hidden');
+                    setDisabled(false);
+                }
+            }
+
+            window.addEventListener('online', update);
+            window.addEventListener('offline', update);
+            if(retryBtn) retryBtn.addEventListener('click', update);
+
+            if(document.readyState==='loading'){
+                document.addEventListener('DOMContentLoaded', update);
+            } else update();
+        } catch (e) {
+            // ignore failures; non-critical
+            console.warn('initOfflineModal failed', e);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initOfflineModal);
+    } else {
+        initOfflineModal();
+    }
+})();
+
 // Hook bouton refresh news and Open News button
 document.addEventListener('DOMContentLoaded', () => {
     // Refresh button: delegates to the news module when available
@@ -532,6 +596,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // don't break page
         console.warn('Landing animations init failed', e);
     }
+});
+
+// Wire floating news hero/button to open news (delegates to existing button or calls API)
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const openNewsFloat = document.getElementById('openNewsFloat');
+        if (!openNewsFloat) return;
+        openNewsFloat.addEventListener('click', () => {
+            try {
+                const openNews = document.getElementById('openNewsButton');
+                if (openNews) { openNews.click(); return; }
+
+                if (typeof showNewsMode === 'function') {
+                    try { showNewsMode(); } catch (e) { console.warn('showNewsMode failed', e); }
+                } else if (typeof switchView === 'function' && typeof getCurrentView === 'function' && typeof VIEWS !== 'undefined' && VIEWS.news) {
+                    try { switchView(getCurrentView(), VIEWS.news); } catch (e) { console.warn('switchView to news failed', e); }
+                } else {
+                    const c = document.getElementById('newsContainer'); if (c) { c.style.display = 'block'; c.classList.add('news-fullscreen') }
+                }
+
+                if (typeof initNews === 'function') initNews();
+            } catch (e) { console.warn('openNewsFloat click handler error', e); }
+        });
+    } catch (e) { console.warn('openNewsFloat handler failed to attach', e); }
 });
 
 // When populateModpackInstances is used elsewhere, ensure cards get the pop animation.

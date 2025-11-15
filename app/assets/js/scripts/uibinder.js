@@ -125,7 +125,7 @@ async function populateSidebarInstances() {
                         py-3 px-4 rounded-l-2xl transition-all duration-300 ease-out
                         flex items-center gap-3
                         ${isSelected 
-                            ? 'bg-gradient-to-br from-[#F8BA59]/30 via-[#F8BA59]/20 to-[#F8BA59]/10 backdrop-blur-xl border-2 border-[#F8BA59]/40 ' 
+                            ? 'bg-white/6 backdrop-blur-md  ' 
                             : 'bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20'
                         }
                         ${isSelected ? 'text-white' : 'text-white/80 hover:text-white'}"
@@ -133,7 +133,7 @@ async function populateSidebarInstances() {
                         title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
                         
                         <!-- Glassmorphism overlay effect -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"></div>
+                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none "></div>
                         
                         <!-- Icon container with glow effect -->
                         <div class="relative flex-shrink-0 transition-transform duration-300 ${isSelected ? 'scale-110' : 'scale-100 group-hover:scale-105'}">
@@ -572,7 +572,17 @@ async function showMainUI(data){
         ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
     }
 
-    await prepareSettings(true)
+    try {
+        if (typeof prepareSettings === 'function') {
+            await prepareSettings(true);
+        } else if (typeof window !== 'undefined' && typeof window.prepareSettings === 'function') {
+            await window.prepareSettings(true);
+        } else {
+            console.warn('[UIBINDER] prepareSettings not available at showMainUI time');
+        }
+    } catch (err) {
+        console.warn('[UIBINDER] prepareSettings threw', err);
+    }
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
     

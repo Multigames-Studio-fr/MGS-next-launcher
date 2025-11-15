@@ -1508,3 +1508,57 @@ ipcMain.handle('auto-fix-resources', async (event) => {
         }
     }
 })
+
+// Handler: clear application caches and common cache folders used by Electron
+ipcMain.handle('clear-app-cache', async (event) => {
+    try {
+        const { session, app } = require('electron')
+        const fs = require('fs')
+        const path = require('path')
+
+        // Clear chromium session caches
+        try {
+            if (session && session.defaultSession && typeof session.defaultSession.clearCache === 'function') {
+                await session.defaultSession.clearCache()
+            }
+            if (session && session.defaultSession && typeof session.defaultSession.clearStorageData === 'function') {
+                await session.defaultSession.clearStorageData()
+            }
+        } catch (e) {
+            try { log && log.warn && log.warn('[IPC] clear-app-cache: session clear failed', e && e.message) } catch (ee) {}
+        }
+
+        // Remove common cache folders under app paths when present (best-effort)
+        try {
+            const candidates = []
+            try { candidates.push(app.getPath('cache')) } catch (e) {}
+            try { candidates.push(path.join(app.getPath('userData'), 'Cache')) } catch (e) {}
+            try { candidates.push(path.join(app.getPath('userData'), 'GPUCache')) } catch (e) {}
+            try { candidates.push(path.join(app.getPath('userData'), 'Service Worker', 'CacheStorage')) } catch (e) {}
+
+            for (const c of candidates) {
+                if (!c) continue
+                try {
+                    if (fs.existsSync(c)) {
+                        // Use rmSync with force/recursive if available
+                        try {
+                            fs.rmSync(c, { recursive: true, force: true })
+                        } catch (e) {
+                            // fallback to rmdirSync
+                            try { fs.rmdirSync(c, { recursive: true }) } catch (er) {}
+                        }
+                    }
+                } catch (e) {
+                    try { log && log.debug && log.debug('[IPC] clear-app-cache: failed to remove', c, e && e.message) } catch (ee) {}
+                }
+            }
+        } catch (e) {
+            try { log && log.warn && log.warn('[IPC] clear-app-cache: remove candidates failed', e && e.message) } catch (ee) {}
+        }
+
+        return { success: true }
+    } catch (error) {
+        try { log && log.error && log.error('[IPC] clear-app-cache unexpected error', error && error.message) } catch (e) {}
+        return { success: false, error: (error && error.message) || String(error) }
+    }
+})

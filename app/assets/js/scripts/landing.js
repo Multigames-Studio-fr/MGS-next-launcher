@@ -577,13 +577,25 @@ try {
 
 // Bind settings button
 document.getElementById('settingsMediaButton').onclick = async e => {
-    await prepareSettings()
+    try {
+        if (typeof prepareSettings === 'function') await prepareSettings();
+        else if (typeof window !== 'undefined' && typeof window.prepareSettings === 'function') await window.prepareSettings();
+        else console.warn('[LANDING] prepareSettings not available on settings button click');
+    } catch (err) {
+        console.warn('[LANDING] prepareSettings threw', err);
+    }
     switchView(getCurrentView(), VIEWS.settings)
 }
 
 // Bind avatar overlay button.
 document.getElementById('avatarOverlay').onclick = async e => {
-    await prepareSettings()
+    try {
+        if (typeof prepareSettings === 'function') await prepareSettings();
+        else if (typeof window !== 'undefined' && typeof window.prepareSettings === 'function') await window.prepareSettings();
+        else console.warn('[LANDING] prepareSettings not available on avatar overlay click');
+    } catch (err) {
+        console.warn('[LANDING] prepareSettings threw', err);
+    }
     switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
         settingsNavItemListener(document.getElementById('settingsNavAccount'), false)
     })
@@ -2160,7 +2172,7 @@ function populateFallbackSidebar(instances, selectedServerId) {
         const isSelected = instance.id === selectedServerId
         
         htmlString += `
-// ...existing code...
+
 <li class="server-instance-item group relative">
     <div class="server-instance-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 backdrop-blur-sm border border-gray-700/50 hover:border-[#F8BA59]/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#F8BA59]/20">
         <!-- Background gradient overlay -->
@@ -2578,3 +2590,38 @@ function animateTextLayerSwap(containerEl, newHTML, opts = {}){
         }
     })()
 }
+
+// Bind clear cache button
+try {
+    const clearBtn = document.getElementById('clearCacheButton')
+    if (clearBtn) {
+        clearBtn.addEventListener('click', async () => {
+            try {
+                // Confirmation to avoid accidental data loss
+                if (!confirm(Lang.queryJS ? Lang.queryJS('landing.clearCacheConfirm') || 'Vider le cache du launcher ?' : 'Vider le cache du launcher ?')) return
+
+                setLaunchDetails('Vider le cache...')
+                toggleLaunchArea(true)
+
+                const { ipcRenderer } = require('electron')
+                const res = await ipcRenderer.invoke('clear-app-cache')
+
+                if (res && res.success) {
+                    setLaunchDetails('Cache vidé avec succès.')
+                    setTimeout(() => {
+                        toggleLaunchArea(false)
+                    }, 1500)
+                } else {
+                    setLaunchDetails('Échec du nettoyage du cache: ' + (res && res.error ? res.error : 'Erreur inconnue'))
+                    setTimeout(() => {
+                        toggleLaunchArea(false)
+                    }, 3000)
+                }
+            } catch (err) {
+                console.error('Erreur clear cache', err)
+                setLaunchDetails('Erreur lors du nettoyage: ' + (err && err.message ? err.message : String(err)))
+                setTimeout(() => { toggleLaunchArea(false) }, 3000)
+            }
+        })
+    }
+} catch (e) { /* ignore if DOM not ready */ }

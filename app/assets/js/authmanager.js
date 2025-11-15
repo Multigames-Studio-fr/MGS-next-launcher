@@ -28,8 +28,16 @@ function makeMicrosoftDisplayable(code) {
     } catch (e) {
         // ignore and fallback
     }
-    // Fallback object structure expected by callers in this module
-    return { microsoftErrorCode: code, message: typeof code === 'string' ? code : String(code || 'Microsoft error') }
+    // Fallback object structure expected by callers in this module.
+    // Provide `title` and `desc` so UI code that expects a displayable
+    // error (with .title and .desc) can show a meaningful message.
+    const msgStr = typeof code === 'string' ? code : String(code || 'Microsoft error')
+    return {
+        microsoftErrorCode: code,
+        title: 'Microsoft Login Error',
+        desc: msgStr,
+        message: msgStr
+    }
 }
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 
@@ -115,8 +123,47 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         if(mcTokenResponse.responseStatus === RestResponseStatus.ERROR) {
             return Promise.reject(makeMicrosoftDisplayable(mcTokenResponse.microsoftErrorCode))
         }
-        const mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
+
+        // Some versions of the underlying Microsoft library (or the HTTP client it uses)
+        // may throw an HTTPError for non-2xx responses (for example a 404 from
+        // https://api.minecraftservices.com/minecraft/profile). In that case we want
+        // to convert a 404/NOT_FOUND into a user-friendly "no minecraft profile" error
+        // instead of letting the thrown error bubble to the outer catch and become
+        // an UNKNOWN error. Wrap the call to getMCProfile and map 404/NOT_FOUND.
+        let mcProfileResponse
+        try {
+            mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
+        } catch (err) {
+            // Try to detect a 404 NOT_FOUND response from common error shapes
+            const status = err && (err.statusCode || (err.response && err.response.statusCode))
+            const body = err && ((err.response && err.response.body) || err.body) || {}
+            if (status === 404 || (body && (body.error === 'NOT_FOUND' || (body.errorMessage && String(body.errorMessage).toLowerCase().includes('not found'))))) {
+                return Promise.reject({
+                    microsoftErrorCode: 'NO_MINECRAFT_PROFILE',
+                    title: 'No Minecraft profile',
+                    desc: 'This Microsoft account does not have an associated Minecraft profile (it may not own Minecraft). Please verify the account owns Minecraft or use a different account.',
+                    message: 'No Minecraft profile'
+                })
+            }
+            // rethrow unknown errors so the outer catch will handle them
+            throw err
+        }
+
         if(mcProfileResponse.responseStatus === RestResponseStatus.ERROR) {
+            // Some Microsoft responses (e.g. when the account does not own Minecraft)
+            // return a 404 / NOT_FOUND from the Minecraft services endpoint.
+            // Detect that case and return a user-friendly displayable error so
+            // the UI can show a helpful message instead of a numeric code.
+            const body = mcProfileResponse.data || mcProfileResponse.error || {}
+            if (body && (body.error === 'NOT_FOUND' || (body.errorMessage && String(body.errorMessage).toLowerCase().includes('not found')))) {
+                return Promise.reject({
+                    microsoftErrorCode: 'NO_MINECRAFT_PROFILE',
+                    title: 'No Minecraft profile',
+                    desc: 'This Microsoft account does not have an associated Minecraft profile (it may not own Minecraft). Please verify the account owns Minecraft or use a different account.',
+                    message: 'No Minecraft profile'
+                })
+            }
+
             return Promise.reject(makeMicrosoftDisplayable(mcProfileResponse.microsoftErrorCode))
         }
         return {

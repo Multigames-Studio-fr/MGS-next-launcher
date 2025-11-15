@@ -269,7 +269,7 @@ body {
 }
 
 .rounded-xl {
-  border-radius: 0.75rem;
+   
 }
 
 .rounded-2xl {
@@ -905,7 +905,7 @@ body {
   }
 
   .sm\:rounded-xl {
-    border-radius: 0.75rem;
+     
   }
 
   .sm\:rounded-2xl {

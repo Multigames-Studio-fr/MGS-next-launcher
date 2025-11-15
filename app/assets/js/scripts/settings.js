@@ -152,7 +152,7 @@ async function initSettingsValues() {
     }
     if (typeof gFn === "function") {
       if (v.tagName === "INPUT") {
-        if (v.type === "number" || v.type === "text") {
+        if (v.type === "number" || v.type === "text" || v.type === "range") {
           // Special Conditions
           if (cVal === "JavaExecutable") {
             v.value = gFn.apply(null, gFnOpts);
@@ -162,7 +162,18 @@ async function initSettingsValues() {
           } else if (cVal === "JVMOptions") {
             v.value = gFn.apply(null, gFnOpts).join(" ");
           } else {
-            v.value = gFn.apply(null, gFnOpts);
+            // For numeric/range inputs the config may return strings like "3G" or "1536M".
+            let val = gFn.apply(null, gFnOpts);
+            if ((cVal === "MinRAM" || cVal === "MaxRAM") && typeof val === "string") {
+              if (val.endsWith("M")) {
+                val = Number(val.substring(0, val.length - 1)) / 1024;
+              } else if (val.endsWith("G")) {
+                val = Number(val.substring(0, val.length - 1));
+              } else {
+                val = Number.parseFloat(val);
+              }
+            }
+            v.value = val;
           }
         } else if (v.type === "checkbox") {
           v.checked = gFn.apply(null, gFnOpts);
@@ -208,7 +219,7 @@ function saveSettingsValues() {
     }
     if (typeof sFn === "function") {
       if (v.tagName === "INPUT") {
-        if (v.type === "number" || v.type === "text") {
+        if (v.type === "number" || v.type === "text" || v.type === "range") {
           // Special Conditions
           if (cVal === "JVMOptions") {
             if (!v.value.trim()) {
@@ -218,6 +229,20 @@ function saveSettingsValues() {
               sFnOpts.push(v.value.trim().split(/\s+/));
               sFn.apply(null, sFnOpts);
             }
+          } else if (v.type === "range") {
+            // Range inputs store numeric GB values; convert to expected storage format
+            if (cVal === "MinRAM" || cVal === "MaxRAM") {
+              let val = Number(v.value);
+              if (val % 1 > 0) {
+                val = Math.round(val * 1024) + "M";
+              } else {
+                val = val + "G";
+              }
+              sFnOpts.push(val);
+            } else {
+              sFnOpts.push(v.value);
+            }
+            sFn.apply(null, sFnOpts);
           } else {
             sFnOpts.push(v.value);
             sFn.apply(null, sFnOpts);
@@ -366,7 +391,7 @@ const settingsNavDone = document.getElementById("settingsNavDone");
  * @param {boolean} v True to disable, false to enable.
  */
 function settingsSaveDisabled(v) {
-  settingsNavDone.disabled = v;
+  if (settingsNavDone) settingsNavDone.disabled = v;
 }
 
 function fullSettingsSave() {
@@ -378,10 +403,12 @@ function fullSettingsSave() {
 }
 
 /* Closes the settings view and saves all data. */
-settingsNavDone.onclick = () => {
-  fullSettingsSave();
-  switchView(getCurrentView(), VIEWS.landing);
-};
+if (settingsNavDone) {
+  settingsNavDone.onclick = () => {
+    fullSettingsSave();
+    switchView(getCurrentView(), VIEWS.landing);
+  };
+}
 
 /**
  * Account Management Tab
@@ -390,12 +417,15 @@ settingsNavDone.onclick = () => {
 const msftLoginLogger = LoggerUtil.getLogger("Microsoft Login");
 const msftLogoutLogger = LoggerUtil.getLogger("Microsoft Logout");
 
-// Bind the add microsoft account button.
-document.getElementById("settingsAddMicrosoftAccount").onclick = (e) => {
-  switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
-    ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, VIEWS.settings, VIEWS.settings);
-  });
-};
+// Bind the add microsoft account button (defensive: element may be missing)
+const _msAddBtn = document.getElementById("settingsAddMicrosoftAccount");
+if (_msAddBtn) {
+  _msAddBtn.onclick = (e) => {
+    switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
+      ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, VIEWS.settings, VIEWS.settings);
+    });
+  };
+}
 
 // Bind reply for Microsoft Login.
 ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
@@ -663,9 +693,10 @@ function refreshAuthAccountSelected(uuid) {
   );
 }
 
-const settingsCurrentMicrosoftAccounts = document.getElementById(
-  "settingsCurrentMicrosoftAccounts"
-);
+// Access the accounts container at call-time to avoid TDZ/circular-require
+function getSettingsCurrentMicrosoftAccounts() {
+  return document.getElementById("settingsCurrentMicrosoftAccounts");
+}
 
 /**
  * Add auth account elements for each one stored in the authentication database.
@@ -683,28 +714,39 @@ function populateAuthAccounts() {
   authKeys.forEach((val) => {
     const acc = authAccounts[val];
 
-  const accHtml = `<div class="settingsAuthAccount group flex items-center p-4  rounded-lg mb-4" uuid="${acc.uuid}">
-        <div class="settingsAuthAccountLeft mr-4">
-            <img class="settingsAuthAccountImage w-16 h-16 rounded-full" alt="${acc.displayName}" src="https://mc-heads.net/avatar/${acc.uuid}/60">
+    const accHtml = `<div class="settingsAuthAccount group flex items-center p-4 rounded-lg mb-4" uuid="${acc.uuid}">
+      <div class="settingsAuthAccountLeft mr-4 flex-shrink-0">
+        <div class="settingsAuthAvatar h-25 rounded-md overflow-hidden  flex items-center justify-center">
+          <img
+            class="settingsAuthAccountImage w-full h-full object-cover"
+            alt="${acc.displayName}"
+            src="https://crafatar.com/renders/body/${acc.uuid}?size=160&overlay=true"
+            onerror="this.onerror=null;this.src='https://mc-heads.net/avatar/${acc.uuid}/60';"
+          />
         </div>
-        <div class="settingsAuthAccountRight flex-grow">
-            <div class="settingsAuthAccountDetails mb-4">
-                <div class="settingsAuthAccountDetailPane mb-2">
-                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold group-hover:text-white text-gray-400">${Lang.queryJS("settings.authAccountPopulate.username")}</div>
-                    <div class="settingsAuthAccountDetailValue text-lg font-bold text-white">${acc.displayName}</div>
-                </div>
-                <div class="settingsAuthAccountDetailPane">
-                    <div class="settingsAuthAccountDetailTitle text-sm font-semibold group-hover:text-white text-gray-400">${Lang.queryJS("settings.authAccountPopulate.uuid")}</div>
-                    <div class="settingsAuthAccountDetailValue text-lg font-bold text-white">${acc.uuid}</div>
-                </div>
+      </div>
+      <div class="settingsAuthAccountBody flex-grow">
+        <div class="flex items-start justify-between">
+          <div class="settingsAuthAccountInfo min-w-0">
+            <div class="settingsAuthAccountName text-sm text-gray-400 truncate">${Lang.queryJS("settings.authAccountPopulate.username")}</div>
+            <div class="settingsAuthAccountDisplay text-lg font-bold text-white truncate">${acc.displayName}</div>
+            <div class="settingsAuthAccountUuid mt-1 text-xs text-gray-400 truncate">${Lang.queryJS("settings.authAccountPopulate.uuid")}: <span class="text-white font-mono">${acc.uuid}</span></div>
+            <div class="settingsAuthAccountType mt-1 text-xs text-gray-400 truncate">${Lang.queryJS("settings.authAccountPopulate.type")}: <span class="text-white">${acc.type}</span></div>
+            <div class="settingsAuthAccountExpiry mt-1 text-xs text-gray-400 truncate">${Lang.queryJS("settings.authAccountPopulate.expires")}: <span class="text-white font-mono">${acc.expiresAt ? new Date(acc.expiresAt).toLocaleString() : Lang.queryJS("settings.authAccountPopulate.noExpiry")}</span></div>
+            <div class="settingsAuthAccountTokenStatus mt-1 text-xs text-gray-400 truncate"><span id="tokenStatus-${acc.uuid}">${Date.now() < (acc.expiresAt || 0) ? Lang.queryJS("settings.authAccountPopulate.tokenValid") : Lang.queryJS("settings.authAccountPopulate.tokenInvalid")}</span></div>
+          </div>
+          <div class="settingsAuthAccountActions flex items-start justify-start ml-4">
+            <div class="relative">
+              <button type="button" aria-haspopup="true" aria-expanded="false" class="settingsAuthAccountMenuBtn bg-transparent text-gray-300 hover:text-white p-2 rounded focus:outline-none" tabindex="0">&#x2630;</button>
+              <div class="settingsAuthAccountMenu hidden absolute right-0 mt-2 w-44 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+                <button class="w-full text-left settingsAuthAccountSelect px-4 py-2 text-sm text-white hover:bg-gray-700">${selectedUUID === acc.uuid ? Lang.queryJS("settings.authAccountPopulate.selectedAccount") : Lang.queryJS("settings.authAccountPopulate.selectAccount")}</button>
+                <button class="w-full text-left settingsAuthAccountRefresh px-4 py-2 text-sm text-white hover:bg-gray-700" refresh-uuid="${acc.uuid}">${Lang.queryJS("settings.authAccountPopulate.checkToken")}</button>
+                <button class="w-full text-left settingsAuthAccountLogOut px-4 py-2 text-sm text-red-400 hover:bg-gray-700">${Lang.queryJS("settings.authAccountPopulate.logout")}</button>
+              </div>
             </div>
-            <div class="settingsAuthAccountActions flex space-x-4">
-                <button class="settingsAuthAccountSelect bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500" ${selectedUUID === acc.uuid ? "selected>" + Lang.queryJS("settings.authAccountPopulate.selectedAccount") : ">" + Lang.queryJS("settings.authAccountPopulate.selectAccount")}</button>
-                <div class="settingsAuthAccountWrapper">
-                    <button class="settingsAuthAccountLogOut bg-red-600 text-white py-2 px-4 rounded hover:bg-red-500">${Lang.queryJS("settings.authAccountPopulate.logout")}</button>
-                </div>
-            </div>
+          </div>
         </div>
+      </div>
     </div>`;
 
     if (acc.type === "microsoft") {
@@ -712,7 +754,116 @@ function populateAuthAccounts() {
     }
   });
 
-  settingsCurrentMicrosoftAccounts.innerHTML = microsoftAuthAccountStr;
+  const _container = getSettingsCurrentMicrosoftAccounts();
+  if (_container) {
+    _container.innerHTML = microsoftAuthAccountStr;
+    // Bind refresh (check token) buttons after inserting HTML
+    bindAuthAccountRefresh();
+    bindAuthAccountMenu();
+  }
+}
+
+/**
+ * Bind functionality for the check/refresh token button for each account.
+ */
+function bindAuthAccountRefresh() {
+  const _container = getSettingsCurrentMicrosoftAccounts();
+  if (!_container) return;
+  const sEls = _container.querySelectorAll("[refresh-uuid]");
+  Array.from(sEls).map((v) => {
+    v.onclick = async (e) => {
+      const uuid = v.getAttribute("refresh-uuid");
+      const origText = v.innerHTML;
+      try {
+        // Mark button busy
+        v.disabled = true;
+        v.innerHTML = Lang.queryJS("settings.authAccountPopulate.checking");
+
+        // Set selected account so AuthManager.validateSelected operates on it
+        ConfigManager.setSelectedAccount(uuid);
+
+        const valid = await AuthManager.validateSelected();
+        const statusEl = document.getElementById(`tokenStatus-${uuid}`);
+        if (valid) {
+          if (statusEl) statusEl.innerHTML = Lang.queryJS("settings.authAccountPopulate.tokenValid");
+        } else {
+          if (statusEl) statusEl.innerHTML = Lang.queryJS("settings.authAccountPopulate.tokenInvalid");
+
+          // Offer re-login via login options
+          setOverlayContent(
+            Lang.queryJS("settings.authAccountPopulate.tokenInvalidTitle"),
+            Lang.queryJS("settings.authAccountPopulate.tokenInvalidMessage"),
+            Lang.queryJS("settings.authAccountPopulate.reloginButton"),
+            Lang.queryJS("settings.authAccountPopulate.cancelButton")
+          );
+          setOverlayHandler(() => {
+            loginOptionsViewOnLoginSuccess = VIEWS.settings;
+            loginOptionsViewOnLoginCancel = VIEWS.loginOptions;
+            switchView(getCurrentView(), VIEWS.loginOptions);
+            toggleOverlay(false);
+          });
+          setDismissHandler(() => {
+            toggleOverlay(false);
+          });
+          toggleOverlay(true, true);
+        }
+      } catch (err) {
+        setOverlayContent(
+          Lang.queryJS("settings.authAccountPopulate.checkFailedTitle"),
+          err && err.message ? err.message : String(err),
+          Lang.queryJS("settings.authAccountPopulate.okButton")
+        );
+        setOverlayHandler(() => { toggleOverlay(false); });
+        toggleOverlay(true);
+      } finally {
+        v.disabled = false;
+        v.innerHTML = origText;
+      }
+    };
+  });
+}
+
+/**
+ * Bind menu toggle handlers and close-on-outside-click for account burger menus.
+ */
+function bindAuthAccountMenu() {
+  if (bindAuthAccountMenu._bound) return;
+  bindAuthAccountMenu._bound = true;
+
+  // Use event delegation on the accounts container for robustness.
+  const _container = getSettingsCurrentMicrosoftAccounts();
+  if (!_container) return;
+  _container.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('.settingsAuthAccountMenuBtn');
+    if (!btn) return;
+    e.stopPropagation();
+
+    // Close all menus first
+    const menus = _container.querySelectorAll('.settingsAuthAccountMenu');
+    Array.from(menus).forEach((m) => m.classList.add('hidden'));
+
+    // Reset aria-expanded for all menu buttons
+    const allBtns = _container.querySelectorAll('.settingsAuthAccountMenuBtn');
+    Array.from(allBtns).forEach((b) => b.setAttribute('aria-expanded', 'false'));
+
+    // Toggle this menu
+    const menu = btn.parentElement && btn.parentElement.querySelector('.settingsAuthAccountMenu') || btn.nextElementSibling;
+    if (menu) {
+      menu.classList.toggle('hidden');
+      const expanded = menu.classList.contains('hidden') ? 'false' : 'true';
+      btn.setAttribute('aria-expanded', expanded);
+    }
+  });
+
+  // Close any open menu when clicking elsewhere in the document
+  document.addEventListener('click', () => {
+    const _c = getSettingsCurrentMicrosoftAccounts();
+    if (!_c) return;
+    const menus = _c.querySelectorAll('.settingsAuthAccountMenu');
+    Array.from(menus).forEach((m) => m.classList.add('hidden'));
+    const allBtns = _c.querySelectorAll('.settingsAuthAccountMenuBtn');
+    Array.from(allBtns).forEach((b) => b.setAttribute('aria-expanded', 'false'));
+  });
 }
 
 /**
@@ -731,20 +882,24 @@ function prepareAccountsTab() {
 /**
  * Disable decimals, negative signs, and scientific notation.
  */
-document
-  .getElementById("settingsGameWidth")
-  .addEventListener("keydown", (e) => {
-    if (/^[-.eE]$/.test(e.key)) {
-      e.preventDefault();
-    }
-  });
-document
-  .getElementById("settingsGameHeight")
-  .addEventListener("keydown", (e) => {
-    if (/^[-.eE]$/.test(e.key)) {
-      e.preventDefault();
-    }
-  });
+(() => {
+  const gw = document.getElementById("settingsGameWidth");
+  if (gw) {
+    gw.addEventListener("keydown", (e) => {
+      if (/^[-.eE]$/.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+  }
+  const gh = document.getElementById("settingsGameHeight");
+  if (gh) {
+    gh.addEventListener("keydown", (e) => {
+      if (/^[-.eE]$/.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+  }
+})();
 
 /**
  * Mods Tab
@@ -1259,86 +1414,136 @@ async function prepareModsTab(first) {
  * Java Tab
  */
 
-// DOM Cache
-const settingsMaxRAMRange = document.getElementById("settingsMaxRAMRange");
-const settingsMinRAMRange = document.getElementById("settingsMinRAMRange");
-const settingsMaxRAMLabel = document.getElementById("settingsMaxRAMLabel");
-const settingsMinRAMLabel = document.getElementById("settingsMinRAMLabel");
-const settingsMemoryTotal = document.getElementById("settingsMemoryTotal");
-const settingsMemoryAvail = document.getElementById("settingsMemoryAvail");
-const settingsJavaExecDetails = document.getElementById(
-  "settingsJavaExecDetails"
-);
-const settingsJavaReqDesc = document.getElementById("settingsJavaReqDesc");
-const settingsJvmOptsLink = document.getElementById("settingsJvmOptsLink");
+// DOM getters for Java tab elements — query at runtime to avoid early access
+function getSettingsMaxRAMRange() { return document.getElementById("settingsMaxRAMRange"); }
+function getSettingsMinRAMRange() { return document.getElementById("settingsMinRAMRange"); }
+function getSettingsMaxRAMLabel() { return document.getElementById("settingsMaxRAMLabel"); }
+function getSettingsMinRAMLabel() { return document.getElementById("settingsMinRAMLabel"); }
+function getSettingsMemoryTotal() { return document.getElementById("settingsMemoryTotal"); }
+function getSettingsMemoryAvail() { return document.getElementById("settingsMemoryAvail"); }
+function getSettingsJavaExecDetails() { return document.getElementById("settingsJavaExecDetails"); }
+function getSettingsJavaReqDesc() { return document.getElementById("settingsJavaReqDesc"); }
+function getSettingsJvmOptsLink() { return document.getElementById("settingsJvmOptsLink"); }
 
-// Bind on change event for min memory container.
-settingsMinRAMRange.onchange = (e) => {
-  // Current range values
-  const sMaxV = Number(settingsMaxRAMRange.getAttribute("value"));
-  const sMinV = Number(settingsMinRAMRange.getAttribute("value"));
+// Bind a performant double-range control for Min/Max RAM.
+function bindDoubleRangeControls() {
+  const minInput = getSettingsMinRAMRange();
+  const maxInput = getSettingsMaxRAMRange();
+  const minThumb = document.getElementById('settingsMinThumb');
+  const maxThumb = document.getElementById('settingsMaxThumb');
+  const track = document.querySelector('.double-range-track');
+  const fillEl = document.getElementById('settingsRangeFill');
+  const minLabel = getSettingsMinRAMLabel();
+  const maxLabel = getSettingsMaxRAMLabel();
+  if (!minInput || !maxInput || !minThumb || !maxThumb || !track || !fillEl) return;
 
-  // Get reference to range bar.
-  const bar = e.target.getElementsByClassName("rangeSliderBar")[0];
-  // Calculate effective total memory.
-  const max = os.totalmem() / 1073741824;
+  const minAttr = Number(minInput.getAttribute('min') || 0);
+  const maxAttr = Number(minInput.getAttribute('max') || 100);
+  const step = Number(minInput.getAttribute('step') || 1);
 
-  // Change range bar color based on the selected value.
-  if (sMinV >= max / 2) {
-    bar.style.background = "#e86060";
-  } else if (sMinV >= max / 4) {
-    bar.style.background = "#e8e18b";
-  } else {
-    bar.style.background = null;
+  function valueToPercent(v) {
+    return ((v - minAttr) / (maxAttr - minAttr)) * 100;
+  }
+  function percentToValue(p) {
+    const raw = minAttr + (p / 100) * (maxAttr - minAttr);
+    const steps = Math.round((raw - minAttr) / step);
+    let v = minAttr + steps * step;
+    v = Math.max(minAttr, Math.min(maxAttr, Number(v.toFixed(3))));
+    return v;
   }
 
-  // Increase maximum memory if the minimum exceeds its value.
-  if (sMaxV < sMinV) {
-    const sliderMeta = calculateRangeSliderMeta(settingsMaxRAMRange);
-    updateRangedSlider(
-      settingsMaxRAMRange,
-      sMinV,
-      ((sMinV - sliderMeta.min) / sliderMeta.step) * sliderMeta.inc
-    );
-    settingsMaxRAMLabel.innerHTML = sMinV.toFixed(1) + "G";
+  function fmtGb(v) {
+    return Number(v) % 1 === 0 ? `${Number(v)}G` : `${Number(v).toFixed(1)}G`;
   }
 
-  // Update label
-  settingsMinRAMLabel.innerHTML = sMinV.toFixed(1) + "G";
-};
-
-// Bind on change event for max memory container.
-settingsMaxRAMRange.onchange = (e) => {
-  // Current range values
-  const sMaxV = Number(settingsMaxRAMRange.getAttribute("value"));
-  const sMinV = Number(settingsMinRAMRange.getAttribute("value"));
-
-  // Get reference to range bar.
-  const bar = e.target.getElementsByClassName("rangeSliderBar")[0];
-  // Calculate effective total memory.
-  const max = os.totalmem() / 1073741824;
-
-  // Change range bar color based on the selected value.
-  if (sMaxV >= max / 2) {
-    bar.style.background = "#e86060";
-  } else if (sMaxV >= max / 4) {
-    bar.style.background = "#e8e18b";
-  } else {
-    bar.style.background = null;
+  function updatePositions() {
+    const a = Number(minInput.value);
+    const b = Number(maxInput.value);
+    const low = Math.min(a, b);
+    const high = Math.max(a, b);
+    const left = valueToPercent(low);
+    const right = valueToPercent(high);
+    fillEl.style.left = left + '%';
+    fillEl.style.width = Math.max(0, right - left) + '%';
+    minThumb.style.left = valueToPercent(a) + '%';
+    maxThumb.style.left = valueToPercent(b) + '%';
+    if (minLabel) minLabel.innerText = fmtGb(a);
+    if (maxLabel) maxLabel.innerText = fmtGb(b);
   }
 
-  // Decrease the minimum memory if the maximum value is less.
-  if (sMaxV < sMinV) {
-    const sliderMeta = calculateRangeSliderMeta(settingsMaxRAMRange);
-    updateRangedSlider(
-      settingsMinRAMRange,
-      sMaxV,
-      ((sMaxV - sliderMeta.min) / sliderMeta.step) * sliderMeta.inc
-    );
-    settingsMinRAMLabel.innerHTML = sMaxV.toFixed(1) + "G";
+  // initialize
+  updatePositions();
+
+  let active = null;
+  function onPointerMove(e) {
+    if (!active) return;
+    const rect = track.getBoundingClientRect();
+    let p = ((e.clientX - rect.left) / rect.width) * 100;
+    p = Math.max(0, Math.min(100, p));
+    const v = percentToValue(p);
+    if (active === minThumb) {
+      const maxV = Number(maxInput.value);
+      const newV = Math.min(v, maxV);
+      minInput.value = newV;
+    } else {
+      const minV = Number(minInput.value);
+      const newV = Math.max(v, minV);
+      maxInput.value = newV;
+    }
+    updatePositions();
   }
-  settingsMaxRAMLabel.innerHTML = sMaxV.toFixed(1) + "G";
-};
+
+  function onPointerUp(e) {
+    if (!active) return;
+    try { active.releasePointerCapture(e.pointerId); } catch (err) {}
+    active.classList.remove('dragging');
+    active.style.zIndex = '';
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    active = null;
+  }
+
+  function onPointerDownThumb(e) {
+    e.preventDefault();
+    active = e.currentTarget;
+    active.setPointerCapture && active.setPointerCapture(e.pointerId);
+    active.classList.add('dragging');
+    active.style.zIndex = 30;
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  }
+
+  minThumb.addEventListener('pointerdown', onPointerDownThumb);
+  maxThumb.addEventListener('pointerdown', onPointerDownThumb);
+
+  // keyboard support
+  function onThumbKey(e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const delta = e.key === 'ArrowRight' ? step : -step;
+    if (e.currentTarget === minThumb) {
+      let v = Number(minInput.value) + delta;
+      v = Math.max(minAttr, Math.min(Number(maxInput.value), v));
+      minInput.value = v;
+    } else {
+      let v = Number(maxInput.value) + delta;
+      v = Math.min(maxAttr, Math.max(Number(minInput.value), v));
+      maxInput.value = v;
+    }
+    updatePositions();
+  }
+
+  minThumb.tabIndex = 0;
+  maxThumb.tabIndex = 0;
+  minThumb.addEventListener('keydown', onThumbKey);
+  maxThumb.addEventListener('keydown', onThumbKey);
+
+  // keep visuals in sync if inputs change programmatically
+  minInput.addEventListener('input', updatePositions);
+  maxInput.addEventListener('input', updatePositions);
+  minInput.addEventListener('change', updatePositions);
+  maxInput.addEventListener('change', updatePositions);
+}
 
 /**
  * Calculate common values for a ranged slider.
@@ -1363,7 +1568,29 @@ function calculateRangeSliderMeta(v) {
  */
 function bindRangeSlider() {
   Array.from(document.getElementsByClassName("rangeSlider")).map((v) => {
-    // Reference the track (thumb).
+    // If this is an INPUT range, bind input/change listeners.
+    if (v.tagName === "INPUT") {
+      const sliderMeta = calculateRangeSliderMeta(v);
+      // initialize display
+      const value = Number(v.value || v.getAttribute("value") || sliderMeta.min);
+      updateRangedSlider(v, value, ((value - sliderMeta.min) / sliderMeta.step) * sliderMeta.inc);
+
+      v.addEventListener("input", (e) => {
+        const val = Number(e.target.value);
+        const notch = ((val - sliderMeta.min) / sliderMeta.step) * sliderMeta.inc;
+        updateRangedSlider(v, val, notch);
+        updateDoubleRangeFill();
+      });
+      v.addEventListener("change", (e) => {
+        const val = Number(e.target.value);
+        const notch = ((val - sliderMeta.min) / sliderMeta.step) * sliderMeta.inc;
+        updateRangedSlider(v, val, notch);
+        updateDoubleRangeFill();
+      });
+      return;
+    }
+
+    // Reference the track (thumb) for DIV-based sliders.
     const track = v.getElementsByClassName("rangeSliderTrack")[0];
 
     // Set the initial slider value.
@@ -1377,38 +1604,42 @@ function bindRangeSlider() {
     );
 
     // The magic happens when we click on the track.
-    track.onmousedown = (e) => {
-      // Stop moving the track on mouse up.
-      document.onmouseup = (e) => {
-        document.onmousemove = null;
-        document.onmouseup = null;
-      };
+    if (track) {
+      track.onmousedown = (e) => {
+        // Stop moving the track on mouse up.
+        document.onmouseup = (e) => {
+          document.onmousemove = null;
+          document.onmouseup = null;
+        };
 
-      // Move slider according to the mouse position.
-      document.onmousemove = (e) => {
-        // Distance from the beginning of the bar in pixels.
-        const diff = e.pageX - v.offsetLeft - track.offsetWidth / 2;
+        // Move slider according to the mouse position.
+        document.onmousemove = (e) => {
+          // Distance from the beginning of the bar in pixels.
+          const diff = e.pageX - v.offsetLeft - track.offsetWidth / 2;
 
-        // Don't move the track off the bar.
-        if (diff >= 0 && diff <= v.offsetWidth - track.offsetWidth / 2) {
-          // Convert the difference to a percentage.
-          const perc = (diff / v.offsetWidth) * 100;
-          // Calculate the percentage of the closest notch.
-          const notch =
-            Number(perc / sliderMeta.inc).toFixed(0) * sliderMeta.inc;
+          // Don't move the track off the bar.
+          if (diff >= 0 && diff <= v.offsetWidth - track.offsetWidth / 2) {
+            // Convert the difference to a percentage.
+            const perc = (diff / v.offsetWidth) * 100;
+            // Calculate the percentage of the closest notch.
+            const notch = Number(perc / sliderMeta.inc).toFixed(0) * sliderMeta.inc;
 
-          // If we're close to that notch, stick to it.
-          if (Math.abs(perc - notch) < sliderMeta.inc / 2) {
-            updateRangedSlider(
-              v,
-              sliderMeta.min + sliderMeta.step * (notch / sliderMeta.inc),
-              notch
-            );
+            // If we're close to that notch, stick to it.
+            if (Math.abs(perc - notch) < sliderMeta.inc / 2) {
+              updateRangedSlider(
+                v,
+                sliderMeta.min + sliderMeta.step * (notch / sliderMeta.inc),
+                notch
+              );
+            }
           }
-        }
+        };
       };
-    };
+    }
   });
+
+  // Initial draw for double-range fill (if both inputs present)
+  updateDoubleRangeFill();
 }
 
 /**
@@ -1419,43 +1650,77 @@ function bindRangeSlider() {
  * @param {number} notch The notch that the slider should now be at.
  */
 function updateRangedSlider(element, value, notch) {
-  const oldVal = element.getAttribute("value");
-  const bar = element.getElementsByClassName("rangeSliderBar")[0];
-  const track = element.getElementsByClassName("rangeSliderTrack")[0];
+  const oldVal = element.getAttribute && element.getAttribute("value");
+  const bar = element.getElementsByClassName ? element.getElementsByClassName("rangeSliderBar")[0] : null;
+  const track = element.getElementsByClassName ? element.getElementsByClassName("rangeSliderTrack")[0] : null;
 
-  element.setAttribute("value", value);
-
-  if (notch < 0) {
-    notch = 0;
-  } else if (notch > 100) {
-    notch = 100;
+  // Update the stored value (for DIVs) or real value (for INPUTs)
+  if (element.tagName === "INPUT") {
+    element.value = value;
+  } else if (element.setAttribute) {
+    element.setAttribute("value", value);
   }
 
-  const event = new MouseEvent("change", {
-    target: element,
-    type: "change",
-    bubbles: false,
-    cancelable: true,
+  if (notch < 0) notch = 0;
+  else if (notch > 100) notch = 100;
+
+  // Apply visual changes directly. Avoid dispatching a synthetic 'change' event
+  // here because it can trigger other listeners synchronously and cause
+  // heavy cascading updates (leading to input lag). If other modules need a
+  // programmatic notification they should call a dedicated API.
+  try {
+    if (track && track.style) track.style.left = notch + "%";
+    if (bar && bar.style) bar.style.width = notch + "%";
+
+    // For inputs, emulate a progress bar using background gradient
+    if (element.tagName === "INPUT") {
+      element.style.background = `linear-gradient(90deg, rgba(59,130,246,0.6) ${notch}%, rgba(255,255,255,0.04) ${notch}%)`;
+    }
+  } catch (e) {
+    // Ignore visual errors; don't revert value — keep the input state consistent.
+  }
+}
+
+/**
+ * Update the visual filled area between the two RAM range thumbs.
+ * This draws the blue segment between the min and max thumbs.
+ */
+function updateDoubleRangeFill() {
+  // Batch fill updates via requestAnimationFrame to avoid layout thrashing
+  if (updateDoubleRangeFill._scheduled) return;
+  updateDoubleRangeFill._scheduled = true;
+  requestAnimationFrame(() => {
+    updateDoubleRangeFill._scheduled = false;
+    try {
+      const minEl = getSettingsMinRAMRange();
+      const maxEl = getSettingsMaxRAMRange();
+      const fill = document.getElementById("settingsRangeFill");
+      if (!minEl || !maxEl || !fill) return;
+
+      const minAttr = Number(minEl.getAttribute("min") || 0);
+      const maxAttr = Number(minEl.getAttribute("max") || 100);
+      const a = Number(minEl.tagName === "INPUT" ? minEl.value : minEl.getAttribute("value"));
+      const b = Number(maxEl.tagName === "INPUT" ? maxEl.value : maxEl.getAttribute("value"));
+      const low = Math.min(a, b);
+      const high = Math.max(a, b);
+      const left = ((low - minAttr) / (maxAttr - minAttr)) * 100;
+      const right = ((high - minAttr) / (maxAttr - minAttr)) * 100;
+      fill.style.left = left + "%";
+      fill.style.width = Math.max(0, right - left) + "%";
+    } catch (e) {
+      // ignore visual update errors
+    }
   });
-
-  let cancelled = !element.dispatchEvent(event);
-
-  if (!cancelled) {
-    track.style.left = notch + "%";
-    bar.style.width = notch + "%";
-  } else {
-    element.setAttribute("value", oldVal);
-  }
 }
 
 /**
  * Display the total and available RAM.
  */
 function populateMemoryStatus() {
-  settingsMemoryTotal.innerHTML =
-    Number((os.totalmem() - 1073741824) / 1073741824).toFixed(1) + "G";
-  settingsMemoryAvail.innerHTML =
-    Number(os.freemem() / 1073741824).toFixed(1) + "G";
+  const totalEl = getSettingsMemoryTotal();
+  const availEl = getSettingsMemoryAvail();
+  if (totalEl) totalEl.innerHTML = Number((os.totalmem() - 1073741824) / 1073741824).toFixed(1) + "G";
+  if (availEl) availEl.innerHTML = Number(os.freemem() / 1073741824).toFixed(1) + "G";
 }
 
 /**
@@ -1474,13 +1739,14 @@ async function populateJavaExecDetails(execPath) {
     server.effectiveJavaOptions.supported
   );
 
+  const detailsEl = getSettingsJavaExecDetails();
   if (details != null) {
-    settingsJavaExecDetails.innerHTML = Lang.queryJS(
+    if (detailsEl) detailsEl.innerHTML = Lang.queryJS(
       "settings.java.selectedJava",
       { version: details.semverStr, vendor: details.vendor }
     );
   } else {
-    settingsJavaExecDetails.innerHTML = Lang.queryJS(
+    if (detailsEl) detailsEl.innerHTML = Lang.queryJS(
       "settings.java.invalidSelection"
     );
   }
@@ -1520,12 +1786,17 @@ function bindMinMaxRam(server) {
   const SETTINGS_MIN_MEMORY = ConfigManager.getAbsoluteMinRAM(
     server.rawServer.javaOptions?.ram
   );
-
-  // Set the max and min values for the ranged sliders.
-  settingsMaxRAMRange.setAttribute("max", SETTINGS_MAX_MEMORY);
-  settingsMaxRAMRange.setAttribute("min", SETTINGS_MIN_MEMORY);
-  settingsMinRAMRange.setAttribute("max", SETTINGS_MAX_MEMORY);
-  settingsMinRAMRange.setAttribute("min", SETTINGS_MIN_MEMORY);
+  // Set the max and min values for the ranged sliders (use getters).
+  const maxEl = getSettingsMaxRAMRange();
+  const minEl = getSettingsMinRAMRange();
+  if (maxEl) {
+    maxEl.setAttribute("max", SETTINGS_MAX_MEMORY);
+    maxEl.setAttribute("min", SETTINGS_MIN_MEMORY);
+  }
+  if (minEl) {
+    minEl.setAttribute("max", SETTINGS_MAX_MEMORY);
+    minEl.setAttribute("min", SETTINGS_MIN_MEMORY);
+  }
 }
 
 /**
@@ -1537,6 +1808,7 @@ async function prepareJavaTab() {
   );
   bindMinMaxRam(server);
   bindRangeSlider(server);
+  bindDoubleRangeControls();
   populateMemoryStatus();
   populateJavaReqDesc(server);
   populateJvmOptsLink(server);
@@ -1762,14 +2034,10 @@ try {
  * @param {function} handler Optional. New button event handler.
  */
 function settingsUpdateButtonStatus(text, disabled = false, handler = null) {
-  // Use a dynamic lookup in case the DOM wasn't present when this file
-  // was initially parsed (cached consts may be null). If the button
-  // is not present, silently return.
-  const btn =
-    typeof settingsUpdateActionButton !== "undefined" &&
-    settingsUpdateActionButton
-      ? settingsUpdateActionButton
-      : document.getElementById("settingsUpdateActionButton");
+  // Always query the DOM at call-time to avoid accessing variables that
+  // may be in the temporal-dead-zone if this module is executed before
+  // the settings DOM is mounted. If the button is not present, silently return.
+  const btn = document.getElementById("settingsUpdateActionButton");
   if (!btn) return;
   btn.innerHTML = text;
   btn.disabled = disabled;
