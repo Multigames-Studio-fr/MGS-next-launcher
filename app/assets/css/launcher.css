@@ -2700,7 +2700,6 @@ input:checked + .toggleSwitchSlider:before {
 #landingContainer > #lower {
   height: 23%;
   display: flex;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 
 #landingContainer > #lower > #left {
@@ -3041,14 +3040,7 @@ input:checked + .toggleSwitchSlider:before {
   width: 15px;
 }
 
-/* News error (message) container. */
-# {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-}
+
 
 #newsErrorFailed {
   display: flex;

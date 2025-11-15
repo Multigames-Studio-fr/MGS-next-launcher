@@ -328,7 +328,7 @@ function setupSettingsTabs() {
  * @param {Element} ele The nav item which has been clicked.
  * @param {boolean} fade Optional. True to fade transition.
  */
-function settingsNavItemListener(ele, fade = true) {
+function settingsNavItemListener(ele, fade = false) {
   if (ele.hasAttribute("selected")) {
     return;
   }
@@ -1390,9 +1390,11 @@ function saveAllModConfigurations() {
  * server is changed.
  */
 function animateSettingsTabRefresh() {
-  $(`#${selectedSettingsTab}`).fadeOut(500, async () => {
+  // Refresh current tab content without visual animations.
+  // Hide immediately, refresh, then show immediately to avoid transitions.
+  $(`#${selectedSettingsTab}`).hide(0, async () => {
     await prepareSettings();
-    $(`#${selectedSettingsTab}`).fadeIn(500);
+    $(`#${selectedSettingsTab}`).show(0);
   });
 }
 

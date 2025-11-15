@@ -1856,6 +1856,9 @@
   .text-right {
     text-align: right;
   }
+  .font-\[Mojang\] {
+    font-family: Mojang;
+  }
   .font-mono {
     font-family: var(--font-mono);
   }
@@ -3175,6 +3178,11 @@
   .lg\:col-span-2 {
     @media (width >= 64rem) {
       grid-column: span 2 / span 2;
+    }
+  }
+  .lg\:w-72 {
+    @media (width >= 64rem) {
+      width: calc(var(--spacing) * 72);
     }
   }
   .lg\:grid-cols-2 {

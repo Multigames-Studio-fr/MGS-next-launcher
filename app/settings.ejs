@@ -1,6 +1,6 @@
 <div id="settingsContainer" class="hidden fixed inset-0 z-50">
-  <div class="flex min-h-screen w-full relative fit-content" style="background: url('./assets/images/backgrounds/0.jpg') center/cover no-repeat;">
-    <div class="absolute inset-0 bg-black/60 z-0"></div>
+  <div class="flex min-h-screen w-full relative fit-content"  >
+    <div class=" "></div>
     <main class="relative z-10 flex-1 flex">
     <aside id="settingsContainerLeft" class="w-64 sticky top-0 h-screen ">
       <div class="glass-sidebar bg-[#181818]/60  py-4 px-3    -white/10 h-full overflow-y-auto">
@@ -11,7 +11,7 @@
           <div class="flex items-center gap-3 px-2">
             <img src="./assets/images/multigames-logo.webp" alt="MultiGames Logo" class="w-10 h-10 rounded" />
             <div class="leading-tight">
-              <div class="text-white font-semibold">MultiGames</div>
+              <div class="text-white font-[Mojang] font-[Mojang]">MultiGames</div>
               <div class="text-xs text-gray-400">Launcher</div>
             </div>
           </div>
@@ -68,7 +68,7 @@
   <main id="settingsContainerRight" class="flex-1 p-6 glass-main-content overflow-auto max-h-screen">
       <div id="settingsTabAccount" class="settingsTab">
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabAccountHeaderText') %></h2>
+          <h2 class="text-xl text-white mb-2 font-[Mojang]"><%- lang('settings.tabAccountHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.tabAccountHeaderDesc') %></p>
         </div>
         <div class="space-y-6">
@@ -95,7 +95,7 @@
       </div>
       <div id="settingsTabMinecraft" class="settingsTab hidden">
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.minecraftTabHeaderText') %></h2>
+          <h2 class="text-xl font-[Mojang] text-white mb-2"><%- lang('settings.minecraftTabHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.minecraftTabHeaderDesc') %></p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,7 +186,7 @@
         <div class="glass-sidebar p-4 mb-4    -gray-700 rounded-lg">
           <div class="flex items-center justify-between gap-4">
             <div class="flex-1">
-              <div class="text-lg font-semibold text-white"><%- lang('settings.allowPrereleaseTitle') %></div>
+              <div class="text-lg  text-white"><%- lang('settings.allowPrereleaseTitle') %></div>
               <div class="text-sm text-gray-400 mt-1"><%- lang('settings.allowPrereleaseDesc') %></div>
             </div>
             <div>
@@ -200,7 +200,7 @@
         <div class="glass-sidebar p-4 mb-4 md:col-span-2    -gray-700 rounded-lg">
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
-              <div class="text-lg font-semibold text-white" id="settingsDataDirTitle">
+              <div class="text-lg text-white" id="settingsDataDirTitle">
                 <%- lang('settings.dataDirectoryTitle') %>
               </div>
               <div class="text-sm text-gray-400 mt-1">
@@ -223,7 +223,7 @@
       </div>
       <div id="settingsTabMods" class="settingsTab hidden">
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabModsHeaderText') %></h2>
+          <h2 class="text-xl font-[Mojang] text-white mb-2"><%- lang('settings.tabModsHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.tabModsHeaderDesc') %></p>
         </div>
         <div class="space-y-6">
@@ -289,14 +289,14 @@
       </div>
       <div id="settingsTabJava" class="settingsTab hidden">
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.tabJavaHeaderText') %></h2>
+          <h2 class="text-xl font-[Mojang] text-white mb-2"><%- lang('settings.tabJavaHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.tabJavaHeaderDesc') %></p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <!-- Card: Memory (refactored) - accessible range inputs, spans two columns on md+ -->
-          <div class="p-4 bg-[#181818]/60    -gray-700 rounded-lg group md:col-span-2">
+          <div class="p-4 bg-[#181818]/60  glass-sidebar   -gray-700 rounded-lg group md:col-span-2">
             <div class="flex flex-col">
               <div class="flex items-baseline gap-2">
                 <i class="bi bi-memory text-white text-1xl"></i>
@@ -337,7 +337,7 @@
           </div>
 
           <!-- Card: Java Executable -->
-          <div class="p-4 bg-[#181818]/60    -gray-700 rounded-lg group">
+          <div class="p-4 bg-[#181818]/60  glass-sidebar  -gray-700 rounded-lg group">
             <div class="flex flex-col">
               <div class="flex items-baseline gap-2">
                 <i class="bi bi-folder2-open text-white  text-1xl"></i>
@@ -361,7 +361,7 @@
           </div>
 
           <!-- Card: JVM Options -->
-          <div class="p-4 bg-[#181818]/60    -gray-700 rounded-lg group">
+          <div class="p-4 bg-[#181818]/60  glass-sidebar  -gray-700 rounded-lg group">
             <div class="flex flex-col">
               <div class="flex items-baseline gap-2">
                 <i class="bi bi-gear text-white  text-1xl"></i>
@@ -381,7 +381,7 @@
       </div>
       <div id="settingsTabLogs" class="settingsTab hidden">
         <div class="mb-6">
-          <h2 class="text-xl font-semibold text-white mb-2"><%- lang('settings.logsTabHeaderText') %></h2>
+          <h2 class="text-xl font-[Mojang] text-white mb-2"><%- lang('settings.logsTabHeaderText') %></h2>
           <p class="text-sm text-gray-400"><%- lang('settings.logsTabHeaderDesc') %></p>
         </div>
         
@@ -482,7 +482,7 @@
       <div id="settingsTabAbout" class="settingsTab hidden">
         <div class="settingsTabHeader mb-4">
           <span class="settingsTabHeaderText  text-1xl font-bold text-white"><%- lang('settings.aboutTabHeaderText')
-              %></span>
+              %></span><br />
           <span class="settingsTabHeaderDesc text-sm text-gray-400"><%- lang('settings.aboutTabHeaderDesc') %></span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -497,7 +497,7 @@
             <div id="settingsAboutCurrentVersion" class="flex items-center mb-4">
               <div id="settingsAboutCurrentVersionCheck" class="text-green-500 mr-2">&#10003;</div>
               <div id="settingsAboutCurrentVersionDetails">
-                <span id="settingsAboutCurrentVersionTitle" class="text-lg font-semibold text-white">
+                <span id="settingsAboutCurrentVersionTitle" class="text-lg text-white">
                   <%- lang('settings.stableRelease') %>
                 </span>
                 <div id="settingsAboutCurrentVersionLine" class="flex items-center">
@@ -538,12 +538,12 @@
           <div id="settingsUpdateStatusContainer" class="mb-2">
             <div id="settingsUpdateStatusContent">
               <div id="settingsUpdateStatusHeadline" class="mb-3">
-                <span id="settingsUpdateTitle" class="text-lg font-semibold text-white"><!-- You Are Running the Latest Version --></span>
+                <span id="settingsUpdateTitle" class="text-lg text-white"><!-- You Are Running the Latest Version --></span>
               </div>
               <div id="settingsUpdateVersion" class="flex items-center mb-3">
                 <div id="settingsUpdateVersionCheck" class="text-green-500 mr-2">&#10003;</div>
                 <div id="settingsUpdateVersionDetails">
-                  <span id="settingsUpdateVersionTitle" class="text-lg font-semibold text-white"><%- lang('settings.stableRelease') %></span>
+                  <span id="settingsUpdateVersionTitle" class="text-lg text-white"><%- lang('settings.stableRelease') %></span>
                   <div id="settingsUpdateVersionLine" class="flex items-center">
                     <span id="settingsUpdateVersionText" class="text-sm text-gray-400 mr-2"><%- lang('settings.versionText') %></span>
                     <span id="settingsUpdateVersionValue" class="text-sm text-white">2.1.1</span>
@@ -568,7 +568,7 @@
           <div class="settingsChangelogContainer">
             <div class="settingsChangelogContent">
               <div class="settingsChangelogHeadline mb-4">
-                <div class="settingsChangelogLabel text-lg font-semibold text-white"><%- lang('settings.whatsNew') %></div>
+                <div class="settingsChangelogLabel text-lg text-white"><%- lang('settings.whatsNew') %></div>
                 <div class="settingsChangelogTitle text-1xl font-bold text-white"><%- lang('settings.updateReleaseNotes') %></div>
               </div>
               <div class="settingsChangelogText text-sm text-gray-400"><%- lang('settings.noReleaseNotes') %></div>
