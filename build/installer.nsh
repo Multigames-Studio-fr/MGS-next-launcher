@@ -1,10 +1,10 @@
+; Request UAC elevation when necessary (highest is valid NSIS value)
+RequestExecutionLevel highest
+
 !include "MUI2.nsh"
 !include "nsDialogs.nsh"
 !include "WinMessages.nsh"
 !include "LogicLib.nsh"
-
-; Request UAC elevation when necessary (highestAvailable):
-RequestExecutionLevel highestAvailable
 
 Var SCOPE_USER_RADIO
 Var SCOPE_ALL_RADIO
