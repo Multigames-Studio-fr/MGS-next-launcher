@@ -467,6 +467,21 @@ async function checkUpdateStatus() {
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
+    // Immediate UI feedback: show starting state right away to avoid perceived latency
+    try {
+        const launchBtn = document.getElementById('launch_button')
+        setLaunchDetails(Lang.queryJS && Lang.queryJS('landing.launch.starting') || 'Démarrage...')
+        toggleLaunchArea(true)
+        setLaunchPercentage(0)
+        if (launchBtn) {
+            try {
+                launchBtn.innerHTML = `<svg class="animate-spin w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity=".2"></circle><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path></svg> Démarrage...`
+                launchBtn.classList.remove('bg-[#FF6A1A]')
+                launchBtn.classList.add('bg-yellow-600')
+                launchBtn.disabled = true
+            } catch (e) { /* ignore UI update errors */ }
+        }
+    } catch (e) { /* non-critical */ }
     try {
         // Vérifier l'état des mises à jour avant de lancer
         const updateStatus = await checkUpdateStatus()
@@ -661,113 +676,137 @@ function updateSidebarSelection(selectedServerId) {
 window.updateSidebarSelection = updateSidebarSelection
 
 // Bind selected server
-async function updateSelectedServer(serv){
+async function updateSelectedServer(serv, instant = false){
     if(getCurrentView() === VIEWS.settings){
         fullSettingsSave()
     }
     ConfigManager.setSelectedServer(serv != null ? serv.rawServer.id : null)
     ConfigManager.save()
     
-    // Update server info in the new UI with animations
+    // Update server info in the new UI. If `instant` is true, apply changes
+    // immediately without running the animated transition sequence.
     const serverTitle = document.querySelector('.server-title')
     const serverDesc = document.querySelector('.server-desc')
     const serverVersion = document.querySelector('.server-version')
     const serverLoader = document.querySelector('.server-loader')
     const serverStatusName = document.querySelector('.server-status-name')
     const playInstance = document.querySelector('.play-instance')
-    // Token for cancelling outdated transitions
-    const myTransitionToken = ++instanceTransitionCounter
-    
-    // Helper: add animation class and wait for animationend on elements (with a fallback timeout)
-    const animateAndWait = (els, addClass, fallback = 360) => {
-        return new Promise(resolve => {
-            if (!els || els.length === 0) return resolve()
-            let remaining = els.length
-            const onEnd = (e) => {
-                try { e.currentTarget.removeEventListener('animationend', onEnd) } catch (e) {}
-                remaining--
-                if (remaining <= 0) resolve()
+
+    if (instant) {
+        try {
+            if (serv != null) {
+                const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
+                const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
+                if (serverTitle) serverTitle.innerHTML = titleHtml
+                if (serverDesc) serverDesc.innerHTML = descHtml
+                if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
+                if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
+                if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
+            } else {
+                if (serverTitle) serverTitle.innerHTML = 'Veuillez sélectionner une instance'
+                if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
+                if (serverVersion) serverVersion.textContent = '--'
+                if (serverLoader) serverLoader.textContent = '--'
+                if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
             }
-            els.forEach(el => {
-                try {
-                    el.addEventListener('animationend', onEnd)
-                } catch (e) {}
-                // trigger animation
-                el.classList.add(addClass)
+        } catch (e) {
+            console.debug('[Landing] instant updateSelectedServer failed', e)
+        }
+    } else {
+        // Token for cancelling outdated transitions
+        const myTransitionToken = ++instanceTransitionCounter
+        
+        // Helper: add animation class and wait for animationend on elements (with a fallback timeout)
+        const animateAndWait = (els, addClass, fallback = 360) => {
+            return new Promise(resolve => {
+                if (!els || els.length === 0) return resolve()
+                let remaining = els.length
+                const onEnd = (e) => {
+                    try { e.currentTarget.removeEventListener('animationend', onEnd) } catch (e) {}
+                    remaining--
+                    if (remaining <= 0) resolve()
+                }
+                els.forEach(el => {
+                    try {
+                        el.addEventListener('animationend', onEnd)
+                    } catch (e) {}
+                    // trigger animation
+                    el.classList.add(addClass)
+                })
+                // fallback in case animationend doesn't fire
+                setTimeout(() => resolve(), fallback)
             })
-            // fallback in case animationend doesn't fire
-            setTimeout(() => resolve(), fallback)
-        })
-    }
+        }
 
-    // Apply slide-out for title/desc and fade-out for meta, then update, then slide-in/fade-in
-    const textEls = [serverTitle, serverDesc].filter(el => el)
-    const metaEls = [serverVersion, serverLoader].filter(el => el)
+        // Apply slide-out for title/desc and fade-out for meta, then update, then slide-in/fade-in
+        const textEls = [serverTitle, serverDesc].filter(el => el)
+        const metaEls = [serverVersion, serverLoader].filter(el => el)
 
-    try {
-        // Start animations in parallel: meta fades out first. Text uses per-element layered animation.
-        const outPromises = []
-        if (metaEls.length) outPromises.push(animateAndWait(metaEls, 'instance-fade-out', 260))
-        await Promise.all(outPromises)
+        try {
+            // Start animations in parallel: meta fades out first. Text uses per-element layered animation.
+            const outPromises = []
+            if (metaEls.length) outPromises.push(animateAndWait(metaEls, 'instance-fade-out', 260))
+            await Promise.all(outPromises)
 
-        // If a newer transition started, abort and cleanup
-        if (myTransitionToken !== instanceTransitionCounter) {
-            // remove any out classes left behind
+            // If a newer transition started, abort and cleanup
+            if (myTransitionToken !== instanceTransitionCounter) {
+                // remove any out classes left behind
+                textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
+                metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
+                return
+            }
+
+            // Update content while out of view (use two-layer swap if available)
+            if (serv != null) {
+                const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
+                const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
+                // Use layered swap when possible
+                if (serverTitle) await animateTextLayerSwap(serverTitle, titleHtml)
+                if (serverDesc) await animateTextLayerSwap(serverDesc, descHtml)
+                if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
+                if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
+                if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
+            } else {
+                if (serverTitle) await animateTextLayerSwap(serverTitle, 'Veuillez sélectionner une instance')
+                if (serverDesc) await animateTextLayerSwap(serverDesc, 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.')
+                if (serverVersion) serverVersion.textContent = '--'
+                if (serverLoader) serverLoader.textContent = '--'
+                if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
+            }
+
+            // Trigger meta elements fade-in
+            metaEls.forEach(el => {
+                el.classList.remove('instance-fade-out')
+                void el.offsetHeight
+                el.classList.add('instance-fade-in')
+            })
+
+            // Add glow/slide to play button if server selected
+            if (playInstance && serv != null) {
+                playInstance.classList.add('slide-up-anim')
+            }
+
+            // Wait for meta fade-in to complete
+            const inPromises = []
+            if (metaEls.length) inPromises.push(animateAndWait(metaEls, 'instance-fade-in', 300))
+            await Promise.all(inPromises)
+
+            // If a newer transition started while animating in, stop and cleanup
+            if (myTransitionToken !== instanceTransitionCounter) {
+                textEls.forEach(el => { try { el.classList.remove('instance-slide-in','instance-slide-out') } catch (e) {} })
+                metaEls.forEach(el => { try { el.classList.remove('instance-fade-in','instance-fade-out') } catch (e) {} })
+                return
+            }
+        } catch (e) {
+            // Ensure classes are cleaned up
             textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
             metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
-            return
-        }
-
-        // Update content while out of view (use two-layer swap if available)
-        if (serv != null) {
-            const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
-            const descHtml = DOMPurify.sanitize(serv.rawServer.description || 'Serveur Minecraft')
-            // Use layered swap when possible
-            if (serverTitle) await animateTextLayerSwap(serverTitle, titleHtml)
-            if (serverDesc) await animateTextLayerSwap(serverDesc, descHtml)
-            if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
-            if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
-            if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
-        } else {
-            if (serverTitle) await animateTextLayerSwap(serverTitle, 'Veuillez sélectionner une instance')
-            if (serverDesc) await animateTextLayerSwap(serverDesc, 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.')
-            if (serverVersion) serverVersion.textContent = '--'
-            if (serverLoader) serverLoader.textContent = '--'
-            if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
-        }
-
-        // Trigger meta elements fade-in
-        metaEls.forEach(el => {
-            el.classList.remove('instance-fade-out')
-            void el.offsetHeight
-            el.classList.add('instance-fade-in')
-        })
-
-        // Add glow/slide to play button if server selected
-        if (playInstance && serv != null) {
-            playInstance.classList.add('slide-up-anim')
-        }
-
-        // Wait for meta fade-in to complete
-        const inPromises = []
-        if (metaEls.length) inPromises.push(animateAndWait(metaEls, 'instance-fade-in', 300))
-        await Promise.all(inPromises)
-
-        // If a newer transition started while animating in, stop and cleanup
-        if (myTransitionToken !== instanceTransitionCounter) {
-            textEls.forEach(el => { try { el.classList.remove('instance-slide-in','instance-slide-out') } catch (e) {} })
-            metaEls.forEach(el => { try { el.classList.remove('instance-fade-in','instance-fade-out') } catch (e) {} })
-            return
-        }
-    } catch (e) {
-        // Ensure classes are cleaned up
-        textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
-        metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
-    } finally {
-        textEls.forEach(el => { try { el.classList.remove('instance-slide-in') } catch (e) {} })
-        metaEls.forEach(el => { try { el.classList.remove('instance-fade-in') } catch (e) {} })
-        if (playInstance) {
-            playInstance.classList.remove('slide-up-anim')
+        } finally {
+            textEls.forEach(el => { try { el.classList.remove('instance-slide-in') } catch (e) {} })
+            metaEls.forEach(el => { try { el.classList.remove('instance-fade-in') } catch (e) {} })
+            if (playInstance) {
+                playInstance.classList.remove('slide-up-anim')
+            }
         }
     }
     
@@ -1161,6 +1200,10 @@ async function dlAsync(login = true) {
 
     setLaunchDetails(Lang.queryJS('landing.dlAsync.loadingServerInfo'))
 
+    // Let the renderer paint the updated launch UI before starting heavy work.
+    // Small non-blocking yield to the event loop so the progress bar becomes visible.
+    try { await new Promise(resolve => setTimeout(resolve, 50)) } catch (e) { /* ignore */ }
+
     let distro
 
     try {
@@ -1221,6 +1264,8 @@ async function dlAsync(login = true) {
     } else {
         loggerLaunchSuite.info('Validating files.')
         setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
+        // Yield briefly to ensure UI updates before starting potentially expensive file I/O/CPU work
+        try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
         let invalidFileCount = 0
         try {
             invalidFileCount = await fullRepairModule.verifyFiles(percent => {
@@ -1240,6 +1285,8 @@ async function dlAsync(login = true) {
         setLaunchDetails(Lang.queryJS('landing.dlAsync.downloadingFiles'))
         setLaunchPercentage(0)
         try {
+            // yield briefly so the UI can render the progress UI before starting download
+            try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
             await fullRepairModule.download(percent => {
                 setDownloadPercentage(percent)
             })
@@ -1262,6 +1309,8 @@ async function dlAsync(login = true) {
     setLaunchDetails('Vérification des mods de triche...')
     try {
         const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
+        // yield briefly before starting filesystem-heavy scan so the renderer can paint
+        try { await new Promise(resolve => setTimeout(resolve, 30)) } catch (e) { /* ignore */ }
         const cleanResult = await ModDeduplicator.scanAndCleanCheatMods(modsDir)
         
         if (cleanResult.deleted > 0) {
@@ -1294,7 +1343,11 @@ async function dlAsync(login = true) {
         serv.rawServer.id
     )
 
+    // Give the renderer a tick before starting index/network operations
+    try { await new Promise(resolve => setTimeout(resolve, 30)) } catch (e) { /* ignore */ }
     const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+    // allow a small tick before the potentially heavy version JSON parsing
+    try { await new Promise(resolve => setTimeout(resolve, 20)) } catch (e) { /* ignore */ }
     const versionData = await mojangIndexProcessor.getVersionJson()
 
         if(login) {

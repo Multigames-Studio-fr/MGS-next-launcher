@@ -4,6 +4,7 @@ const semver = require("semver");
 
 const DropinModUtil = require("./assets/js/dropinmodutil");
 
+
 // Import IPC constants if not already loaded
 if (typeof MSFT_OPCODE === 'undefined') {
   var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require("./assets/js/ipcconstants");
@@ -907,19 +908,36 @@ function prepareAccountsTab() {
 
 const settingsModsContainer = document.getElementById("settingsModsContainer");
 
+// Flag indicating whether drop-in/mod actions are allowed for the
+// currently selected server/account. Updated by `resolveDropinModsForUI`.
+let DROPIN_WHITELIST_ALLOWED = true;
 /**
  * Resolve and update the mods on the UI.
  */
 async function resolveModsForUI() {
-  const serv = ConfigManager.getSelectedServer();
+  const servId = ConfigManager.getSelectedServer();
 
   const distro = await DistroAPI.getDistribution();
-  const servConf = ConfigManager.getModConfiguration(serv);
+  const serv = distro.getServerById(servId);
+  const servConf = ConfigManager.getModConfiguration(servId);
+
+  // Only allow mod controls if the server has an active whitelist.
+  // Requirement: If the instance does NOT have a whitelist, disable ability to add/modify custom mods.
+  let whitelistAllowed = false;
+  try {
+    const wl = serv.rawServer.whitelist;
+    if (wl && wl.active) {
+      whitelistAllowed = true;
+    }
+  } catch (e) {
+    console.warn('[SETTINGS] Error checking whitelist for mods tab', e);
+  }
 
   const modStr = parseModulesForUI(
-    distro.getServerById(serv).modules,
+    serv.modules,
     false,
-    servConf.mods
+    servConf.mods,
+    whitelistAllowed
   );
 
   document.getElementById("settingsReqModsContent").innerHTML = modStr.reqMods;
@@ -933,7 +951,7 @@ async function resolveModsForUI() {
  * @param {boolean} submodules Whether or not we are parsing submodules.
  * @param {Object} servConf The server configuration object for this module level.
  */
-function parseModulesForUI(mdls, submodules, servConf) {
+function parseModulesForUI(mdls, submodules, servConf, whitelistAllowed = true) {
   let reqMods = "";
   let optMods = "";
 
@@ -951,7 +969,8 @@ function parseModulesForUI(mdls, submodules, servConf) {
                 parseModulesForUI(
                   mdl.subModules,
                   true,
-                  servConf[mdl.getVersionlessMavenIdentifier()]
+                  servConf[mdl.getVersionlessMavenIdentifier()],
+                  whitelistAllowed
                 )
               ).join("")}</div>`
             : "";
@@ -979,13 +998,18 @@ function parseModulesForUI(mdls, submodules, servConf) {
         const subHtml =
           mdl.subModules.length > 0
             ? `<div class="settingsSubModContainer ml-6 mt-2">${Object.values(
-                parseModulesForUI(mdl.subModules, true, conf.mods)
+                parseModulesForUI(mdl.subModules, true, conf.mods, whitelistAllowed)
               ).join("")}</div>`
             : "";
 
+        // If the server/account is not allowed by whitelist, render toggles disabled
+        // and visually dim the container so the user cannot change optional mods.
+        const toggleDisabledAttr = whitelistAllowed ? "" : "disabled title='Whitelist active — votre compte n\'est pas autorisé.'";
+        const containerDisabledClasses = whitelistAllowed ? "" : " opacity-40 cursor-not-allowed ";
+
         optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
           submodules ? "settingsSubMod" : ""
-        }" ${val ? "enabled" : ""}>
+        } ${containerDisabledClasses}" ${val ? "enabled" : ""}>
           <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
             <div class="flex items-center justify-between gap-4">
               <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -1001,7 +1025,7 @@ function parseModulesForUI(mdls, submodules, servConf) {
                 <label class="toggleSwitch relative inline-block">
                   <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${
           val ? "checked" : ""
-        } class="sr-only peer">
+        } ${toggleDisabledAttr} class="sr-only peer">
                   <span class="toggleSwitchSlider block w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></span>
                 </label>
               </div>
@@ -1094,11 +1118,33 @@ async function resolveDropinModsForUI() {
     CACHE_SETTINGS_MODS_DIR,
     serv.rawServer.minecraftVersion
   );
+  // Only allow drop-in mod controls if the server has an active whitelist.
+  let whitelistAllowed = false;
+  try {
+    const wl = serv.rawServer.whitelist;
+    if (wl && wl.active) {
+      whitelistAllowed = true;
+    }
+  } catch (e) {
+    console.warn('[SETTINGS] Error checking whitelist for dropin mods', e);
+  }
+
+  // Update module-level flag used by bind functions.
+  DROPIN_WHITELIST_ALLOWED = whitelistAllowed;
 
   let dropinMods = "";
 
-  for (dropin of CACHE_DROPIN_MODS) {
-    dropinMods += `<div id="${dropin.fullName}" class="settingsBaseMod settingsDropinMod ${!dropin.disabled ? "enabled" : ""}">
+  // Optional top-level notice when controls are disabled.
+  if (!whitelistAllowed) {
+    dropinMods += `<div class="mb-3 p-3 bg-yellow-800/40 rounded text-sm text-yellow-200">${Lang.queryJS('settings.dropinMods.whitelistRestricted') || 'Whitelist active — votre compte n\'est pas autorisé. Les mods personnalisés sont désactivés.'}</div>`;
+  }
+
+  for (const dropin of CACHE_DROPIN_MODS) {
+    const toggleDisabledAttr = whitelistAllowed ? "" : "disabled title='Whitelist active — votre compte n\'est pas autorisé.'";
+    const removeDisabledAttr = whitelistAllowed ? "" : "disabled";
+    const containerDisabledClasses = whitelistAllowed ? "" : " opacity-40 cursor-not-allowed ";
+
+    dropinMods += `<div id="${dropin.fullName}" class="settingsBaseMod settingsDropinMod ${!dropin.disabled ? "enabled" : ""} ${containerDisabledClasses}">
       <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
         <div class="flex items-center justify-between gap-4">
           <!-- Left: Status + Name -->
@@ -1113,10 +1159,10 @@ async function resolveDropinModsForUI() {
           <!-- Right: Toggle + Remove Button -->
           <div class="flex items-center gap-3 flex-shrink-0">
             <label class="toggleSwitch relative inline-block">
-              <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} class="sr-only peer">
+              <input type="checkbox" formod="${dropin.fullName}" dropin ${!dropin.disabled ? "checked" : ""} ${toggleDisabledAttr} class="sr-only peer">
               <span class="toggleSwitchSlider block w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></span>
             </label>
-            <button class="settingsDropinRemoveButton bg-red-600/80 hover:bg-red-600 text-white py-1.5 px-3 rounded text-sm font-medium transition-all flex items-center gap-1.5" remmod="${dropin.fullName}">
+            <button ${removeDisabledAttr} class="settingsDropinRemoveButton bg-red-600/80 hover:bg-red-600 text-white py-1.5 px-3 rounded text-sm font-medium transition-all flex items-center gap-1.5" remmod="${dropin.fullName}">
               <i class="bi bi-trash text-sm"></i>
               <span class="hidden sm:inline">${Lang.queryJS("settings.dropinMods.removeButton")}</span>
             </button>
@@ -1162,6 +1208,22 @@ function bindDropinModsRemoveButton() {
  */
 function bindDropinModFileSystemButton() {
   const fsBtn = document.getElementById("settingsDropinFileSystemButton");
+  // If drop-in actions are disallowed by whitelist, disable the button
+  // and show an explanatory overlay instead of opening the folder.
+  if (!DROPIN_WHITELIST_ALLOWED) {
+    try { fsBtn.disabled = true; } catch (e) {}
+    fsBtn.onclick = () => {
+      setOverlayContent(
+        Lang.queryJS('settings.dropinMods.whitelistRestrictedTitle') || 'Accès restreint',
+        Lang.queryJS('settings.dropinMods.whitelistRestricted') || "Whitelist active — votre compte n'est pas autorisé.",
+        Lang.queryJS('settings.dropinMods.okButton') || 'OK'
+      );
+      setOverlayHandler(() => { toggleOverlay(false); });
+      toggleOverlay(true);
+    };
+    return;
+  }
+
   fsBtn.onclick = () => {
     DropinModUtil.validateDir(CACHE_SETTINGS_MODS_DIR);
     shell.openPath(CACHE_SETTINGS_MODS_DIR);

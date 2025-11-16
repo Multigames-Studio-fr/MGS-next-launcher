@@ -176,7 +176,7 @@ document.getElementById('serverSelectConfirm').addEventListener('click', async (
     for(let i=0; i<listings.length; i++){
         if(listings[i].hasAttribute('selected')){
             const serv = (await DistroAPI.getDistribution()).getServerById(listings[i].getAttribute('servid'))
-            updateSelectedServer(serv)
+            updateSelectedServer(serv, true)
             refreshServerStatus(true)
             toggleOverlay(false)
             return
@@ -185,7 +185,7 @@ document.getElementById('serverSelectConfirm').addEventListener('click', async (
     // None are selected? Not possible right? Meh, handle it.
     if(listings.length > 0){
         const serv = (await DistroAPI.getDistribution()).getServerById(listings[i].getAttribute('servid'))
-        updateSelectedServer(serv)
+        updateSelectedServer(serv, true)
         toggleOverlay(false)
     }
 })

@@ -102,6 +102,25 @@
         return String(html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
     }
 
+    // Open links in the external system browser when possible (Electron shell),
+    // otherwise fall back to window.open. Keeps behaviour consistent across
+    // renderer/main contexts.
+    function openExternalLink(url) {
+        if (!url) return
+        try {
+            if (typeof require === 'function') {
+                const electron = require('electron')
+                if (electron && electron.shell && typeof electron.shell.openExternal === 'function') {
+                    electron.shell.openExternal(url)
+                    return
+                }
+            }
+        } catch (e) {
+            // ignore and fallback
+        }
+        try { window.open(url, '_blank') } catch (e) {}
+    }
+
     function renderCard(data, sizeClass) {
         const tpl = document.getElementById('news-card-template')
         if (tpl && tpl.content && tpl.content.firstElementChild) {
@@ -136,20 +155,20 @@
                 if (openBtn) {
                     openBtn.addEventListener('click', (e) => {
                         e.stopPropagation()
-                        if (data.link) window.open(data.link, '_blank')
+                        if (data.link) openExternalLink(data.link)
                     })
                 }
                 
                 // Make entire card clickable
                 el.addEventListener('click', () => {
-                    if (data.link) window.open(data.link, '_blank')
+                    if (data.link) openExternalLink(data.link)
                 })
                 
                 // Add keyboard navigation
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        if (data.link) window.open(data.link, '_blank')
+                        if (data.link) openExternalLink(data.link)
                     }
                 })
                 
@@ -232,7 +251,7 @@
         
         // Add click handlers
         const openLink = () => {
-            if (data.link) window.open(data.link, '_blank')
+            if (data.link) openExternalLink(data.link)
         }
         
         card.addEventListener('click', openLink)
@@ -275,18 +294,26 @@
                 }
                 if (category) category.textContent = 'Actualité'
                 
-                // Set link
+                // Set link and make sure it opens externally
                 if (data.link) {
-                    el.href = data.link
-                    el.target = '_blank'
-                    el.rel = 'noopener noreferrer'
+                    try {
+                        if (el.tagName === 'A') {
+                            el.setAttribute('href', data.link)
+                            el.setAttribute('target', '_blank')
+                            el.setAttribute('rel', 'noopener noreferrer')
+                            el.addEventListener('click', (ev) => { ev.preventDefault(); openExternalLink(data.link) })
+                        } else {
+                            el.setAttribute('data-link', data.link)
+                            el.addEventListener('click', () => openExternalLink(data.link))
+                        }
+                    } catch (e) {}
                 }
-                
+
                 // Add keyboard navigation
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        if (data.link) window.open(data.link, '_blank')
+                        if (data.link) openExternalLink(data.link)
                     }
                 })
                 

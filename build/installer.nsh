@@ -9,50 +9,16 @@
 !include "WinMessages.nsh"
 !include "LogicLib.nsh"
 
-Var SCOPE_USER_RADIO
-Var SCOPE_ALL_RADIO
+; The license page is handled by electron-builder when `build.nsis.license`
+; is set in `package.json`. Do not insert `MUI_PAGE_LICENSE` here to avoid
+; duplicate pages.
 
-; Custom installer page to choose install scope (current user or all users)
-; Define both the create and leave callbacks so makensis knows the function is used
-Page custom SelectScopePage SelectScopePageLeave
-
-Function SelectScopePage
-    nsDialogs::Create 1018
-    Pop $0
-    ${If} $0 == error
-        Abort
-    ${EndIf}
-
-    ; Title text
-    ${NSD_CreateLabel} 0u 0u 100% 12u "Installation Settings"
-    Pop $0
-
-    ; Radio buttons
-    ${NSD_CreateRadioButton} 10u 20u 100% 12u "Install for current user only (recommended)"
-    Pop $SCOPE_USER_RADIO
-    ${NSD_CreateRadioButton} 10u 36u 100% 12u "Install for all users (requires admin privileges)"
-    Pop $SCOPE_ALL_RADIO
-
-    ; Default to current user
-    ${NSD_SetState} $SCOPE_USER_RADIO ${BST_CHECKED}
-
-    nsDialogs::Show
-FunctionEnd
-
-Function SelectScopePageLeave
-    ; If the current page is our custom page, read selection and adjust $INSTDIR
-    StrCpy $R0 $INSTDIR
-    ${NSD_GetState} $SCOPE_ALL_RADIO $R1
-    ${If} $R1 == ${BST_CHECKED}
-        ; All users selected -> install for all users
-        SetShellVarContext all
-        StrCpy $INSTDIR "$PROGRAMFILES\\multigames-studio-launcher"
-    ${Else}
-        ; Current user -> install just for current user
-        SetShellVarContext current
-        StrCpy $INSTDIR "$LOCALAPPDATA\\multigames-studio-launcher"
-    ${EndIf}
-FunctionEnd
+; Note: the installer previously contained a custom `SelectScopePage` to
+; choose per-user vs all-users installs. Electron-builder's NSIS logic now
+; inserts its own install-scope UI when relevant which caused the same
+; page to appear twice. We intentionally remove the custom page so the
+; built-in electron-builder pages control install scope and avoid
+; duplicated UI.
 
 ; Ensure license page is shown (electron-builder will insert MUI_PAGE_LICENSE when license is present)
 ; This file is included into the generated NSIS script by electron-builder.
@@ -72,4 +38,15 @@ Function .onInstSuccess
     System::Call 'Kernel32::GetTickCount() i .r2'
     FileWrite $R1 "Tick: $R2 - Installed to: $INSTDIR\r\n"
     FileClose $R1
+
+    ; Create a simple installed marker file so the launcher can detect an
+    ; installation and skip its first-run installation UI when appropriate.
+    StrCpy $R3 "$INSTDIR\\installed.flag"
+    FileOpen $R4 $R3 w
+    ${If} $R4 == error
+        ; silently ignore if we can't create the file
+    ${Else}
+        FileWrite $R4 "installed"
+        FileClose $R4
+    ${EndIf}
 FunctionEnd

@@ -230,12 +230,7 @@
           <p class="text-sm text-gray-400"><%- lang('settings.tabModsHeaderDesc') %></p>
         </div>
         <div class="space-y-6">
-          <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
-            <div class="settingsSelServContent"></div>
-            <button class="bg-[#FF6A1A] hover:bg-[#F8BA59] text-white py-2 px-4 rounded transition-colors mt-3 settingsSwitchServerButton">
-              <%- lang('settings.switchServerButton') %>
-            </button>
-          </div>
+
           <div id="settingsModsContainer" class="space-y-4">
             <!-- Optional mods: shown as cards for quick scanning -->
             <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
@@ -244,20 +239,6 @@
                 <span class="text-sm text-gray-400"><%- lang('settings.optionalModsNote') %></span>
               </div>
               <div id="settingsOptModsContent" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <!-- Drop-in mods: keep add/remove controls together with a card list -->
-            <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-white font-medium"><%- lang('settings.dropinMods') %></h3>
-                <div class="flex items-center gap-2">
-                  <button id="settingsDropinFileSystemButton" class="bg-[#FF6A1A] hover:bg-[#F8BA59] text-white py-2 px-4 rounded transition-colors">
-                    <%- lang('settings.addMods') %>
-                  </button>
-                </div>
-              </div>
-              <p class="text-sm text-gray-400 mb-3"><%- lang('settings.dropinRefreshNote') %></p>
-              <div id="settingsDropinModsContent" class="space-y-3"></div>
             </div>
 
             <!-- Shaderpacks: simple control card -->
@@ -286,6 +267,19 @@
               </div>
               <p class="text-sm text-gray-400 mb-3"><%- lang('settings.requiredModsDesc') %></p>
               <div id="settingsReqModsContent" class="space-y-3"></div>
+            </div>
+            <!-- Drop-in mods: keep add/remove controls together with a card list -->
+            <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-white font-medium"><%- lang('settings.dropinMods') %></h3>
+                <div class="flex items-center gap-2">
+                  <button id="settingsDropinFileSystemButton" class="bg-[#FF6A1A] hover:bg-[#F8BA59] text-white py-2 px-4 rounded transition-colors">
+                    <%- lang('settings.addMods') %>
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm text-gray-400 mb-3"><%- lang('settings.dropinRefreshNote') %></p>
+              <div id="settingsDropinModsContent" class="space-y-3"></div>
             </div>
           </div>
         </div>
@@ -605,7 +599,7 @@
     background-color: rgba(24,24,24,0.6) !important;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+
 
     border: 1px solid rgba(255,255,255,0.04);
   }

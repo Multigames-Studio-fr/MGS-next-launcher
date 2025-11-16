@@ -13,7 +13,31 @@ const sysRoot =
 
 const dataPath = path.join(sysRoot, ".multigames");
 
-const launcherDir = require("@electron/remote").app.getPath("userData");
+// Determine launcher directory in a way that works both from the main
+// process and from renderer windows using @electron/remote.
+let launcherDir = null
+try {
+  // In the main process, prefer the electron.app provided by core
+  const { app } = require('electron')
+  if (app && typeof app.getPath === 'function') {
+    launcherDir = app.getPath('userData')
+  }
+} catch (e) {
+  // ignore - fallback to remote
+}
+
+if (!launcherDir) {
+  try {
+    // In renderer contexts where remote is enabled, fallback to @electron/remote
+    const remoteApp = require('@electron/remote').app
+    if (remoteApp && typeof remoteApp.getPath === 'function') {
+      launcherDir = remoteApp.getPath('userData')
+    }
+  } catch (e) {
+    // Last-resort fallback: use a path under the user's home directory
+    launcherDir = path.join(sysRoot, '.multigames')
+  }
+}
 
 /**
  * Retrieve the absolute path of the launcher directory.
@@ -47,8 +71,24 @@ exports.setDataDirectory = function (dataDirectory) {
 
 const configPath = path.join(exports.getLauncherDirectory(), "config.json");
 const configPathLEGACY = path.join(dataPath, "config.json");
-const firstLaunch =
-  !fs.existsSync(configPath) && !fs.existsSync(configPathLEGACY);
+
+// Determine whether this appears to be the first launch. Historically this
+// was purely driven by presence of the configuration file, however when the
+// application is installed using the NSIS installer we create an
+// `installed.flag` marker file next to the installed executable. If that
+// marker exists we should not show the first-run installation UI even if a
+// config file isn't present in the user's profile yet.
+let firstLaunch = !fs.existsSync(configPath) && !fs.existsSync(configPathLEGACY);
+try {
+  const execDir = path.dirname(process.execPath || process.argv[0] || '')
+  const installedFlagPath = path.join(execDir, 'installed.flag')
+  if (installedFlagPath && fs.existsSync(installedFlagPath)) {
+    firstLaunch = false
+  }
+} catch (e) {
+  // If anything goes wrong while probing for the installed flag, fall back
+  // to the original behavior (i.e. treat as first launch if config missing).
+}
 
 exports.getAbsoluteMinRAM = function (ram) {
   if (ram?.minimum != null) {

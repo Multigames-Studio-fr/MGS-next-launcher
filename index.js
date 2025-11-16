@@ -106,6 +106,14 @@ const LangLoader                        = require('./app/assets/js/langloader')
 // Setup Lang
 LangLoader.setupLanguage()
 
+// Load ConfigManager early in main so config is available to main process code.
+try {
+    const ConfigManager = require('./app/assets/js/configmanager')
+    try { ConfigManager.load() } catch (e) { try { log && log.warn && log.warn('[Startup] ConfigManager.load() failed', e && e.message) } catch (ee) {} }
+} catch (e) {
+    try { log && log.warn && log.warn('[Startup] failed to require ConfigManager in main', e && e.message) } catch (ee) {}
+}
+
 // --- Ajout: utilitaire sûr pour notifier les renderers ---
 function sendAutoUpdateNotification(preferEvent /* may be undefined */, type, payload) {
 	// prefer sending to the original ipc sender when available
@@ -851,14 +859,22 @@ mcLogger.setBroadcaster((line) => {
 })
 
 function createWindow() {
+    const ConfigManager = require('./app/assets/js/configmanager')
+
+    // Use game resolution as minimum launcher window size when possible.
+    let cfgGameWidth = parseInt((ConfigManager.getGameWidth && ConfigManager.getGameWidth()) || 0, 10) || 1280
+    let cfgGameHeight = parseInt((ConfigManager.getGameHeight && ConfigManager.getGameHeight()) || 0, 10) || 752
+    // Ensure minimum sensible bounds
+    cfgGameWidth = Math.max(220, cfgGameWidth)
+    cfgGameHeight = Math.max(120, cfgGameHeight)
 
     win = new BrowserWindow({
-        width: 1280,
-        height: 752,
+        width: Math.max(1280, cfgGameWidth),
+        height: Math.max(752, cfgGameHeight),
         icon: getPlatformIcon('multigames-logo'),
-        minWidth: 1280,
-        minHeight: 752,
-  frame: false,
+        minWidth: cfgGameWidth,
+        minHeight: cfgGameHeight,
+        frame: false,
         webPreferences: {
             preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
             nodeIntegration: true,
