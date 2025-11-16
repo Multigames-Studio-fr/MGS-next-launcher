@@ -10,7 +10,8 @@ Var SCOPE_USER_RADIO
 Var SCOPE_ALL_RADIO
 
 ; Custom installer page to choose install scope (current user or all users)
-Page custom SelectScopePage
+; Define both the create and leave callbacks so makensis knows the function is used
+Page custom SelectScopePage SelectScopePageLeave
 
 Function SelectScopePage
     nsDialogs::Create 1018
@@ -35,8 +36,8 @@ Function SelectScopePage
     nsDialogs::Show
 FunctionEnd
 
-Function .onNext
-    ; If the current page is our custom page, read selection
+Function SelectScopePageLeave
+    ; If the current page is our custom page, read selection and adjust $INSTDIR
     StrCpy $R0 $INSTDIR
     ${NSD_GetState} $SCOPE_ALL_RADIO $R1
     ${If} $R1 == ${BST_CHECKED}
