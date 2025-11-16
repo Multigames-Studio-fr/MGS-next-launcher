@@ -533,6 +533,10 @@ function scheduleInitNewsCall(maxRetries = 15, delayMs = 200, onReady = null) {
 // The currently shown view container.
 let currentView
 
+// Disable view transition animations to avoid layout/display bugs during view switches.
+// Set `window.__disableViewAnimations = false` elsewhere to re-enable if desired.
+const DISABLE_VIEW_ANIMATIONS = (typeof window !== 'undefined' && window.__disableViewAnimations === false) ? false : true
+
 /**
  * Switch launcher views.
  * 
@@ -547,6 +551,21 @@ let currentView
  */
 function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, onCurrentFade = () => {}, onNextFade = () => {}){
     currentView = next
+    // If animations are disabled, perform immediate hide/show to avoid visual glitches.
+    if (DISABLE_VIEW_ANIMATIONS || currentFadeTime === 0 || nextFadeTime === 0) {
+        try {
+            $(`${current}`).hide()
+        } catch (e) { try { document.querySelector(current).style.display = 'none' } catch (err) {} }
+        try { $(current).addClass('hidden') } catch (e) {}
+        Promise.resolve().then(async () => {
+            try { await onCurrentFade() } catch (e) { console.warn('onCurrentFade error', e) }
+            try { $(`${next}`).removeClass('hidden') } catch (e) {}
+            try { $(`${next}`).show() } catch (e) { try { document.querySelector(next).style.display = '' } catch (err) {} }
+            try { await onNextFade() } catch (e) { console.warn('onNextFade error', e) }
+        })
+        return
+    }
+
     $(`${current}`).fadeOut(currentFadeTime, async () => {
         $(current).addClass('hidden')
         await onCurrentFade()
@@ -612,17 +631,17 @@ async function showMainUI(data){
 
         if(ConfigManager.isFirstLaunch()){
             currentView = VIEWS.welcome
-            $(VIEWS.welcome).fadeIn(1000)
+            if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.welcome).show(); else $(VIEWS.welcome).fadeIn(1000)
         } else {
             if(isLoggedIn){
                 currentView = VIEWS.landing
-                $(VIEWS.landing).fadeIn(1000)
+                if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.landing).show(); else $(VIEWS.landing).fadeIn(1000)
             } else {
                 loginOptionsCancelEnabled(false)
                 loginOptionsViewOnLoginSuccess = VIEWS.landing
                 loginOptionsViewOnLoginCancel = VIEWS.loginOptions
                 currentView = VIEWS.loginOptions
-                $(VIEWS.loginOptions).fadeIn(1000)
+                if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.loginOptions).show(); else $(VIEWS.loginOptions).fadeIn(1000)
             }
         }
 

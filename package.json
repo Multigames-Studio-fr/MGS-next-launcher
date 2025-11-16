@@ -1,6 +1,6 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.5.1",
+  "version": "3.5.2",
   "description": "MultiGames Studios Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio <noreply@multigames-studio.fr>",
   "license": "MIT",
@@ -73,10 +73,20 @@
       "category": "Game"
     },
     "win": {
-      "artifactName": "${name}-Setup-${version}.${ext}"
+      "target": ["nsis"],
+      "artifactName": "${name}-Setup.${ext}"
     },
     "nsis": {
-      "artifactName": "${name}-Setup-${version}.${ext}"
+      "artifactName": "${name}-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "requestedExecutionLevel": "highestAvailable",
+      "license": "EULA.md",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": false,
+      "include": "build/installer.nsh"
     }
   }
 }

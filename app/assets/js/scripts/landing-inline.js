@@ -642,3 +642,29 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 })();
+
+// Attach avatar -> settings handler (moved from inline to satisfy CSP)
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const el = document.getElementById('openSettingsFromAvatar')
+        if (!el) return
+        const handler = async (e) => {
+            // First switch to settings view so DOM is mounted, then prepare settings
+            try { switchView(getCurrentView(), VIEWS.settings) } catch (e) { console.warn('[LANDING] switchView failed', e) }
+            // small delay to allow settings DOM to mount
+            setTimeout(async () => {
+                try {
+                    if (typeof prepareSettings === 'function') await prepareSettings();
+                    else if (typeof window !== 'undefined' && typeof window.prepareSettings === 'function') await window.prepareSettings();
+                    else console.warn('[LANDING] prepareSettings not available on avatar click');
+                } catch (err) { console.warn('[LANDING] prepareSettings threw', err); }
+            }, 120)
+        }
+        el.addEventListener('click', handler)
+        el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); handler(ev) } })
+        el.style.pointerEvents = 'auto'
+        el.style.outline = 'none'
+    } catch (e) {
+        console.warn('openSettingsFromAvatar handler attach failed', e)
+    }
+})

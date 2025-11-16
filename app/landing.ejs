@@ -209,7 +209,7 @@
 
                     <button id="settingsMediaButton"
                         class="settings-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-white/6 backdrop-blur-md hover:bg-[#F8BA59]/80 text-white hover:text-black transition    ">
-                        <i class="bi bi-gear-fill  text-white" style="font-size: x-large;" aria-hidden="true"></i>
+                        <i class="bi bi-gear-fill " style="font-size: x-large;" aria-hidden="true"></i>
                     </button>
 
                     <!-- News button: ouvre la section Actualités -->
@@ -298,7 +298,13 @@
 
                 <div class="relative mb-3 ">
                     <div
-                        class="bg-white/6 backdrop-blur-md rounded-l-2xl sm:rounded-l-3xl py-3 px-3 flex  gap-3 glass-sidebar     -white/10">
+                        id="openSettingsFromAvatar"
+                        role="button"
+                        
+                        tabindex="0"
+                        onclick="document.getElementById('settingsMediaButton') && document.getElementById('settingsMediaButton').click()"
+                        onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); document.getElementById('settingsMediaButton') && document.getElementById('settingsMediaButton').click(); }"
+                        class="bg-white/6 backdrop-blur-md rounded-l-2xl sm:rounded-l-3xl py-3 px-3 flex  gap-3 glass-sidebar     -white/10 cursor-pointer">
                         <div id="avatarContainer"
                             class="player-head w-15 h-15 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
 
@@ -333,7 +339,7 @@
                 </div>
 
                 <!-- Bas : Réseaux sociaux -->
-                <div class="  p-7">
+                <div class=" pl-14 pr-14 pt-7 pb-7">
                     <style>
                         .social-icon { font-size: 2.5rem; line-height: 1; }
                         .social-link { color: #ffffff; transition: color 180ms ease, transform 180ms ease; }
@@ -349,23 +355,23 @@
                         <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord"
                             class="social-link social-discord mt-3 mb-3 " aria-label="Discord">
                             <!-- Discord icon kept as SVG for better fidelity -->
-                            <i class="bi bi-discord social-icon" style="font-size:xx-large" aria-hidden="true"></i>
+                            <i class="bi bi-discord social-icon" style="font-size:x-large" aria-hidden="true"></i>
                         </a>
 
                         <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok"
                             class="social-link social-tiktok mt-3 mb-3" aria-label="TikTok">
                             <!-- Keep TikTok SVG for brand accuracy -->
-                            <i class="bi bi-tiktok social-icon" style="font-size:xx-large" aria-hidden="true"></i>
+                            <i class="bi bi-tiktok social-icon" style="font-size:x-large" aria-hidden="true"></i>
                         </a>
 
                         <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube"
                             class="social-link social-youtube mt-3 mb-3" aria-label="YouTube">
-                            <i class="bi bi-youtube social-icon" style="font-size:xx-large" aria-hidden="true"></i>
+                            <i class="bi bi-youtube social-icon" style="font-size:x-large" aria-hidden="true"></i>
                         </a>
 
                         <a href="https://x.com/MultigamesStd" target="_blank" title="X"
                             class="social-link social-x mt-3 mb-3" aria-label="X">
-                            <i class="bi bi-twitter social-icon" style="font-size:xx-large" aria-hidden="true"></i>
+                            <i class="bi bi-twitter social-icon" style="font-size:x-large" aria-hidden="true"></i>
                         </a>
                     </div>
                     <!-- Ajoute d'autres réseaux si besoin -->
@@ -949,8 +955,8 @@
             overflow: hidden;
             position: relative;
             cursor: pointer;
-            box-shadow: 0 10px 26px rgba(0,0,0,0.5);
-            transition: transform .12s ease, box-shadow .12s ease;
+        
+            transition: transform .12s ease;
             background-size: cover;
             background-position: center;
         }
@@ -959,7 +965,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.45) 60%);
+          
             pointer-events: none;
         }
 
@@ -981,7 +987,7 @@
             font-size: clamp(14px, 3vw, 22px);
             letter-spacing: 1px;
             text-transform: uppercase;
-            text-shadow: 0 6px 16px rgba(0,0,0,0.5);
+
             line-height: 1;
         }
 
@@ -995,7 +1001,7 @@
 
         #newsFloatButton .news-hero:hover {
             transform: translateY(-3px) scale(1.003);
-            box-shadow: 0 14px 34px rgba(0,0,0,0.58);
+
         }
 
         /* Hide the original small news button to avoid duplication */
