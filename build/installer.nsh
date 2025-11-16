@@ -22,7 +22,6 @@ Function SelectScopePage
     ; Title text
     ${NSD_CreateLabel} 0u 0u 100% 12u "Installation Settings"
     Pop $0
-    ${NSD_SetFont} $0 "\"Segoe UI\"" 10
 
     ; Radio buttons
     ${NSD_CreateRadioButton} 10u 20u 100% 12u "Install for current user only (recommended)"
