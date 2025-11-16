@@ -2080,22 +2080,40 @@ async function populateSidebarInstances() {
             try {
                 const wl = serv.rawServer.whitelist
                 if (wl && wl.active) {
-                    // Pas d'utilisateur sélectionné => ne pas afficher
-                    if (!selectedUUID) {
+                    // If no selected account, hide the server when whitelist is active
+                    if (!selectedAcc) {
                         console.log('[SIDEBAR] Server', serv.rawServer.id, 'has an active whitelist but no account is selected; hiding')
                         return null
                     }
 
                     const players = Array.isArray(wl.players) ? wl.players : []
+
+                    // Normalize selected identifiers
+                    const selUuidNorm = selectedAcc.uuid ? selectedAcc.uuid.replace(/-/g, '').toLowerCase() : null
+                    const selNameNorm = selectedAcc.displayName ? selectedAcc.displayName.toLowerCase() : null
+
                     const matched = players.some(p => {
                         if (!p) return false
-                        // comparer par uuid si disponible, sinon par nom
-                        if (p.uuid) {
-                            return p.uuid.toLowerCase() === selectedUUID
+
+                        // Player entry can be a string (uuid or name) or an object {uuid,name}
+                        if (typeof p === 'string') {
+                            const val = p.trim()
+                            // treat as UUID if it contains hex and optional dashes
+                            const valUuid = val.replace(/-/g, '').toLowerCase()
+                            if (selUuidNorm && /^[0-9a-f]{32}$/.test(valUuid) && valUuid === selUuidNorm) return true
+                            // otherwise compare as name (case-insensitive)
+                            if (selNameNorm && val.toLowerCase() === selNameNorm) return true
+                            return false
                         }
-                        if (p.name && selectedAcc.displayName) {
-                            return p.name === selectedAcc.displayName
+
+                        // object case
+                        if (p.uuid && selUuidNorm) {
+                            if (p.uuid.replace(/-/g, '').toLowerCase() === selUuidNorm) return true
                         }
+                        if (p.name && selNameNorm) {
+                            if (p.name.toLowerCase() === selNameNorm) return true
+                        }
+
                         return false
                     })
 

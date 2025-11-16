@@ -1,6 +1,6 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.5.6",
+  "version": "3.5.7",
   "description": "MultiGames Studios Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio <noreply@multigames-studio.fr>",
   "license": "MIT",
@@ -62,6 +62,7 @@
     "url": "git+https://github.com/wiltark/MGS-next-launcher"
   },
   "build": {
+    "productName": "MultiGames Studio Launcher",
     "publish": [
       {
         "provider": "github",
