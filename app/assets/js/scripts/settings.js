@@ -975,7 +975,7 @@ function parseModulesForUI(mdls, submodules, servConf, whitelistAllowed = true) 
               ).join("")}</div>`
             : "";
 
-        reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
+        reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod settingsReqMod ${
           submodules ? "settingsSubMod" : ""
         }" enabled>
           <div class="settingsModContent p-4 bg-gray-800/80 border border-gray-700 rounded-lg shadow-lg mb-3 group hover:bg-gray-800 transition-all">
@@ -1002,10 +1002,9 @@ function parseModulesForUI(mdls, submodules, servConf, whitelistAllowed = true) 
               ).join("")}</div>`
             : "";
 
-        // If the server/account is not allowed by whitelist, render toggles disabled
-        // and visually dim the container so the user cannot change optional mods.
-        const toggleDisabledAttr = whitelistAllowed ? "" : "disabled title='Whitelist active — votre compte n\'est pas autorisé.'";
-        const containerDisabledClasses = whitelistAllowed ? "" : " opacity-40 cursor-not-allowed ";
+        // Optional mods should always be toggleable by the user, regardless of whitelist status
+        const toggleDisabledAttr = "";
+        const containerDisabledClasses = "";
 
         optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod ${
           submodules ? "settingsSubMod" : ""
@@ -1049,16 +1048,32 @@ function bindModsToggleSwitch() {
   const sEls = settingsModsContainer.querySelectorAll("[formod]");
   Array.from(sEls).map((v, index, arr) => {
     v.onchange = () => {
+      const modId = v.getAttribute("formod");
+      const modElement = document.getElementById(modId);
+      
       if (v.checked) {
-        document
-          .getElementById(v.getAttribute("formod"))
-          .setAttribute("enabled", "");
+        if (modElement) modElement.setAttribute("enabled", "");
       } else {
-        document
-          .getElementById(v.getAttribute("formod"))
-          .removeAttribute("enabled");
+        // Prevent unchecking required mods
+        const isRequired = modElement && modElement.classList.contains("settingsReqMod");
+        if (isRequired) {
+          v.checked = true;
+          return;
+        }
+        if (modElement) modElement.removeAttribute("enabled");
       }
     };
+  });
+}
+
+/**
+ * Ensure all required mods are always enabled and not unchecked by the user.
+ */
+function ensureRequiredModsEnabled() {
+  const reqMods = settingsModsContainer.querySelectorAll(".settingsReqMod [formod]");
+  Array.from(reqMods).map((v) => {
+    v.checked = true;
+    v.disabled = true;
   });
 }
 
@@ -1070,6 +1085,31 @@ function saveModConfiguration() {
   const modConf = ConfigManager.getModConfiguration(serv);
   modConf.mods = _saveModConfiguration(modConf.mods);
   ConfigManager.setModConfiguration(serv, modConf);
+}
+
+/**
+ * Force download verification and update of mods for the current server.
+ * This ensures all selected mods are downloaded with integrity checks.
+ */
+async function forceModsDownloadCheck() {
+  const serv = ConfigManager.getSelectedServer();
+  const modConf = ConfigManager.getModConfiguration(serv);
+  
+  // Mark all enabled mods for re-download verification
+  modConf.forceValidation = true;
+  ConfigManager.setModConfiguration(serv, modConf);
+  ConfigManager.save();
+  
+  // Show confirmation overlay
+  setOverlayContent(
+    Lang.queryJS("settings.forceDownload.title") || "Vérification forcée",
+    Lang.queryJS("settings.forceDownload.message") || "Les mods seront téléchargés et vérifiés avant le prochain lancement.",
+    Lang.queryJS("settings.forceDownload.okButton") || "OK"
+  );
+  setOverlayHandler(() => {
+    toggleOverlay(false);
+  });
+  toggleOverlay(true);
 }
 
 /**
@@ -1396,6 +1436,48 @@ function bindShaderpackButton() {
   };
 }
 
+/**
+ * Bind the force download check button.
+ */
+function bindForceDownloadButton() {
+  const forceBtn = document.getElementById("settingsForceDownloadButton");
+  if (!forceBtn) return;
+  
+  forceBtn.onclick = async () => {
+    forceBtn.disabled = true;
+    forceBtn.innerHTML = Lang.queryJS("settings.forceDownloadButton") || "Vérification...";
+    
+    try {
+      await forceModsDownloadCheck();
+    } catch (err) {
+      setOverlayContent(
+        Lang.queryJS("settings.forceDownload.errorTitle") || "Erreur",
+        err && err.message ? err.message : "Erreur lors de la vérification forcée.",
+        Lang.queryJS("settings.forceDownload.okButton") || "OK"
+      );
+      setOverlayHandler(() => {
+        toggleOverlay(false);
+      });
+      toggleOverlay(true);
+    } finally {
+      forceBtn.disabled = false;
+      forceBtn.innerHTML = Lang.queryJS("settings.forceDownloadButton") || "Vérifier";
+    }
+  };
+}
+
+/**
+ * Bind the force download button to trigger mod validation.
+ */
+function bindForceDownloadButton() {
+  const forceBtn = document.getElementById("settingsForceDownloadButton");
+  if (!forceBtn) return;
+  
+  forceBtn.onclick = () => {
+    forceModsDownloadCheck();
+  };
+}
+
 // Server status bar functions.
 
 /**
@@ -1471,6 +1553,8 @@ async function prepareModsTab(first) {
   bindDropinModFileSystemButton();
   bindShaderpackButton();
   bindModsToggleSwitch();
+  ensureRequiredModsEnabled();
+  bindForceDownloadButton();
   await loadSelectedServerOnModsTab();
 }
 

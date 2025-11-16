@@ -268,6 +268,20 @@
               <p class="text-sm text-gray-400 mb-3"><%- lang('settings.requiredModsDesc') %></p>
               <div id="settingsReqModsContent" class="space-y-3"></div>
             </div>
+            
+            <!-- Force Download Check: button to verify mods -->
+            <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <h3 class="text-white font-medium mb-1"><%- lang('settings.forceDownloadTitle') || 'Vérifier les mods' %></h3>
+                  <p class="text-sm text-gray-400"><%- lang('settings.forceDownloadDesc') || 'Force la vérification et le téléchargement des mods avant le lancement' %></p>
+                </div>
+                <button id="settingsForceDownloadButton" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors whitespace-nowrap ml-4">
+                  <%- lang('settings.forceDownloadButton') || 'Vérifier' %>
+                </button>
+              </div>
+            </div>
+            
             <!-- Drop-in mods: keep add/remove controls together with a card list -->
             <div class="glass-sidebar bg-[#181818]/60    -gray-700 rounded-lg p-4">
               <div class="flex items-center justify-between mb-3">

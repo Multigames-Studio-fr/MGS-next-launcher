@@ -37,12 +37,13 @@
             {
               "id": "1.21.4-fabric-0.17.2",
               "name": "Fabric (version.json)",
-              "type": "VersionManifest",
+              "type": "File",
               "artifact": {
                 "size": 2847,
                 "MD5": "53139c891ca2126ab3285d6dd9093b0e",
                 "url": "https://multigames-studio.fr/repo/versions/1.21.4-fabric-0.17.2/1.21.4-fabric-0.17.2.json"
-              }
+              },
+              "path": "1.21.4-fabric-0.17.2.json"
             },
             {
               "id": "org.ow2.asm:asm:9.8",

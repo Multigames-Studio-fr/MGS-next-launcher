@@ -3,6 +3,7 @@
  */
 // Requirements
 const { URL }                 = require('url')
+const fs                      = require('fs-extra')
 // path is already declared in preloader.js
 const {
     MojangRestAPI,
@@ -1249,6 +1250,42 @@ async function dlAsync(login = true) {
             showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
         }
     })
+
+    // Check if forced validation of mods is required
+    const modConfig = ConfigManager.getModConfiguration(serv.rawServer.id)
+    let forceModValidation = false
+    if (modConfig && modConfig.forceValidation) {
+        forceModValidation = true
+        loggerLaunchSuite.info('Force validation flag detected, will re-download all mods.')
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.forcingModValidation') || 'Vérification forcée des mods en cours...')
+        try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
+        
+        try {
+            // Remove mod files to force re-download
+            const modsPath = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
+            const modStorePath = path.join(ConfigManager.getCommonDirectory(), 'modstore')
+            
+            // Delete mod directories if they exist
+            if (fs.existsSync(modsPath)) {
+                loggerLaunchSuite.info('Removing mod cache at: ' + modsPath)
+                fs.removeSync(modsPath)
+            }
+            if (fs.existsSync(modStorePath)) {
+                loggerLaunchSuite.info('Removing modstore cache at: ' + modStorePath)
+                fs.removeSync(modStorePath)
+            }
+            
+            // Clear the flag
+            modConfig.forceValidation = false
+            ConfigManager.setModConfiguration(serv.rawServer.id, modConfig)
+            ConfigManager.save()
+            
+            loggerLaunchSuite.info('Mod cache cleared, mods will be re-downloaded.')
+        } catch (err) {
+            loggerLaunchSuite.error('Error clearing mod cache:', err)
+            // Continue anyway
+        }
+    }
 
     // If the UI reports offline, skip validation and downloads to avoid
     // network-related validation errors (Transmitter errors) while offline.
