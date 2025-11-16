@@ -1466,18 +1466,6 @@ function bindForceDownloadButton() {
   };
 }
 
-/**
- * Bind the force download button to trigger mod validation.
- */
-function bindForceDownloadButton() {
-  const forceBtn = document.getElementById("settingsForceDownloadButton");
-  if (!forceBtn) return;
-  
-  forceBtn.onclick = () => {
-    forceModsDownloadCheck();
-  };
-}
-
 // Server status bar functions.
 
 /**

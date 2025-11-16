@@ -1287,6 +1287,33 @@ async function dlAsync(login = true) {
         }
     }
 
+    // Always delete and redownload FancyMenu config on launch
+    // This ensures FancyMenu is always fresh and up-to-date
+    // This must be done BEFORE file verification so FancyMenu files are included in the verification
+    try {
+        loggerLaunchSuite.info('Auto-cleaning FancyMenu config on launch...')
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.forcingFancyMenuRedownload') || 'Suppression de la configuration FancyMenu...')
+        try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
+        
+        // Remove FancyMenu config directory to force re-download from distribution
+        const instancePath = ConfigManager.getInstanceDirectory()
+        const fancymenuPath = path.join(instancePath, serv.rawServer.id, 'config', 'fancymenu')
+        
+        // Delete FancyMenu directory if it exists
+        if (fs.existsSync(fancymenuPath)) {
+            loggerLaunchSuite.info('Removing FancyMenu config at: ' + fancymenuPath)
+            fs.removeSync(fancymenuPath)
+            loggerLaunchSuite.info('FancyMenu config directory deleted. Will be re-downloaded from distribution.')
+        } else {
+            loggerLaunchSuite.info('FancyMenu config directory not found, will be downloaded fresh from distribution.')
+        }
+        
+        loggerLaunchSuite.info('FancyMenu will be re-downloaded from distribution during file verification.')
+    } catch (err) {
+        loggerLaunchSuite.error('Error clearing FancyMenu config:', err)
+        // Continue anyway - don't block launch on FancyMenu deletion error
+    }
+
     // If the UI reports offline, skip validation and downloads to avoid
     // network-related validation errors (Transmitter errors) while offline.
     const offlineDetectedForValidation = (typeof navigator !== 'undefined' && !navigator.onLine)
