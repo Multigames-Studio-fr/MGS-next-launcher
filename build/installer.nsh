@@ -3,6 +3,9 @@
 !include "WinMessages.nsh"
 !include "LogicLib.nsh"
 
+; Request UAC elevation when necessary (highestAvailable):
+RequestExecutionLevel highestAvailable
+
 Var SCOPE_USER_RADIO
 Var SCOPE_ALL_RADIO
 
