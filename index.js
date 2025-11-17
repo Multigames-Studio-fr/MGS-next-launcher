@@ -181,7 +181,7 @@ function safeQuitAndInstall(caller) {
                             const child = require('child_process')
                             // Use the sanitized app name for the updater directory path
                             const pendingBase = process.platform === 'win32' 
-                                ? path.join(os.homedir(), 'AppData', 'Local', 'MultiGamesStudioLauncher updater', 'pending')
+                                ? path.join(os.homedir(), 'AppData', 'Local', 'multigames-studio-launcher-updater', 'pending')
                                 : path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
                             let installerPath = null
                             try {
@@ -722,6 +722,35 @@ ipcMain.handle(SHELL_OPCODE.TRASH_ITEM, async (event, ...args) => {
 // Disable hardware acceleration.
 // https://electronjs.org/docs/tutorial/offscreen-rendering
 app.disableHardwareAcceleration()
+
+// Single instance lock: only allow one instance of the launcher to run at a time
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+    // If we don't have the lock, another instance is already running
+    // Close this instance and focus the existing one
+    try {
+        log && log.info && log.info('[Startup] Another instance is already running, exiting')
+    } catch (e) {}
+    app.quit()
+} else {
+    // Handle second instance attempt
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        try {
+            log && log.info && log.info('[Startup] Second instance attempt detected, focusing existing window')
+        } catch (e) {}
+        
+        // If a window exists, bring it to focus
+        if (win && !win.isDestroyed()) {
+            try {
+                if (win.isMinimized()) win.restore()
+                win.focus()
+            } catch (e) {
+                try { log && log.warn && log.warn('[Startup] Failed to focus existing window', e && e.message) } catch (ee) {}
+            }
+        }
+    })
+}
 
 
 const REDIRECT_URI_PREFIX = 'https://login.microsoftonline.com/common/oauth2/nativeclient?'
