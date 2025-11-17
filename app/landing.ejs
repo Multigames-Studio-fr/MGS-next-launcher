@@ -219,17 +219,7 @@
                     </button>
 
                 </div>
-                <!-- Floating centered News button (bottom of viewport) -->
-                <div id="newsFloatButton" role="button" aria-label="Actualités" tabindex="0">
-                    <div class="news-hero" id="openNewsFloat" style="background-image: url('./assets/images/mascotte.png');" aria-hidden="false">
-                        <div class="news-overlay">
-                            <div class="news-title">News</div>
-                            <svg class="news-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M6 9l6 6 6-6"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+
                 <br>
                 <!-- Remplace tout le bloc .play-instance par le bloc .info-starting-game ci-dessous -->
                 <div id="launch_details"
@@ -285,6 +275,17 @@
 
                 <!-- News moved to top-level include in app.ejs -->
             </div>
+                            <!-- Floating centered News button (bottom of viewport) -->
+                <div id="newsFloatButton" role="button" aria-label="Actualités" tabindex="0">
+                    <div class="news-hero" id="openNewsFloat" style="background-image: url('./assets/images/mascotte.png');" aria-hidden="false">
+                        <div class="news-overlay">
+                            <div class="news-title">News</div>
+                            <svg class="news-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
         </main>
         <!-- Sidebar verticale Multigames style -->
         <aside class="relative z-10 flex flex-col justify-between py-4 sm:py-6 md:py-8  min-h-screen items-end">
@@ -934,7 +935,7 @@
         /* Floating centered News hero (bottom) */
         #newsFloatButton {
             position: fixed;
-            bottom: -30;
+            bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 60;

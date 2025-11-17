@@ -1369,6 +1369,41 @@ async function dlAsync(login = true) {
         // Continuer le lancement même en cas d'erreur
     }
 
+    // Verify and download critical mod loader files (e.g., VersionManifest for Fabric)
+    setLaunchDetails('Vérification des fichiers du mod loader...')
+    try { await new Promise(resolve => setTimeout(resolve, 20)) } catch (e) { /* ignore */ }
+    
+    try {
+        // Check for Fabric VersionManifest
+        const fabricModule = serv.modules.find(m => m.rawModule.type === 'Fabric')
+        if (fabricModule && fabricModule.subModules) {
+            const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
+            if (versionManifestModule) {
+                const versionManifestPath = versionManifestModule.getArtifact().getPath()
+                if (!fs.existsSync(versionManifestPath)) {
+                    loggerLaunchSuite.warn(`VersionManifest not found at ${versionManifestPath}, downloading...`)
+                    setLaunchDetails('Téléchargement du fichier de version Fabric...')
+                    
+                    const artifact = versionManifestModule.getArtifact()
+                    try {
+                        await downloadFile(artifact.url, versionManifestPath)
+                        loggerLaunchSuite.info('VersionManifest downloaded successfully')
+                    } catch (downloadErr) {
+                        loggerLaunchSuite.error('Failed to download VersionManifest:', downloadErr)
+                        showLaunchFailure(
+                            Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
+                            `Impossible de télécharger le fichier de version Fabric. Veuillez vérifier votre connexion Internet. (${downloadErr.message})`
+                        )
+                        return
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        loggerLaunchSuite.error('Error during mod loader file verification:', err)
+        // Don't fail here, the recovery code below will handle it
+    }
+
     setLaunchDetails(Lang.queryJS('landing.dlAsync.preparingToLaunch'))
 
     const mojangIndexProcessor = new MojangIndexProcessor(
@@ -1382,7 +1417,47 @@ async function dlAsync(login = true) {
 
     // Give the renderer a tick before starting index/network operations
     try { await new Promise(resolve => setTimeout(resolve, 30)) } catch (e) { /* ignore */ }
-    const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+    
+    let modLoaderData
+    try {
+        modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+    } catch (err) {
+        loggerLaunchSuite.error('Failed to load mod loader version JSON, attempting recovery...', err)
+        
+        // Attempt to download the missing version manifest file
+        try {
+            setLaunchDetails('Téléchargement du fichier de version manquant...')
+            
+            // Find the VersionManifest module in the fabric loader
+            const fabricModule = serv.modules.find(m => m.rawModule.type === 'Fabric')
+            if (fabricModule && fabricModule.subModules) {
+                const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
+                if (versionManifestModule) {
+                    const artifact = versionManifestModule.getArtifact()
+                    loggerLaunchSuite.info(`Downloading missing version manifest from ${artifact.url}`)
+                    
+                    // Download the file
+                    await downloadFile(artifact.url, artifact.getPath())
+                    loggerLaunchSuite.info('Version manifest downloaded successfully')
+                    
+                    // Try loading again
+                    modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+                } else {
+                    throw new Error('VersionManifest module not found in Fabric configuration')
+                }
+            } else {
+                throw new Error('Fabric module not found in server configuration')
+            }
+        } catch (recoveryErr) {
+            loggerLaunchSuite.error('Failed to recover missing version manifest', recoveryErr)
+            showLaunchFailure(
+                Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
+                `Impossible de charger le fichier de version du mod loader. Veuillez vérifier votre connexion Internet et réessayer. (${recoveryErr.message})`
+            )
+            return
+        }
+    }
+    
     // allow a small tick before the potentially heavy version JSON parsing
     try { await new Promise(resolve => setTimeout(resolve, 20)) } catch (e) { /* ignore */ }
     const versionData = await mojangIndexProcessor.getVersionJson()
