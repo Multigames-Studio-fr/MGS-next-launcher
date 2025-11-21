@@ -1107,10 +1107,17 @@ async function downloadJava(effectiveJavaOptions, launchAfter = true) {
     }
 
     let received = 0
-    await downloadFile(asset.url, asset.path, ({ transferred }) => {
+    try {
+        await fs.ensureDir(path.dirname(asset.path))
+    } catch (e) {
+        console.warn('[Landing] Failed to ensure Java download directory exists:', path.dirname(asset.path), e)
+    }
+    console.log('[Landing] Downloading Java asset:', asset.url, '->', asset.path)
+    await safeDownload(asset.url, asset.path, ({ transferred }) => {
         received = transferred
         setDownloadPercentage(Math.trunc((transferred/asset.size)*100))
     })
+    console.log('[Landing] Java download finished, received bytes:', received)
     setDownloadPercentage(100)
 
     if(received != asset.size) {
@@ -1192,6 +1199,172 @@ function createOfflineAuth(selectedAccount){
     }
 }
 
+/**
+ * Compute MD5 of a file
+ * @param {string} filePath
+ * @returns {Promise<string>} hex md5
+ */
+async function computeFileMD5(filePath) {
+    try {
+        const buf = await fs.readFile(filePath)
+        return cryptoNode.createHash('md5').update(buf).digest('hex')
+    } catch (e) {
+        return null
+    }
+}
+
+
+/**
+ * Ensure distribution 'File' modules (config files) exist in the instance.
+ * If missing or MD5 mismatches, download and install the artifact into the instance.
+ * @param {Object} serv - distribution server wrapper
+ */
+async function checkAndRestoreFileModules(serv) {
+    const logger = LoggerUtil.getLogger('FileInstaller')
+    console.log('[FileInstaller] checkAndRestoreFileModules called for server:', serv && serv.rawServer && serv.rawServer.id)
+    if (!serv || !serv.rawServer || !Array.isArray(serv.modules)) return
+
+    const instanceBase = ConfigManager.getInstanceDirectory()
+    if (!instanceBase) return
+
+    for (const mod of serv.modules) {
+        try {
+            if (!mod || !mod.rawModule) continue
+            if (mod.rawModule.type !== 'File') continue
+
+            // Get artifact object
+            const artifact = (typeof mod.getArtifact === 'function') ? mod.getArtifact() : (mod.rawModule && mod.rawModule.artifact ? mod.rawModule.artifact : null)
+            if (!artifact) {
+                logger.warn && logger.warn('File module has no artifact', mod.rawModule && mod.rawModule.id)
+                continue
+            }
+
+            // Determine relative target path inside instance (e.g., config/foo/bar.txt)
+            const targetRel = (artifact.path) || (mod.rawModule && mod.rawModule.artifact && mod.rawModule.artifact.path)
+            if (!targetRel) {
+                logger.warn && logger.warn('File module artifact missing path', mod.rawModule && mod.rawModule.id)
+                continue
+            }
+
+            // Only handle config/ paths
+            if (!/^config[\\\/]/i.test(targetRel)) continue
+
+            const dest = path.join(instanceBase, serv.rawServer.id, targetRel)
+
+            let needsInstall = false
+            if (!fs.existsSync(dest)) {
+                needsInstall = true
+                logger.info && logger.info('Missing config file, will install:', targetRel)
+            } else if (artifact.MD5 || artifact.md5 || artifact.Md5) {
+                const expected = (artifact.MD5 || artifact.md5 || artifact.Md5 || '').toString().toLowerCase()
+                const actual = await computeFileMD5(dest)
+                if (!actual || actual.toLowerCase() !== expected) {
+                    needsInstall = true
+                    logger.info && logger.info('Config file MD5 mismatch, will reinstall:', targetRel)
+                }
+            }
+
+            if (!needsInstall) {
+                console.log('[FileInstaller] OK:', targetRel, 'exists and matches')
+                continue
+            }
+
+            // Download artifact to temp location then copy to destination
+            const tmpDir = path.join(ConfigManager.getCommonDirectory(), 'file-cache')
+            await fs.ensureDir(tmpDir)
+            const tmpPath = path.join(tmpDir, path.basename(targetRel))
+
+            try {
+                if (!artifact.url) {
+                    logger.warn && logger.warn('Artifact URL missing for', targetRel)
+                    console.warn('[FileInstaller] Artifact URL missing for', targetRel, 'artifact=', artifact)
+                    continue
+                }
+
+                console.log('[FileInstaller] Downloading', artifact.url, 'to', tmpPath)
+                // downloadFile is available in this module
+                await safeDownload(artifact.url, tmpPath)
+
+                // validate MD5 if available
+                if (artifact.MD5 || artifact.md5 || artifact.Md5) {
+                    const expected = (artifact.MD5 || artifact.md5 || artifact.Md5 || '').toString().toLowerCase()
+                    const actual = await computeFileMD5(tmpPath)
+                    if (!actual || actual.toLowerCase() !== expected) {
+                        logger.error && logger.error('Downloaded file MD5 does not match expected for', targetRel)
+                        console.error('[FileInstaller] MD5 mismatch for downloaded file', tmpPath, 'expected=', expected, 'actual=', actual)
+                        continue
+                    }
+                }
+
+                await fs.ensureDir(path.dirname(dest))
+                await fs.copy(tmpPath, dest, { overwrite: true })
+                logger.info && logger.info('Installed config file:', dest)
+                console.log('[FileInstaller] Installed config file:', dest)
+            } catch (e) {
+                logger.error && logger.error('Failed to download/install config file', targetRel, e)
+                console.error('[FileInstaller] Failed to download/install config file', targetRel, e)
+            }
+        } catch (e) {
+            LoggerUtil.getLogger('FileInstaller').debug && LoggerUtil.getLogger('FileInstaller').debug('Error processing file module', e)
+        }
+    }
+}
+
+
+/**
+ * Safely obtain the artifact object from a module wrapper or raw module.
+ * @param {Object} mod
+ */
+function getModuleArtifact(mod) {
+    if (!mod) return null
+    try {
+        if (typeof mod.getArtifact === 'function') return mod.getArtifact()
+    } catch (e) {}
+    if (mod.artifact) return mod.artifact
+    if (mod.rawModule && mod.rawModule.artifact) return mod.rawModule.artifact
+    return null
+}
+
+
+/**
+ * Resolve a local filesystem path for an artifact. Uses artifact.getPath() if available,
+ * otherwise falls back to common directory + basename(url) or artifact.path.
+ * @param {Object} artifact
+ */
+function resolveArtifactLocalPath(artifact) {
+    if (!artifact) return null
+    try {
+        if (typeof artifact.getPath === 'function') return artifact.getPath()
+    } catch (e) {}
+    if (artifact.path && fs.existsSync(artifact.path)) return artifact.path
+    if (artifact.url) return path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url))
+    if (artifact.path) return path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.path))
+    return null
+}
+
+/**
+ * Wrapper around downloadFile to add logging and better error context.
+ * @param {string} url
+ * @param {string} dest
+ * @param {function} progressCb
+ */
+async function safeDownload(url, dest, progressCb) {
+    const lg = LoggerUtil.getLogger('Downloader')
+    try {
+        if (!url) throw new Error('safeDownload: missing url')
+        if (!dest) throw new Error('safeDownload: missing destination path')
+        try { await fs.ensureDir(path.dirname(dest)) } catch (e) { lg && lg.warn && lg.warn('safeDownload: ensureDir failed', path.dirname(dest), e) }
+        console.log('[Downloader] Starting', url, '->', dest)
+        await downloadFile(url, dest, progressCb)
+        console.log('[Downloader] Completed', url, '->', dest)
+        return dest
+    } catch (e) {
+        lg && lg.error && lg.error('safeDownload failed for', url, '->', dest, e)
+        console.error('[Downloader] failed for', url, '->', dest, e)
+        throw e
+    }
+}
+
 async function dlAsync(login = true) {
 
     // Login parameter is temporary for debug purposes. Allows testing the validation/downloads without
@@ -1214,6 +1387,19 @@ async function dlAsync(login = true) {
         loggerLaunchSuite.error('Unable to refresh distribution index.', err)
         showLaunchFailure(Lang.queryJS('landing.dlAsync.fatalError'), Lang.queryJS('landing.dlAsync.unableToLoadDistributionIndex'))
         return
+    }
+
+    // Before heavy validation/download, ensure distribution-provided "File" modules
+    // (typically entries with artifact.path starting with "config/") are present
+    // in the instance directory. If missing or modified (MD5 mismatch) they will
+    // be re-downloaded and installed.
+    try {
+        const servForCheck = distro.getServerById(ConfigManager.getSelectedServer())
+        if (servForCheck) {
+            try { await checkAndRestoreFileModules(servForCheck) } catch (e) { loggerLanding && loggerLanding.warn && loggerLanding.warn('checkAndRestoreFileModules failed', e) }
+        }
+    } catch (e) {
+        loggerLanding && loggerLanding.debug && loggerLanding.debug('Error during pre-launch file module check', e)
     }
 
     const serv = distro.getServerById(ConfigManager.getSelectedServer())
@@ -1379,15 +1565,21 @@ async function dlAsync(login = true) {
         if (fabricModule && fabricModule.subModules) {
             const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
             if (versionManifestModule) {
-                const versionManifestPath = versionManifestModule.getArtifact().getPath()
-                if (!fs.existsSync(versionManifestPath)) {
-                    loggerLaunchSuite.warn(`VersionManifest not found at ${versionManifestPath}, downloading...`)
+                const artifactObj = getModuleArtifact(versionManifestModule)
+                const versionManifestPath = resolveArtifactLocalPath(artifactObj)
+                if (!versionManifestPath || !fs.existsSync(versionManifestPath)) {
+                    loggerLaunchSuite.warn(`VersionManifest not found at ${versionManifestPath || '<unresolved>'}, downloading...`)
                     setLaunchDetails('Téléchargement du fichier de version Fabric...')
                     
-                    const artifact = versionManifestModule.getArtifact()
+                    const artifact = artifactObj
                     try {
-                        await downloadFile(artifact.url, versionManifestPath)
+                        const targetPath = versionManifestPath || (artifact && artifact.url ? path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url)) : null)
+                        if (!artifact || !artifact.url || !targetPath) throw new Error('Missing artifact URL or target path')
+                        try { await fs.ensureDir(path.dirname(targetPath)) } catch (e) { console.warn('[Landing] ensureDir failed for', path.dirname(targetPath), e) }
+                        console.log('[Landing] Downloading VersionManifest:', artifact.url, '->', targetPath)
+                        await safeDownload(artifact.url, targetPath)
                         loggerLaunchSuite.info('VersionManifest downloaded successfully')
+                        console.log('[Landing] VersionManifest download complete:', targetPath)
                     } catch (downloadErr) {
                         loggerLaunchSuite.error('Failed to download VersionManifest:', downloadErr)
                         showLaunchFailure(
@@ -1433,13 +1625,18 @@ async function dlAsync(login = true) {
             if (fabricModule && fabricModule.subModules) {
                 const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
                 if (versionManifestModule) {
-                    const artifact = versionManifestModule.getArtifact()
-                    loggerLaunchSuite.info(`Downloading missing version manifest from ${artifact.url}`)
-                    
+                    const artifact = getModuleArtifact(versionManifestModule)
+                    loggerLaunchSuite.info(`Downloading missing version manifest from ${artifact && artifact.url}`)
+
                     // Download the file
-                    await downloadFile(artifact.url, artifact.getPath())
+                    const target = resolveArtifactLocalPath(artifact) || (artifact && artifact.url ? path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url)) : null)
+                    if (!artifact || !artifact.url || !target) throw new Error('Missing artifact URL or target path for version manifest')
+                    try { await fs.ensureDir(path.dirname(target)) } catch (e) { console.warn('[Landing] ensureDir failed for', path.dirname(target), e) }
+                    console.log('[Landing] Downloading missing VersionManifest:', artifact.url, '->', target)
+                    await safeDownload(artifact.url, target)
                     loggerLaunchSuite.info('Version manifest downloaded successfully')
-                    
+                    console.log('[Landing] VersionManifest recovery download complete:', target)
+
                     // Try loading again
                     modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
                 } else {
@@ -2426,6 +2623,8 @@ function populateFallbackSidebar(instances, selectedServerId) {
     bindSidebarInstanceEvents()
     console.log('[SIDEBAR] Fallback sidebar populated')
 }
+
+
 
 // Make function globally accessible
 window.populateSidebarInstances = populateSidebarInstances
