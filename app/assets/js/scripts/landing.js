@@ -1310,6 +1310,53 @@ async function checkAndRestoreFileModules(serv) {
     }
 }
 
+/**
+ * Backup user-provided resourcepacks before aggressive repair runs.
+ * Copies the entire 'resourcepacks' folder to a backup location.
+ * @param {Object} serv
+ * @returns {string|null} backupDir or null
+ */
+async function backupResourcePacks(serv) {
+    try {
+        const instanceBase = ConfigManager.getInstanceDirectory()
+        if (!instanceBase) return null
+        const rpDir = path.join(instanceBase, serv.rawServer.id, 'resourcepacks')
+        if (!fs.existsSync(rpDir)) return null
+
+        const backupDir = path.join(ConfigManager.getCommonDirectory(), 'backups', serv.rawServer.id, `resourcepacks-${Date.now()}`)
+        await fs.ensureDir(path.dirname(backupDir))
+        console.log('[ResourcePackBackup] Backing up resourcepacks', rpDir, '->', backupDir)
+        // Use copy to avoid removing originals in case of failures
+        await fs.copy(rpDir, backupDir)
+        return backupDir
+    } catch (e) {
+        console.error('[ResourcePackBackup] Failed to backup resourcepacks', e)
+        return null
+    }
+}
+
+/**
+ * Restore backed-up resourcepacks after repair. Will not overwrite existing files.
+ * @param {Object} serv
+ * @param {string} backupDir
+ */
+async function restoreResourcePacks(serv, backupDir) {
+    try {
+        if (!backupDir || !fs.existsSync(backupDir)) return
+        const instanceBase = ConfigManager.getInstanceDirectory()
+        if (!instanceBase) return
+        const rpDir = path.join(instanceBase, serv.rawServer.id, 'resourcepacks')
+        await fs.ensureDir(rpDir)
+        console.log('[ResourcePackBackup] Restoring resourcepacks from', backupDir, '->', rpDir)
+        // Copy with overwrite = false to preserve any files placed by FullRepair (distribution-provided)
+        await fs.copy(backupDir, rpDir, { overwrite: false, errorOnExist: false })
+        // Optionally remove backup (keep for diagnostics)
+        try { await fs.remove(backupDir) } catch (e) { /* ignore */ }
+    } catch (e) {
+        console.error('[ResourcePackBackup] Failed to restore resourcepacks', e)
+    }
+}
+
 
 /**
  * Safely obtain the artifact object from a module wrapper or raw module.
@@ -1477,6 +1524,7 @@ async function dlAsync(login = true) {
     // network-related validation errors (Transmitter errors) while offline.
     const offlineDetectedForValidation = (typeof navigator !== 'undefined' && !navigator.onLine)
 
+    let _resourcePackBackup = null
     if (offlineDetectedForValidation) {
         loggerLaunchSuite.info('Offline detected — skipping file validation and downloads.')
         // Update UI to reflect offline skipping
@@ -1491,6 +1539,10 @@ async function dlAsync(login = true) {
         try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
         let invalidFileCount = 0
         try {
+            try {
+                _resourcePackBackup = await backupResourcePacks(serv)
+                if (_resourcePackBackup) loggerLaunchSuite.info('Resourcepacks backed up to ' + _resourcePackBackup)
+            } catch (e) { loggerLaunchSuite.warn('Failed to backup resourcepacks, continuing', e) }
             invalidFileCount = await fullRepairModule.verifyFiles(percent => {
                 setLaunchPercentage(percent)
             })
@@ -1527,6 +1579,14 @@ async function dlAsync(login = true) {
     remote.getCurrentWindow().setProgressBar(-1)
 
     fullRepairModule.destroyReceiver()
+    try {
+        if (_resourcePackBackup) {
+            await restoreResourcePacks(serv, _resourcePackBackup)
+            loggerLaunchSuite.info('Resourcepacks restored from backup')
+        }
+    } catch (e) {
+        loggerLaunchSuite.warn('Failed to restore resourcepacks from backup', e)
+    }
 
     // Vérification des mods de triche avant le lancement
     setLaunchDetails('Vérification des mods de triche...')
