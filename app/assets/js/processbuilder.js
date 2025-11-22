@@ -117,6 +117,13 @@ class ProcessBuilder {
             data.trim().split('\n').forEach(line => {
                 console.log(`\x1b[31m[Minecraft]\x1b[0m ${line}`)
                 logMonitor(line) // Surveiller les erreurs
+                // Detect and handle MCEF/mcef-libraries related errors (native load failures, etc.)
+                try {
+                    this._handleMcefLibrariesError(line)
+                } catch (e) {
+                    logger.error('Error in MCEF error handler invocation:', e)
+                }
+
                 if (line.includes('Failed to retrieve profile key pair') && line.includes('Status: 401')) {
                     logger.warn('Detected profile key pair retrieval failure, attempting to refresh token...')
                     // Try to refresh tokens. If refresh fails, open MS login window
@@ -222,6 +229,54 @@ class ProcessBuilder {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Handle errors related to MCEF native libraries. If a log line indicates a problem
+     * with `mcef-libraries`, attempt to remove the `mcef-libraries` directory for the
+     * current instance to allow a clean re-download/extraction on next run.
+     *
+     * This is intentionally defensive: only runs when logs clearly reference
+     * `mcef-libraries` and known native load error messages.
+     *
+     * @param {string} line A single log line from the Minecraft process stderr/stdout
+     */
+    _handleMcefLibrariesError(line) {
+        try {
+            if (!line || typeof line !== 'string') return
+
+            // Only act for lines referencing mcef-libraries and common native load errors
+            if (!/mcef-libraries/i.test(line)) return
+            if (!/(UnsatisfiedLinkError|Can'?t load library|MCEF not initialized|MCEF not initialized yet)/i.test(line)) return
+
+            // Try to extract an absolute path that contains mods/mcef-libraries
+            const winRegex = /([A-Za-z]:[\\/][^\n]*?mods[\\/]mcef-libraries(?:[\\/][^\s:]*)?)/i
+            const nixRegex = /(\/[^\s]*?mods\/mcef-libraries(?:\/[^\s:]*)?)/i
+            let match = line.match(winRegex) || line.match(nixRegex)
+            if (!match || !match[1]){
+                logger.warn('MCEF error detected but could not parse path from log line:', line)
+                return
+            }
+
+            let fullPath = match[1].replace(/["']/g, '')
+
+            // Normalize to the mcef-libraries root directory
+            const idx = fullPath.toLowerCase().indexOf('mcef-libraries')
+            if (idx > -1) {
+                fullPath = fullPath.substring(0, idx + 'mcef-libraries'.length)
+            }
+
+            logger.warn('Detected MCEF libraries error; removing directory to allow retry:', fullPath)
+            fs.remove(fullPath, (err) => {
+                if (err) {
+                    logger.error('Failed to remove mcef-libraries directory:', fullPath, err)
+                } else {
+                    logger.info('Successfully removed mcef-libraries directory:', fullPath)
+                }
+            })
+        } catch (err) {
+            logger.error('Error while handling mcef-libraries cleanup:', err)
         }
     }
 

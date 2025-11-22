@@ -2323,16 +2323,8 @@ async function prepareSettings(first = false) {
  * Prepare the resource packs tab.
  */
 function prepareResourcePacksTab() {
-  try {
-    // Import the resource pack settings module
-    const resourcePackModule = require('./assets/js/scripts/settings-resourcepacks');
-    
-    if (typeof initResourcePackSettings === 'function') {
-      initResourcePackSettings();
-    }
-  } catch (error) {
-    console.error('Failed to load resource pack settings module:', error);
-  }
+  // Resource pack settings system has been removed.
+  // This stub prevents attempts to load the removed module.
 }
 
 // Prepare the settings UI on startup.
