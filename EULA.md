@@ -1,171 +1,165 @@
-# ACCORD DE LICENCE UTILISATEUR FINAL (EULA)
-## MultiGames Studio Launcher
 
----
+ # ACCORD DE LICENCE UTILISATEUR FINAL (EULA)
+ ## MultiGames Studio Launcher
 
-## AVIS IMPORTANT - NON-AFFILIATION À MOJANG
+ ---
 
-**MultiGames Studio et ce launcher ne sont pas affiliés, approuvés ou parrainés par Mojang AB, Mojang Studios, ou Microsoft Corporation.** "Minecraft" est une marque déposée de Mojang AB. Tous les droits relatifs à Minecraft appartiennent à Mojang Studios / Microsoft Corporation.
+ ## AVIS IMPORTANT - NON-AFFILIATION A MOJANG
 
-Ce launcher est un logiciel tiers indépendant conçu pour faciliter l'installation et la gestion de serveurs Minecraft personnalisés et de modifications autorisées par Mojang.
+ **MultiGames Studio et ce launcher ne sont pas affilies, approuves ou parraines par Mojang AB, Mojang Studios, ou Microsoft Corporation.** "Minecraft" est une marque deposee de Mojang AB. Tous les droits relatifs a Minecraft appartiennent a Mojang Studios / Microsoft Corporation.
 
----
+ Ce launcher est un logiciel tiers independant concu pour faciliter l'installation et la gestion de serveurs Minecraft personnalises et de modifications autorisees par Mojang.
 
-## SECTION 1 : DÉFINITIONS ET CHAMP D'APPLICATION
+ ---
 
-**1.1 Parties contractantes**
+ ## SECTION 1 : DEFINITIONS ET CHAMP D'APPLICATION
 
-Cet Accord de Licence Utilisateur Final ("EULA") est conclu entre :
-- **MultiGames Studio** (le "Fournisseur"), responsable du développement et de la distribution du MultiGames Studio Launcher
-- **Vous** (l'Utilisateur), toute personne physique utilisant ce logiciel
+ **1.1 Parties contractantes**
 
-**1.2 Composants couverts**
+ Cet Accord de Licence Utilisateur Final ("EULA") est conclu entre :
+ - **MultiGames Studio** (le "Fournisseur"), responsable du developpement et de la distribution du MultiGames Studio Launcher
+ - **Vous** (l'Utilisateur), toute personne physique utilisant ce logiciel
 
-Cet EULA s'applique exclusivement aux composants propriétaires de MultiGames Studio, notamment :
-- Le logiciel du launcher (MultiGames Studio Launcher)
-- Les configurations personnalisées
-- Les thèmes et interfaces utilisateur propriétaires
-- Tous les éléments graphiques originaux et les actifs multimédias
-- Les systèmes de gestion de mods, configurations de serveur et outils d'installation
-- Les fichiers de configuration et de distribution
+ **1.2 Composants couverts**
 
-**1.3 Composants non couverts**
+ Les elements suivants sont couverts par cet EULA :
+ - Le logiciel du launcher (MultiGames Studio Launcher)
+ - Les configurations personnalisees
+ - Les themes et interfaces utilisateur proprietaires
+ - Tous les elements graphiques originaux et les actifs multimédias
+ - Les systemes de gestion de mods, configurations de serveur et outils d'installation
+ - Les fichiers de configuration et de distribution
 
-Les éléments suivants ne sont **pas** couverts par cet EULA et restent sous leurs licences respectives :
-- Minecraft et tous ses composants (sous licence Mojang/Microsoft)
-- Les bibliothèques open-source incluses (sous licences MIT, Apache 2.0, GPL, etc.)
-- Les mods tiers et modifications de la communauté (sous leurs licences respectives)
-- Les actifs Minecraft originaux (textures, sons, modèles - propriété de Mojang/Microsoft)
+ **1.3 Composants non couverts**
 
----
+ Les elements suivants ne sont pas couverts par cet EULA et restent sous leurs licences respectives :
+ - Minecraft et tous ses composants (sous licence Mojang/Microsoft)
+ - Les bibliotheques open-source incluses (sous licences MIT, Apache 2.0, GPL, etc.)
+ - Les mods tiers et modifications de la communaute (sous leurs licences respectives)
+ - Les actifs Minecraft originaux (textures, sons, modeles - propriete de Mojang/Microsoft)
 
-## SECTION 2 : CONFORMITÉ À MINECRAFT EULA
+ ---
 
-**2.1 Respect des conditions Mojang**
+ ## SECTION 2 : CONFORMITE A MINECRAFT EULA
 
-En utilisant MultiGames Studio Launcher, vous acceptez de vous conformer à l'Accord de Licence Utilisateur Final de Minecraft publié par Mojang Studios à l'adresse : https://www.minecraft.net/en-us/eula
+ **2.1 Respect des conditions Mojang**
 
-Cet accord inclut notamment :
-- L'interdiction d'utiliser Minecraft à des fins commerciales sans autorisation explicite de Mojang
-- L'interdiction de redistribuer ou de revendre les fichiers de Minecraft
-- L'interdiction de contrefaire la propriété intellectuelle de Minecraft
-- Le respect des conditions relatives aux serveurs hébergés
-- Le respect des conditions d'utilisation des services Microsoft
+ En utilisant MultiGames Studio Launcher, vous acceptez de vous conformer a l'Accord de Licence Utilisateur Final de Minecraft publie par Mojang Studios a l'adresse : https://www.minecraft.net/en-us/eula
 
-**2.2 Propriété intellectuelle de Mojang**
+ Cet accord inclut notamment :
+ - L'interdiction d'utiliser Minecraft a des fins commerciales sans autorisation explicite de Mojang
+ - L'interdiction de redistribuer ou de revendre les fichiers de Minecraft
+ - L'interdiction de contrefaire la propriete intellectuelle de Minecraft
+ - Le respect des conditions relatives aux serveurs heberges
+ - Le respect des conditions d'utilisation des services Microsoft
 
-Toute utilisation du contenu Minecraft, des actifs de jeu, ou de technologies Minecraft doit être conforme aux politiques de Mojang Studios. MultiGames Studio ne peut en aucun cas vous autoriser à contrevenir à l'EULA de Minecraft.
+ **2.2 Propriete intellectuelle de Mojang**
 
-**2.3 Services Microsoft**
+ Toute utilisation du contenu Minecraft, des actifs de jeu, ou de technologies Minecraft doit etre conforme aux politiques de Mojang Studios. MultiGames Studio ne peut en aucun cas vous autoriser a contrevenir a l'EULA de Minecraft.
 
-L'utilisation de ce launcher implique l'authentification auprès des services Microsoft/Mojang. Vous acceptez également les Conditions de Service de Microsoft et les Conditions d'Utilisation de Mojang Studios.
+ **2.3 Services Microsoft**
 
----
+ L'utilisation de ce launcher implique l'authentification aupres des services Microsoft/Mojang. Vous acceptez egalement les Conditions de Service de Microsoft et les Conditions d'Utilisation de Mojang Studios.
 
-## SECTION 3 : LICENCE D'UTILISATION
+ ---
 
-**3.1 Accordée à vous**
+ ## SECTION 3 : LICENCE D'UTILISATION
 
-MultiGames Studio vous accorde une licence personnelle, non-exclusive, non-transférable, révocable et limitée pour :
-- Télécharger et installer le MultiGames Studio Launcher sur votre (vos) appareil(s)
-- Utiliser le launcher pour gérer des serveurs Minecraft et des mods autorisés
-- Accéder aux serveurs MultiGames Studio configurés officiellement
-- Utiliser les fonctionnalités de gestion de profils et de configurations
-- Participer à la communauté de MultiGames Studio dans le respect de cet EULA
+ **3.1 Accordee a vous**
 
-**3.2 Limitations de la licence**
+ MultiGames Studio vous accorde une licence personnelle, non-exclusive, non-transferrable, revocable et limitee pour :
+ - Telecharger et installer le MultiGames Studio Launcher sur votre (vos) appareil(s)
+ - Utiliser le launcher pour gerer des serveurs Minecraft et des mods autorises
+ - Acceder aux serveurs MultiGames Studio configures officiellement
+ - Utiliser les fonctionnalites de gestion de profils et de configurations
+ - Participer a la communaute de MultiGames Studio dans le respect de cet EULA
 
-Vous ne pouvez **pas** :
-- Reproduire, dupliquer, copier ou redistribuer le launcher ou ses composants propriétaires
-- Modifier, adapter, traduire ou créer des œuvres dérivées du launcher
-- Désassembler, décompiler, inverser l'ingénierie ou contourner les protections techniques
-- Utiliser le launcher à des fins commerciales sans accord écrit explicite
-- Intégrer les composants propriétaires dans d'autres logiciels
-- Louer, prêter, céder ou donner en sous-licence le launcher
-- Utiliser le launcher pour contourner les protections Minecraft
-- Extraire ou utiliser le code source propriétaire
+ **3.2 Limitations de la licence**
 
-**3.3 Restrictions commerciales**
+ Vous ne pouvez pas :
+ - Reproduire, dupliquer, copier ou redistribuer le launcher ou ses composants proprietaires
+ - Modifier, adapter, traduire ou creer des oeuvres derivees du launcher
+ - Desassembler, decompiler, inverser l'ingenierie ou contourner les protections techniques
+ - Utiliser le launcher a des fins commerciales sans accord ecrit explicite
+ - Integrer les composants proprietaires dans d'autres logiciels
+ - Louer, preter, ceder ou donner en sous-licence le launcher
+ - Utiliser le launcher pour contourner les protections Minecraft
+ - Extraire ou utiliser le code source proprietaire
 
-Sans accord écrit préalable et signé de MultiGames Studio :
-- L'utilisation commerciale du launcher est interdite
-- La vente ou la monétisation du launcher ou de ses composants est strictement interdite
-- L'exploitation du launcher pour la fourniture de services rémunérés est interdite
-- La revente ou la distribution contre rémunération est interdite
-- L'intégration à des services payants est interdite sans autorisation expresse
+ **3.3 Restrictions commerciales**
 
-Pour les demandes de licences commerciales, veuillez contacter : contact@multigames-studio.fr
+ Sans accord ecrit prealable et signe de MultiGames Studio :
+ - L'utilisation commerciale du launcher est interdite
+ - La vente ou la monetisation du launcher ou de ses composants est strictement interdite
+ - L'exploitation du launcher pour la fourniture de services remuneres est interdite
+ - La revente ou la distribution contre remuneration est interdite
+ - L'integration a des services payants est interdite sans autorisation expresse
 
----
+ Pour les demandes de licences commerciales, veuillez contacter : contact@multigames-studio.fr
 
-## SECTION 4 : VOS RESPONSABILITÉS
+ ---
 
-**4.1 Utilisation légitime**
+ ## SECTION 4 : VOS RESPONSABILITES
 
-Vous vous engagez à :
-- Utiliser le launcher uniquement à des fins légales et licites
-- Respecter toutes les lois applicables dans votre juridiction
-- Respecter l'EULA complet de Minecraft de Mojang Studios
-- Respecter les conditions d'utilisation de Microsoft et Mojang
-- Respecter les droits de propriété intellectuelle d'autrui
-- Ne pas utiliser le launcher pour :
-  - Tricher ou utiliser des logiciels de triche en ligne
-  - Contourner les systèmes de sécurité Minecraft ou MultiGames
-  - Accéder à des comptes non autorisés
-  - Distribuer des malwares ou contenu malveillant
-  - Harceler, menacer ou abuser d'autres utilisateurs
-  - Spammer ou effectuer des attaques de déni de service
-  - Violer les conditions de service de Minecraft
+ **4.1 Utilisation legitime**
 
-**4.2 Contenu généré par l'utilisateur**
+ Vous vous engagez a :
+ - Utiliser le launcher uniquement a des fins legales et licites
+ - Respecter toutes les lois applicables dans votre juridiction
+ - Respecter l'EULA complet de Minecraft de Mojang Studios
+ - Respecter les conditions d'utilisation de Microsoft et Mojang
+ - Respecter les droits de propriete intellectuelle d'autrui
+ - Ne pas utiliser le launcher pour :
+   - Tricher ou utiliser des logiciels de triche en ligne
+   - Contourner les systemes de securite Minecraft ou MultiGames
+   - Acceder a des comptes non autorises
+   - Distribuer des malwares ou contenu malveillant
+   - Harceler, menacer ou abuser d'autres utilisateurs
+   - Spammer ou effectuer des attaques de deni de service
+   - Violer les conditions de service de Minecraft
 
-Les modifications, configurations et contenus que vous créez restent votre propriété. Cependant :
-- MultiGames Studio peut utiliser vos retours pour améliorer le service
-- Les configurations partagées publiquement peuvent être utilisées par d'autres utilisateurs
-- Vous êtes responsable de tout contenu que vous créez ou partagez
-- Vous garantissez que votre contenu ne viole aucun droit de propriété intellectuelle
+ **4.2 Contenu genere par l'utilisateur**
 
-**4.3 Mises à jour et compatibilité**
+ Les modifications, configurations et contenus que vous creez restent votre propriete. Cependant :
+ - MultiGames Studio peut utiliser vos retours pour ameliorer le service
+ - Les configurations partagees publiquement peuvent etre utilisees par d'autres utilisateurs
+ - Vous etes responsable de tout contenu que vous creez ou partagez
+ - Vous garantissez que votre contenu ne viole aucun droit de propriete intellectuelle
 
-- Les mises à jour peuvent être obligatoires pour continuer à accéder aux serveurs MultiGames
-- Certaines versions anciennes du launcher peuvent cesser de fonctionner avec nos serveurs
-- Vous acceptez de maintenir une version à jour du launcher pour une expérience optimale
-- Les mises à jour peuvent être téléchargées automatiquement sans votre intervention explicite
+ **4.3 Mises a jour et compatibilite**
 
-**4.4 Respect des règles du serveur**
+ - Les mises a jour peuvent etre obligatoires pour continuer a acceder aux serveurs MultiGames
+ - Certaines versions anciennes du launcher peuvent cesser de fonctionner avec nos serveurs
+ - Vous acceptez de maintenir une version a jour du launcher pour une experience optimale
+ - Les mises a jour peuvent etre telechargees automatiquement sans votre intervention explicite
 
-Vous acceptez de respecter l'ensemble des règles et des conditions imposées par les serveurs MultiGames Studio auxquels vous vous connectez.
+ **4.4 Respect des regles du serveur**
 
----
+ Vous acceptez de respecter l'ensemble des regles et des conditions imposees par les serveurs MultiGames Studio auxquels vous vous connectez.
 
-## SECTION 5 : DONNÉES ET CONFIDENTIALITÉ
+ ---
 
-**5.1 Collecte de données**
+ ## SECTION 5 : DONNEES ET CONFIDENTIALITE
 
-MultiGames Studio Launcher collecte et stocke les informations suivantes :
-- Votre profil Minecraft (UUID, nom d'utilisateur, profil)
-- Votre configuration de serveur et vos préférences
-- Vos données de lancement (versions installées, mods activés, configurations, etc.)
-- Les données de diagnostique et les logs d'erreur
-- Les horodatages de vos connexions et activités
-- L'adresse IP de votre appareil (stockée par les serveurs d'accueil)
-- Les données d'utilisation des fonctionnalités du launcher
+ **5.1 Collecte de donnees**
 
-**5.2 Utilisation des données**
+ MultiGames Studio Launcher collecte et stocke les informations suivantes :
+ - Votre profil Minecraft (UUID, nom d'utilisateur, profil)
+ - Votre configuration de serveur et vos preferences
+ - Vos donnees de lancement (versions installees, mods actives, configurations, etc.)
+ - Les donnees de diagnostique et les logs d'erreur
+ - Les horodatages de vos connexions et activites
+ - L'adresse IP de votre appareil (stockee par les serveurs d'accueil)
+ - Les donnees d'utilisation des fonctionnalites du launcher
 
-Ces données sont utilisées exclusivement pour :
-- Fournir et améliorer les services du launcher
-- Améliorer les performances, la stabilité et la sécurité
-- Détecter et prévenir les fraudes, les abus et les activités malveillantes
-- Maintenir l'intégrité des serveurs MultiGames
-- Se conformer aux obligations légales et réglementaires
-- Répondre aux demandes légales et exécutions judiciaires
+ **5.2 Utilisation des donnees**
 
-**5.3 Partage de données**
-
-Nous partageons vos données uniquement avec :
-- Les serveurs MultiGames Studio (pour l'authentification et la gestion des sessions)
-- Les services Microsoft/Mojang (pour la vérification d'authentification Minecraft)
+ Ces donnees sont utilisees exclusivement pour :
+ - Fournir et ameliorer les services du launcher
+ - Ameliorer les performances, la stabilite et la securite
+ - Detecter et prevenir les fraudes, les abus et les activites malveillantes
+ - Maintenir l'integrite des serveurs MultiGames
+ - Se conformer aux obligations legales et regulatories
 - Les autorités légales si obligatoire par la loi ou décision judiciaire
 
 **Nous ne vendons jamais vos données personnelles à des tiers.**

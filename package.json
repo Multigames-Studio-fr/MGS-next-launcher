@@ -77,7 +77,7 @@
       "target": ["nsis"],
       "artifactName": "${name}-Setup.${ext}"
     },
-    "nsis": {
+      "nsis": {
       "artifactName": "${name}-Setup.${ext}",
       "oneClick": false,
       "perMachine": false,
@@ -85,7 +85,7 @@
       "license": "EULA.md",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "runAfterFinish": false,
+      "runAfterFinish": true,
       "include": "build/installer.nsh"
     }
   }

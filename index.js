@@ -226,11 +226,26 @@ function safeQuitAndInstall(caller) {
                                             const launcherExe = process.execPath
                                             // Use start /wait to wait for installer to finish, then restart launcher
                                             // Then schedule deletion of this batch file.
-                                            const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nstart "" cmd /c "ping -n 5 127.0.0.1>nul && del /f /q \"%~f0\""\r\nexit\r\n`
-                                            try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                                            // Use a PowerShell wrapper to reliably wait for the installer process,
+                                            // then relaunch the launcher and delete the wrapper script.
+                                            const psPath = path.join(tmp, `mgs_apply_update_${Date.now()}.ps1`)
+                                            const psContent = `
+$p = Start-Process -FilePath "${installerPath}" -PassThru -ErrorAction SilentlyContinue
+if ($p) {
+    $pid = $p.Id
+    while (Get-Process -Id $pid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
+} else {
+    $name = [System.IO.Path]::GetFileNameWithoutExtension("${installerPath}")
+    while (Get-Process -Name $name -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
+}
+Start-Process -FilePath "${launcherExe}"
+Start-Sleep -Seconds 2
+Try { Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue } Catch { }
+`
+                                            try { fs.writeFileSync(psPath, psContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
                                             // Show small update indicator briefly before quitting
                                             try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
-                                            const childProc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
+                                            const childProc = child.spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psPath], spawnOpts)
                                             try { childProc.unref && childProc.unref() } catch (e) {}
                                             try { app.quit() } catch (e) { process.exit(0) }
                                             return true
@@ -480,6 +495,16 @@ function initAutoUpdater(event, data) {
         } catch (e) {
             // ignore
         }
+        // Attempt silent install immediately after download completes
+        try {
+            try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
+            try {
+                // safeQuitAndInstall will attempt to launch the installer and quit
+                safeQuitAndInstall('update-downloaded')
+            } catch (e) {
+                try { log.warn('[AutoUpdater] automatic install failed after download', e && e.message) } catch (ee) {}
+            }
+        } catch (e) { /* ignore */ }
     })
 
     autoUpdater.on('update-not-available', (info) => {
@@ -1310,13 +1335,27 @@ function tryApplyInstallerArg() {
                     const tmp = require('os').tmpdir()
                     const batchPath = path.join(tmp, `mgs_apply_update_arg_${Date.now()}.cmd`)
                     const launcherExe = process.execPath
-                    const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nstart "" cmd /c "ping -n 5 127.0.0.1>nul && del /f /q \"%~f0\""\r\nexit\r\n`
-                    try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                    // Use PowerShell wrapper for reliability: wait for installer, relaunch, self-delete
+                    const psPath = path.join(tmp, `mgs_apply_update_arg_${Date.now()}.ps1`)
+                    const psContent = `
+$p = Start-Process -FilePath "${installerPath}" -PassThru -ErrorAction SilentlyContinue
+if ($p) {
+    $pid = $p.Id
+    while (Get-Process -Id $pid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
+} else {
+    $name = [System.IO.Path]::GetFileNameWithoutExtension("${installerPath}")
+    while (Get-Process -Name $name -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
+}
+Start-Process -FilePath "${launcherExe}"
+Start-Sleep -Seconds 2
+Try { Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue } Catch { }
+`
+                    try { fs.writeFileSync(psPath, psContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
                     // Show small update indicator briefly before quitting
                     try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
-                    const proc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
+                    const proc = child.spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psPath], spawnOpts)
                     try { proc.unref && proc.unref() } catch (e) {}
-                    try { log.info('[AutoUpdater:arg] Launched installer wrapper:', batchPath) } catch (e) {}
+                    try { log.info('[AutoUpdater:arg] Launched installer wrapper (ps1):', psPath) } catch (e) {}
                     try { app.quit() } catch (e) { process.exit(0) }
                     return true
                 } catch (e) {

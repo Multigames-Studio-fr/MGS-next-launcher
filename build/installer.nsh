@@ -49,4 +49,7 @@ Function .onInstSuccess
         FileWrite $R4 "installed"
         FileClose $R4
     ${EndIf}
+        ; Launch the installed application if present (Windows)
+        IfFileExists "$INSTDIR\\MultiGames Studio Launcher.exe" 0 +2
+        Exec "$INSTDIR\\MultiGames Studio Launcher.exe"
 FunctionEnd
