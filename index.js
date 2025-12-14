@@ -211,9 +211,8 @@ function safeQuitAndInstall(caller) {
                                     log.info('[AutoUpdater] Found installer, launching directly:', installerPath)
                                 } catch (e) {}
 
-                                // Ensure update UI shows a persistent "installing" popup before quitting
-                                try { createUpdateWindow() } catch (e) { }
-                                try { sendAutoUpdateNotification(undefined, 'installing', { installerPath }) } catch (e) { }
+                                // Silent install: do not open update UI or notify renderers.
+                                // (previously created popup here; removed for fully silent behavior)
 
                                 // Launch installer via a small detached wrapper so we can relaunch
                                 // the launcher after the installer completes. This avoids leaving
@@ -226,8 +225,11 @@ function safeQuitAndInstall(caller) {
                                             const batchPath = path.join(tmp, `mgs_apply_update_${Date.now()}.cmd`)
                                             const launcherExe = process.execPath
                                             // Use start /wait to wait for installer to finish, then restart launcher
-                                            const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nexit\r\n`
+                                            // Then schedule deletion of this batch file.
+                                            const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nstart "" cmd /c "ping -n 5 127.0.0.1>nul && del /f /q \"%~f0\""\r\nexit\r\n`
                                             try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                                            // Show small update indicator briefly before quitting
+                                            try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
                                             const childProc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
                                             try { childProc.unref && childProc.unref() } catch (e) {}
                                             try { app.quit() } catch (e) { process.exit(0) }
@@ -237,7 +239,24 @@ function safeQuitAndInstall(caller) {
                                         }
                                     }
 
-                                    // Fallback for non-Windows: spawn installer directly detached
+                                    // Fallback for non-Windows: create a small shell wrapper that
+                                    // runs the installer, restarts the launcher, then removes itself.
+                                    try {
+                                        const tmp = require('os').tmpdir()
+                                        const shPath = path.join(tmp, `mgs_apply_update_${Date.now()}.sh`)
+                                        const launcherExe = process.execPath
+                                        const shContent = `#!/bin/sh\n\"${installerPath}\"\n\"${launcherExe}\" &\nrm -- \"$0\"\n`
+                                        try { fs.writeFileSync(shPath, shContent, { encoding: 'utf8' }) } catch (e) { /* ignore */ }
+                                        try { fs.chmodSync(shPath, 0o755) } catch (e) { /* ignore */ }
+                                        try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
+                                        const childProc = child.spawn('sh', [shPath], spawnOpts)
+                                        try { childProc.unref && childProc.unref() } catch (e) {}
+                                        try { app.quit() } catch (e) { process.exit(0) }
+                                        return true
+                                    } catch (e) {
+                                        // If wrapper creation fails, fallback to direct spawn
+                                    }
+                                    try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
                                     const childProc = child.spawn(installerPath, [], spawnOpts)
                                     try { childProc.unref && childProc.unref() } catch (e) {}
                                     try { app.quit() } catch (e) { process.exit(0) }
@@ -1276,7 +1295,8 @@ function tryApplyInstallerArg() {
         if (!fs.existsSync(installerPath)) {
             try { log.warn('[AutoUpdater:arg] installer arg provided but file not found', installerPath) } catch (e) {}
             // Create update UI and notify renderers so user sees an error popup
-            try { createUpdateWindow() } catch (e) {}
+            // Do not open UI; just log the error and notify renderers silently.
+            try { log.warn('[AutoUpdater:arg] installer not found', installerPath) } catch (e) {}
             try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'Installer not found', path: installerPath }) } catch (e) {}
             return false
         }
@@ -1290,8 +1310,10 @@ function tryApplyInstallerArg() {
                     const tmp = require('os').tmpdir()
                     const batchPath = path.join(tmp, `mgs_apply_update_arg_${Date.now()}.cmd`)
                     const launcherExe = process.execPath
-                    const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nexit\r\n`
+                    const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nstart "" cmd /c "ping -n 5 127.0.0.1>nul && del /f /q \"%~f0\""\r\nexit\r\n`
                     try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                    // Show small update indicator briefly before quitting
+                    try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
                     const proc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
                     try { proc.unref && proc.unref() } catch (e) {}
                     try { log.info('[AutoUpdater:arg] Launched installer wrapper:', batchPath) } catch (e) {}
@@ -1302,6 +1324,23 @@ function tryApplyInstallerArg() {
                 }
             }
 
+            // For non-Windows create shell wrapper to restart launcher after install
+            try {
+                const tmp = require('os').tmpdir()
+                const shPath = path.join(tmp, `mgs_apply_update_arg_${Date.now()}.sh`)
+                const launcherExe = process.execPath
+                const shContent = `#!/bin/sh\n\"${installerPath}\"\n\"${launcherExe}\" &\nrm -- \"$0\"\n`
+                try { fs.writeFileSync(shPath, shContent, { encoding: 'utf8' }) } catch (e) { /* ignore */ }
+                try { fs.chmodSync(shPath, 0o755) } catch (e) { /* ignore */ }
+                try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
+                const proc = child.spawn('sh', [shPath], spawnOpts)
+                try { proc.unref && proc.unref() } catch (e) {}
+                try { log.info('[AutoUpdater:arg] Launched installer wrapper (sh):', shPath) } catch (e) {}
+                try { app.quit() } catch (e) { process.exit(0) }
+                return true
+            } catch (e) {
+                // fallback to direct spawn
+            }
             const proc = child.spawn(installerPath, [], spawnOpts)
             try { proc.unref && proc.unref() } catch (e) {}
             try { log.info('[AutoUpdater:arg] Launched installer:', installerPath) } catch (e) {}
@@ -1452,6 +1491,43 @@ function createUpdateWindow() {
         })
     } catch (e) {
         try { log.warn('[UpdateWindow] failed to create update window', e && e.message) } catch (er) { }
+    }
+}
+
+// Small unobtrusive mini update window shown briefly while launching installer
+let miniUpdateWindow = null
+function createMiniUpdateWindow(message) {
+    try {
+        if (miniUpdateWindow && !miniUpdateWindow.isDestroyed()) {
+            try { miniUpdateWindow.focus() } catch (e) {}
+            return
+        }
+
+        miniUpdateWindow = new BrowserWindow({
+            width: 360,
+            height: 84,
+            resizable: false,
+            alwaysOnTop: true,
+            frame: false,
+            transparent: false,
+            show: true,
+            skipTaskbar: true,
+            webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true
+            }
+        })
+
+        // Minimal inline HTML to avoid adding files
+        const text = (message && typeof message === 'string') ? message : 'Mise à jour en cours...'
+        const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';"><style>body{margin:0;background:#111;color:#fff;font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;height:100%} .box{padding:12px 18px;border-radius:8px;background:#1a1a1a;border:1px solid #333;box-shadow:0 4px 14px rgba(0,0,0,.6);} .dot{width:10px;height:10px;background:#4caf50;border-radius:50%;display:inline-block;margin-right:10px;vertical-align:middle;animation:blink 1s linear infinite} @keyframes blink{0%{opacity:1}50%{opacity:.2}100%{opacity:1}}</style></head><body><div class="box"><span class="dot"></span><span>${text}</span></div></body></html>`
+
+        miniUpdateWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
+        miniUpdateWindow.removeMenu()
+
+        miniUpdateWindow.on('closed', () => { miniUpdateWindow = null })
+    } catch (e) {
+        try { log.warn('[MiniUpdateWindow] failed to create', e && e.message) } catch (er) {}
     }
 }
 
