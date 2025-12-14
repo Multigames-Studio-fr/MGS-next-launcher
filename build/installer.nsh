@@ -54,8 +54,6 @@ Function .onInstSuccess
         StrCpy $R5 "$INSTDIR\\MultiGames Studio Launcher.exe"
         StrCpy $R6 "$INSTDIR\\multigames-studio-launcher.exe"
         FileOpen $R1 "$TEMP\\mgs_installer.log" a
-        ${If} ${File} ; ensure File functions are available
-        ${EndIf}
         ; Try productName.exe
         IfFileExists "$R5" 0 +3
             FileWrite $R1 "Found executable: $R5\r\n"
