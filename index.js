@@ -183,28 +183,35 @@ function safeQuitAndInstall(caller) {
                             const pendingBase = process.platform === 'win32' 
                                 ? path.join(os.homedir(), 'AppData', 'Local', 'multigames-studio-launcher-updater', 'pending')
                                 : path.join(os.homedir(), '.multigames-studio-launcher-updater', 'pending')
-                            let installerPath = null
-                            try {
-                                if (fs.existsSync(pendingBase)) {
-                                    const files = fs.readdirSync(pendingBase)
-                                    // prefer exact setup file name if present, else pick newest candidate
-                                    const candidates = files.filter(f => /multigames-studio-launcher-Setup-.*\.exe$/i.test(f))
-                                    if (candidates.length > 0) {
-                                        // pick newest
-                                        candidates.sort((a, b) => {
-                                            try {
-                                                const sa = fs.statSync(path.join(pendingBase, a)).mtimeMs
-                                                const sb = fs.statSync(path.join(pendingBase, b)).mtimeMs
-                                                return sb - sa
-                                            } catch (e) { return 0 }
-                                        })
-                                        installerPath = path.join(pendingBase, candidates[0])
+                                    let installerPath = null
+                                    try {
+                                        if (fs.existsSync(pendingBase)) {
+                                            const files = fs.readdirSync(pendingBase)
+                                            try { log.info('[AutoUpdater] pending directory files:', files.join(', ')) } catch (e) {}
+
+                                            // Prefer files that contain 'Setup' and the package name, fall back to any .exe
+                                            const preferred = files.filter(f => /multigames-studio-launcher.*setup.*\.exe$/i.test(f) || /setup.*\.exe$/i.test(f))
+                                            const exeFiles = files.filter(f => /\.exe$/i.test(f))
+
+                                            const pickList = preferred.length > 0 ? preferred : exeFiles
+                                            if (pickList.length > 0) {
+                                                // pick newest by mtime
+                                                pickList.sort((a, b) => {
+                                                    try {
+                                                        const sa = fs.statSync(path.join(pendingBase, a)).mtimeMs
+                                                        const sb = fs.statSync(path.join(pendingBase, b)).mtimeMs
+                                                        return sb - sa
+                                                    } catch (e) { return 0 }
+                                                })
+                                                installerPath = path.join(pendingBase, pickList[0])
+                                            }
+                                        } else {
+                                            try { log.info('[AutoUpdater] pendingBase does not exist:', pendingBase) } catch (e) {}
+                                        }
+                                    } catch (e) {
+                                        try { log.warn('[AutoUpdater] error scanning pending directory', e && e.message) } catch (le) {}
+                                        installerPath = null
                                     }
-                                }
-                            } catch (e) {
-                                // ignore scanning errors
-                                installerPath = null
-                            }
 
                             if (installerPath && fs.existsSync(installerPath)) {
                                 try {

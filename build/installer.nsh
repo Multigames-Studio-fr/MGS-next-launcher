@@ -49,7 +49,32 @@ Function .onInstSuccess
         FileWrite $R4 "installed"
         FileClose $R4
     ${EndIf}
-        ; Launch the installed application if present (Windows)
-        IfFileExists "$INSTDIR\\MultiGames Studio Launcher.exe" 0 +2
-        Exec "$INSTDIR\\MultiGames Studio Launcher.exe"
+        ; Attempt to launch the installed application (robust)
+        ; Try a couple of likely executable names first
+        StrCpy $R5 "$INSTDIR\\MultiGames Studio Launcher.exe"
+        StrCpy $R6 "$INSTDIR\\multigames-studio-launcher.exe"
+        FileOpen $R1 "$TEMP\\mgs_installer.log" a
+        ${If} ${File} ; ensure File functions are available
+        ${EndIf}
+        ; Try productName.exe
+        IfFileExists "$R5" 0 +3
+            FileWrite $R1 "Found executable: $R5\r\n"
+            ExecShell open "$R5" ""
+            Goto +6
+        ; Try name-based exe
+        IfFileExists "$R6" 0 +3
+            FileWrite $R1 "Found executable: $R6\r\n"
+            ExecShell open "$R6" ""
+            Goto +3
+        ; Fallback: find first .exe in install dir and run it
+        FindFirst $R7 $R8 "$INSTDIR\\*.exe"
+        ${If} $R7 == 0
+            FileWrite $R1 "No exe found in $INSTDIR\\*.exe\r\n"
+        ${Else}
+            StrCpy $R9 "$INSTDIR\\$R8"
+            FileWrite $R1 "Launching fallback exe: $R9\r\n"
+            ExecShell open "$R9" ""
+            FindClose $R7
+        ${EndIf}
+        FileClose $R1
 FunctionEnd
