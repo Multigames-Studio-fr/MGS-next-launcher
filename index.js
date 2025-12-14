@@ -210,6 +210,11 @@ function safeQuitAndInstall(caller) {
                                 try {
                                     log.info('[AutoUpdater] Found installer, launching directly:', installerPath)
                                 } catch (e) {}
+
+                                // Ensure update UI shows a persistent "installing" popup before quitting
+                                try { createUpdateWindow() } catch (e) { }
+                                try { sendAutoUpdateNotification(undefined, 'installing', { installerPath }) } catch (e) { }
+
                                 // Launch installer via a small detached wrapper so we can relaunch
                                 // the launcher after the installer completes. This avoids leaving
                                 // the user without the launcher once installation finishes.
@@ -1270,6 +1275,9 @@ function tryApplyInstallerArg() {
         if (!installerPath) return false
         if (!fs.existsSync(installerPath)) {
             try { log.warn('[AutoUpdater:arg] installer arg provided but file not found', installerPath) } catch (e) {}
+            // Create update UI and notify renderers so user sees an error popup
+            try { createUpdateWindow() } catch (e) {}
+            try { sendAutoUpdateNotification(undefined, 'realerror', { message: 'Installer not found', path: installerPath }) } catch (e) {}
             return false
         }
 
