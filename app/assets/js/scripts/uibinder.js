@@ -3,10 +3,10 @@
  * Loaded after core UI functions are initialized in uicore.js.
  */
 // Requirements
-const path          = require('path')
-const { Type }      = require('helios-distribution-types')
+const path = require('path')
+const { Type } = require('helios-distribution-types')
 
-const AuthManager   = require('./assets/js/authmanager')
+const AuthManager = require('./assets/js/authmanager')
 const ConfigManager = require('./assets/js/configmanager')
 const { DistroAPI } = require('./assets/js/distromanager')
 
@@ -18,51 +18,51 @@ let fatalStartupError = false
  */
 async function populateSidebarInstances() {
     console.log('[UIBINDER] populateSidebarInstances() called')
-    
+
     const sidebarContainer = document.getElementById('sidebar-instances')
     if (!sidebarContainer) {
         console.error('[UIBINDER] Sidebar container not found!')
         return
     }
-    
+
     try {
         console.log('[UIBINDER] Fetching distribution...')
         const distro = await DistroAPI.getDistribution()
-        
+
         if (!distro) {
             console.error('[UIBINDER] Distribution is null or undefined!')
             sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: distribution non chargée</li>'
             return
         }
-        
+
         console.log('[UIBINDER] Distribution loaded:', distro)
-        
+
         const selectedServerId = ConfigManager.getSelectedServer()
         console.log('[UIBINDER] Selected server ID:', selectedServerId)
-        
+
         const servers = distro.servers
         console.log('[UIBINDER] Number of servers:', servers ? servers.length : 0)
-        
+
         if (!servers || servers.length === 0) {
             console.warn('[UIBINDER] No servers found in distribution')
             sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Aucune instance disponible</li>'
             return
         }
-        
+
         let htmlString = ''
-        
-    const selectedAcc = ConfigManager.getSelectedAccount()
-    const selectedUUID = selectedAcc && selectedAcc.uuid ? selectedAcc.uuid.toLowerCase() : null
-    const selectedUUIDNoDash = selectedUUID ? selectedUUID.replace(/-/g, '') : null
+
+        const selectedAcc = ConfigManager.getSelectedAccount()
+        const selectedUUID = selectedAcc && selectedAcc.uuid ? selectedAcc.uuid.toLowerCase() : null
+        const selectedUUIDNoDash = selectedUUID ? selectedUUID.replace(/-/g, '') : null
 
         for (let i = 0; i < servers.length; i++) {
             const serv = servers[i]
-            
+
             if (!serv || !serv.rawServer) {
                 console.warn('[UIBINDER] Server #' + i + ' has invalid structure, skipping')
                 continue
             }
-            
+
             const serverId = serv.rawServer.id
             const serverName = serv.rawServer.name || 'Instance ' + (i + 1)
             const isSelected = serverId === selectedServerId
@@ -105,8 +105,8 @@ async function populateSidebarInstances() {
             } catch (e) {
                 console.warn('[UIBINDER] Error checking whitelist for server', serv && serv.rawServer && serv.rawServer.id, e)
             }
-            
-               
+
+
             // If whitelist disallows the selected account, show the server but mark it disabled
             // so the user still sees the instance but cannot select it.
             let disabledAttr = ''
@@ -120,58 +120,57 @@ async function populateSidebarInstances() {
             }
 
             htmlString += `
-                <li class="server-instance-item group transition-all duration-300 ease-out p-1 mb-2" title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
-                    <button ${disabledAttr} class="server-instance-btn relative overflow-hidden ${isSelected ? 'w-64' : 'w-22'} ${disabledClasses} 
-                        py-3 px-4 rounded-l-2xl transition-all duration-300 ease-out
-                        flex items-center gap-3
-                        ${isSelected 
-                            ? 'bg-white/6 backdrop-blur-md  ' 
-                            : 'bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20'
-                        }
-                        ${isSelected ? 'text-white' : 'text-white/80 hover:text-white'}"
+                <button ${disabledAttr} role="button" aria-pressed="${isSelected ? 'true' : 'false'}" aria-disabled="${!whitelistAllowed ? 'true' : 'false'}"
+                        class="instance-item btn btn-ghost w-full group text-left transition-all mb-2 ${isSelected ? 'selected' : ''} ${disabledClasses}"
                         data-server-id="${serverId}"
                         title="${serverName}${disabledTitle ? ' — ' + disabledTitle : ''}">
-                        
-                        <!-- Glassmorphism overlay effect -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none "></div>
-                        
-                        <!-- Icon container with glow effect -->
-                        <div class="relative flex-shrink-0 transition-transform duration-300 ${isSelected ? 'scale-110' : 'scale-100 group-hover:scale-105'}">
-                            <div class="${isSelected ? 'absolute inset-0 bg-[#F8BA59]/30 blur-xl rounded-full animate-pulse' : ''}"></div>
-                            <img src="${iconUrl}" 
+                    <div class="flex items-center justify-between gap-3">
+                     <!-- Selection Indicator -->
+                       
+
+                    <!-- Left: small icon + title -->
+                        <div class="flex-1 min-w-0 flex items-center gap-3">
+                             ${isSelected ? `
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-check-circle-fill text-[#F8BA59] text-lg"></i>
+                        </div>
+                        ` : `
+                        <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="bi bi-arrow-right-circle text-gray-500 text-lg"></i>
+                        </div>
+                        `}
+                            <div class="min-w-0">
+                                <div class="text-white font-semibold text-sm truncate ${isSelected ? 'text-[#F8BA59]' : ''}">
+                                    ${serverName}
+                                </div>
+                            </div>
+                        </div>
+
+                    <!-- Right: larger image -->
+                        <div class="relative flex-shrink-0 ml-auto">
+                            <img src="${iconUrl}"
                                  alt="${serverName}"
-                                 class="relative w-14 h-14 rounded-xl shadow-lg transition-all duration-300 ${isSelected ? 'ring-2 ring-[#F8BA59]/50' : ''}"
+                                 class="w-12 h-12 rounded-lg object-cover"
                                  onerror="this.src='assets/images/SealCircle.png'" />
+                            ${isSelected ? `
+                            <div class="absolute -top-1 -right-1 w-3 h-3 bg-[#F8BA59] rounded-full border-2 border-[#181818]"></div>
+                            ` : ''}
                         </div>
-                        
-                        <!-- Content with slide animation -->
-                        <div class="flex flex-col justify-center min-w-0 flex-1 transition-all duration-300" style="max-width: ${isSelected ? '180px' : '0px'};">
-                            <span class="${isSelected ? 'opacity-100 translate-x-0 text-[#F8BA59]' : 'opacity-0 -translate-x-4'} 
-                                server-instance-label font-bold text-lg leading-tight 
-                                transition-all duration-300 ease-out whitespace-nowrap overflow-hidden text-ellipsis
-                                ${isSelected ? 'block' : 'hidden'}" 
-                                title="${serverName}">
-                                ${serverName}
-                            </span>
-                        </div>
-                        
-                        <!-- Selected indicator glow -->
-                        ${isSelected ? '<div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-[#F8BA59]/20 to-transparent animate-shimmer pointer-events-none"></div>' : ''}
-                    </button>
-                </li>
+                    </div>
+                </button>
             `
-               
+
         }
-        
+
         sidebarContainer.innerHTML = htmlString
-        
+
         // Bind click events to server instance buttons
         bindSidebarInstanceEvents()
-        
+
         // No JS animation post-render; CSS handles entry/exit transitions.
 
         console.log('[UIBINDER] Populated sidebar with ' + servers.length + ' server instances')
-        
+
     } catch (error) {
         console.error('[UIBINDER] Error populating sidebar instances:', error)
         sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center">Erreur: ' + error.message + '</li>'
@@ -182,296 +181,74 @@ async function populateSidebarInstances() {
  * Bind events to sidebar instance buttons
  */
 function bindSidebarInstanceEvents() {
-    const instanceButtons = document.querySelectorAll('.server-instance-btn')
-    
-    instanceButtons.forEach(button => {
-        button.addEventListener('click', async (e) => {
+    const instanceButtons = document.querySelectorAll('.instance-item, .server-instance-btn')
+
+    instanceButtons.forEach((button, index) => {
+        // Remove existing listeners
+        const newButton = button.cloneNode(true)
+        button.parentNode.replaceChild(newButton, button)
+
+        // Click handler
+        newButton.addEventListener('click', async (e) => {
             e.preventDefault()
-            const btn = e.target.closest('button')
-            if (!btn) return
-            // If button is disabled (whitelist restricted), ignore click
+            const btn = e.currentTarget
+            btn.blur()
+
+            // Check if disabled (whitelist)
             if (btn.disabled) {
-                // Optionally show an overlay explaining whitelist
                 const title = btn.getAttribute('title') || ''
                 setOverlayContent('Accès restreint', title, 'OK')
                 setOverlayHandler(() => { toggleOverlay(false) })
-                // Make this overlay dismissable so the user can use the
-                // dismiss button or Escape to close it if they prefer not to
-                // reconnect immediately.
                 toggleOverlay(true, true)
                 return
             }
-            btn.blur()
 
-            // Glassmorphism animations with smooth transitions
-            try {
-                const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-                const toPxForW64 = 16 * rootFontSize // 16rem -> px
-                const toPxForW20 = 5 * rootFontSize  // 5rem -> px
-
-                function animateWidth(elem, toPx, duration = 400) {
-                    return new Promise((resolve) => {
-                        if (!elem) return resolve()
-                        const from = parseFloat(getComputedStyle(elem).width)
-                        const anim = elem.animate([
-                            { width: from + 'px' },
-                            { width: toPx + 'px' }
-                        ], {
-                            duration,
-                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Elastic ease-out
-                            fill: 'forwards'
-                        })
-                        anim.onfinish = () => {
-                            elem.style.width = toPx + 'px'
-                            resolve()
-                        }
-                        setTimeout(() => { if (anim.playState !== 'finished') { anim.cancel(); elem.style.width = toPx + 'px'; resolve() } }, duration + 80)
-                    })
-                }
-
-                function animateGlassEffect(elem, selected = true, duration = 400) {
-                    return new Promise((resolve) => {
-                        if (!elem) return resolve()
-                        
-                        const fromBg = getComputedStyle(elem).background
-                        const toBg = selected 
-                            ? 'linear-gradient(135deg, rgba(248, 186, 89, 0.3) 0%, rgba(248, 186, 89, 0.2) 50%, rgba(248, 186, 89, 0.1) 100%)'
-                            : 'rgba(255, 255, 255, 0.05)'
-                        
-                        const fromShadow = getComputedStyle(elem).boxShadow
-                        const toShadow = selected
-                            ? '0 8px 32px 0 rgba(248, 186, 89, 0.25)'
-                            : '0 4px 16px 0 rgba(0, 0, 0, 0.1)'
-                        
-                        const fromBorder = getComputedStyle(elem).borderColor
-                        const toBorder = selected
-                            ? 'rgba(248, 186, 89, 0.4)'
-                            : 'rgba(255, 255, 255, 0.1)'
-
-                        const anim = elem.animate([
-                            { 
-                                background: fromBg,
-                                boxShadow: fromShadow,
-                                borderColor: fromBorder
-                            },
-                            { 
-                                background: toBg,
-                                boxShadow: toShadow,
-                                borderColor: toBorder
-                            }
-                        ], { 
-                            duration, 
-                            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                            fill: 'forwards' 
-                        })
-                        
-                        anim.onfinish = () => {
-                            try {
-                                elem.style.background = toBg
-                                elem.style.boxShadow = toShadow
-                                elem.style.borderColor = toBorder
-                            } catch (e) {}
-                            resolve()
-                        }
-                        setTimeout(() => { 
-                            if (anim.playState !== 'finished') { 
-                                anim.cancel()
-                                try {
-                                    elem.style.background = toBg
-                                    elem.style.boxShadow = toShadow
-                                    elem.style.borderColor = toBorder
-                                } catch (e) {}
-                                resolve()
-                            }
-                        }, duration + 80)
-                    })
-                }
-
-                function animateLabel(elem, show = true, duration = 350) {
-                    return new Promise((resolve) => {
-                        if (!elem) return resolve()
-
-                        const parentDiv = elem.parentElement
-                        const fromOpacity = show ? 0 : 1
-                        const toOpacity = show ? 1 : 0
-                        const fromTransform = show ? 'translateX(-16px)' : 'translateX(0)'
-                        const toTransform = show ? 'translateX(0)' : 'translateX(-16px)'
-                        const fromMaxWidth = show ? '0px' : '180px'
-                        const toMaxWidth = show ? '180px' : '0px'
-
-                        if (show) {
-                            elem.classList.remove('opacity-0', '-translate-x-4', 'hidden')
-                            elem.classList.add('opacity-100', 'translate-x-0', 'block')
-                            if (parentDiv) {
-                                parentDiv.style.maxWidth = '0px'
-                            }
-                        }
-
-                        // Animate parent container width
-                        const parentAnim = parentDiv ? parentDiv.animate([
-                            { maxWidth: fromMaxWidth },
-                            { maxWidth: toMaxWidth }
-                        ], { 
-                            duration, 
-                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            fill: 'forwards' 
-                        }) : null
-
-                        // Animate label itself
-                        const anim = elem.animate([
-                            { 
-                                opacity: fromOpacity, 
-                                transform: fromTransform,
-                                filter: 'blur(4px)'
-                            },
-                            { 
-                                opacity: toOpacity, 
-                                transform: toTransform,
-                                filter: 'blur(0px)'
-                            }
-                        ], { 
-                            duration, 
-                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            fill: 'forwards' 
-                        })
-                        
-                        anim.onfinish = () => {
-                            try {
-                                elem.style.opacity = toOpacity
-                                elem.style.transform = toTransform
-                                elem.style.filter = 'blur(0px)'
-                                if (parentDiv) {
-                                    parentDiv.style.maxWidth = toMaxWidth
-                                }
-                                if (!show) {
-                                    elem.classList.add('opacity-0', '-translate-x-4', 'hidden')
-                                    elem.classList.remove('opacity-100', 'translate-x-0', 'block')
-                                }
-                            } catch (e) {}
-                            resolve()
-                        }
-                        
-                        setTimeout(() => { 
-                            if (anim.playState !== 'finished') { 
-                                anim.cancel()
-                                if (parentAnim && parentAnim.playState !== 'finished') {
-                                    parentAnim.cancel()
-                                }
-                                try {
-                                    elem.style.opacity = toOpacity
-                                    elem.style.transform = toTransform
-                                    elem.style.filter = 'blur(0px)'
-                                    if (parentDiv) {
-                                        parentDiv.style.maxWidth = toMaxWidth
-                                    }
-                                } catch (e) {}
-                                resolve()
-                            }
-                        }, duration + 80)
-                    })
-                }
-
-                function animateIcon(container, selected = true, duration = 400) {
-                    return new Promise((resolve) => {
-                        if (!container) return resolve()
-                        
-                        const fromScale = selected ? 1 : 1.1
-                        const toScale = selected ? 1.1 : 1
-
-                        const anim = container.animate([
-                            { 
-                                transform: `scale(${fromScale})`,
-                                filter: selected ? 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
-                            },
-                            { 
-                                transform: `scale(${toScale})`,
-                                filter: selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
-                            }
-                        ], { 
-                            duration, 
-                            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            fill: 'forwards' 
-                        })
-                        
-                        anim.onfinish = () => {
-                            try {
-                                container.style.transform = `scale(${toScale})`
-                                container.style.filter = selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
-                            } catch (e) {}
-                            resolve()
-                        }
-                        setTimeout(() => { 
-                            if (anim.playState !== 'finished') { 
-                                anim.cancel()
-                                try {
-                                    container.style.transform = `scale(${toScale})`
-                                    container.style.filter = selected ? 'drop-shadow(0 0 10px rgba(248, 186, 89, 0.6))' : 'drop-shadow(0 0 0px rgba(248, 186, 89, 0))'
-                                } catch (e) {}
-                                resolve()
-                            }
-                        }, duration + 80)
-                    })
-                }
-
-                const prevBtn = document.querySelector('.server-instance-btn.w-64')
-                const prevLabel = prevBtn && prevBtn.querySelector('.server-instance-label')
-                const prevIconContainer = prevBtn && prevBtn.querySelector('div.flex-shrink-0')
-                const tgtLabel = btn.querySelector('.server-instance-label')
-                const tgtIconContainer = btn.querySelector('div.flex-shrink-0')
-
-                const tasks = []
-
-                // Animate previous selected back to normal
-                if (prevBtn && prevBtn !== btn) {
-                    tasks.push(animateGlassEffect(prevBtn, false))
-                    tasks.push(animateLabel(prevLabel, false))
-                    tasks.push(animateIcon(prevIconContainer, false))
-                    tasks.push(animateWidth(prevBtn, toPxForW20))
-                    tasks.push(new Promise(res => setTimeout(() => { 
-                        prevBtn.classList.remove('w-64')
-                        prevBtn.classList.add('w-20')
-                        res()
-                    }, 450)))
-                }
-
-                // Animate new selection
-                if (btn && !btn.classList.contains('w-64')) {
-                    tasks.push(animateGlassEffect(btn, true))
-                    tasks.push(animateLabel(tgtLabel, true))
-                    tasks.push(animateIcon(tgtIconContainer, true))
-                    tasks.push(animateWidth(btn, toPxForW64))
-                    tasks.push(new Promise(res => setTimeout(() => { 
-                        btn.classList.remove('w-20')
-                        btn.classList.add('w-64')
-                        res()
-                    }, 450)))
-                }
-
-                await Promise.all(tasks)
-            } catch (tcErr) {
-                console.warn('[UIBINDER] Glass animation failed', tcErr)
+            // Don't reselect if already selected
+            if (btn.classList.contains('selected')) {
+                return
             }
 
-            const serverId = button.getAttribute('data-server-id')
-            
+            const serverId = btn.getAttribute('data-server-id')
+
             try {
                 const distro = await DistroAPI.getDistribution()
                 const server = distro.getServerById(serverId)
-                
+
                 if (server) {
                     // Update selected server
                     updateSelectedServer(server)
-                    
-                    // Refresh server status for the new server
+
+                    // Refresh server status
                     await refreshServerStatus(true)
-                    
-                    // Repopulate sidebar to update selection state
+
+                    // Repopulate sidebar
                     await populateSidebarInstances()
                 }
             } catch (error) {
                 console.error('[UIBINDER] Error selecting server:', error)
             }
         })
+
+        // Keyboard navigation
+        newButton.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                newButton.click()
+            } else if (e.key === 'ArrowDown' && index < instanceButtons.length - 1) {
+                e.preventDefault()
+                instanceButtons[index + 1].focus()
+            } else if (e.key === 'ArrowUp' && index > 0) {
+                e.preventDefault()
+                instanceButtons[index - 1].focus()
+            }
+        })
+
+        // Make keyboard focusable (skip focus for disabled)
+        if (newButton.disabled) {
+            newButton.setAttribute('tabindex', '-1')
+        } else {
+            newButton.setAttribute('tabindex', '0')
+        }
     })
 }
 
@@ -549,18 +326,18 @@ const DISABLE_VIEW_ANIMATIONS = (typeof window !== 'undefined' && window.__disab
  * @param {*} onNextFade Optional. Callback function to execute when the next view
  * fades in.
  */
-function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, onCurrentFade = () => {}, onNextFade = () => {}){
+function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, onCurrentFade = () => { }, onNextFade = () => { }) {
     currentView = next
     // If animations are disabled, perform immediate hide/show to avoid visual glitches.
     if (DISABLE_VIEW_ANIMATIONS || currentFadeTime === 0 || nextFadeTime === 0) {
         try {
             $(`${current}`).hide()
-        } catch (e) { try { document.querySelector(current).style.display = 'none' } catch (err) {} }
-        try { $(current).addClass('hidden') } catch (e) {}
+        } catch (e) { try { document.querySelector(current).style.display = 'none' } catch (err) { } }
+        try { $(current).addClass('hidden') } catch (e) { }
         Promise.resolve().then(async () => {
             try { await onCurrentFade() } catch (e) { console.warn('onCurrentFade error', e) }
-            try { $(`${next}`).removeClass('hidden') } catch (e) {}
-            try { $(`${next}`).show() } catch (e) { try { document.querySelector(next).style.display = '' } catch (err) {} }
+            try { $(`${next}`).removeClass('hidden') } catch (e) { }
+            try { $(`${next}`).show() } catch (e) { try { document.querySelector(next).style.display = '' } catch (err) { } }
             try { await onNextFade() } catch (e) { console.warn('onNextFade error', e) }
         })
         return
@@ -580,13 +357,13 @@ function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, on
  * 
  * @returns {string} The currently shown view container.
  */
-function getCurrentView(){
+function getCurrentView() {
     return currentView
 }
 
-async function showMainUI(data){
+async function showMainUI(data) {
 
-    if(!isDev){
+    if (!isDev) {
         loggerAutoUpdater.info('Initializing..')
         ipcRenderer.send('autoUpdateAction', 'initAutoUpdater', ConfigManager.getAllowPrerelease())
     }
@@ -604,21 +381,21 @@ async function showMainUI(data){
     }
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
-    
+
     // Populate sidebar instances for the new interface
     console.log('[UIBINDER] Calling populateSidebarInstances()...')
     populateSidebarInstances()
-    
+
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = ''
-        document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
+        document.body.style.backgroundImage = `'none')`
         $('#main').show()
 
         const isLoggedIn = Object.keys(ConfigManager.getAuthAccounts()).length > 0
 
         // If this is enabled in a development environment we'll get ratelimited.
         // The relaunch frequency is usually far too high.
-        if(!isDev && isLoggedIn){
+        if (!isDev && isLoggedIn) {
             validateSelectedAccount()
             // Start periodic validation and schedule based on token expiry
             try {
@@ -629,11 +406,11 @@ async function showMainUI(data){
             }
         }
 
-        if(ConfigManager.isFirstLaunch()){
+        if (ConfigManager.isFirstLaunch()) {
             currentView = VIEWS.welcome
             if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.welcome).show(); else $(VIEWS.welcome).fadeIn(1000)
         } else {
-            if(isLoggedIn){
+            if (isLoggedIn) {
                 currentView = VIEWS.landing
                 if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.landing).show(); else $(VIEWS.landing).fadeIn(1000)
             } else {
@@ -650,7 +427,7 @@ async function showMainUI(data){
                 $('#loadSpinnerImage').removeClass('rotating')
             })
         }, 250)
-        
+
     }, 750)
     // Disable tabbing to the news container.
     if (typeof window.initNews === 'function') {
@@ -659,11 +436,11 @@ async function showMainUI(data){
         })
     } else {
         // initNews may be defined by a script loaded later; schedule retries and when ready
-        scheduleInitNewsCall(15, 200, () => { try { $('#newsContainer *').attr('tabindex', '-1') } catch (e) {} })
+        scheduleInitNewsCall(15, 200, () => { try { $('#newsContainer *').attr('tabindex', '-1') } catch (e) { } })
     }
 }
 
-function showFatalStartupError(){
+function showFatalStartupError() {
     setTimeout(() => {
         $('#loadingContainer').fadeOut(250, () => {
             document.getElementById('overlayContainer').style.background = 'none'
@@ -686,10 +463,10 @@ function showFatalStartupError(){
  * 
  * @param {Object} data The distro index object.
  */
-function onDistroRefresh(data){
+function onDistroRefresh(data) {
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
-    
+
     // Call initNews if it's available
     if (typeof window.initNews === 'function') {
         initNews()
@@ -697,10 +474,10 @@ function onDistroRefresh(data){
         // If initNews arrives shortly after distro refresh, try again a few times
         scheduleInitNewsCall(15, 200)
     }
-    
+
     syncModConfigurations(data)
     ensureJavaSettings(data)
-    
+
     // Populate sidebar instances for the new interface
     console.log('[UIBINDER] onDistroRefresh - calling populateSidebarInstances()...')
     populateSidebarInstances()
@@ -711,38 +488,38 @@ function onDistroRefresh(data){
  * 
  * @param {Object} data The distro index object.
  */
-function syncModConfigurations(data){
+function syncModConfigurations(data) {
 
     const syncedCfgs = []
 
-    for(let serv of data.servers){
+    for (let serv of data.servers) {
 
         const id = serv.rawServer.id
         const mdls = serv.modules
         const cfg = ConfigManager.getModConfiguration(id)
 
-        if(cfg != null){
+        if (cfg != null) {
 
             const modsOld = cfg.mods
             const mods = {}
 
-            for(let mdl of mdls){
+            for (let mdl of mdls) {
                 const type = mdl.rawModule.type
 
-                if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                    if(!mdl.getRequired().value){
+                if (type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod) {
+                    if (!mdl.getRequired().value) {
                         const mdlID = mdl.getVersionlessMavenIdentifier()
-                        if(modsOld[mdlID] == null){
+                        if (modsOld[mdlID] == null) {
                             mods[mdlID] = scanOptionalSubModules(mdl.subModules, mdl)
                         } else {
                             mods[mdlID] = mergeModConfiguration(modsOld[mdlID], scanOptionalSubModules(mdl.subModules, mdl), false)
                         }
                     } else {
-                        if(mdl.subModules.length > 0){
+                        if (mdl.subModules.length > 0) {
                             const mdlID = mdl.getVersionlessMavenIdentifier()
                             const v = scanOptionalSubModules(mdl.subModules, mdl)
-                            if(typeof v === 'object'){
-                                if(modsOld[mdlID] == null){
+                            if (typeof v === 'object') {
+                                if (modsOld[mdlID] == null) {
                                     mods[mdlID] = v
                                 } else {
                                     mods[mdlID] = mergeModConfiguration(modsOld[mdlID], v, true)
@@ -762,15 +539,15 @@ function syncModConfigurations(data){
 
             const mods = {}
 
-            for(let mdl of mdls){
+            for (let mdl of mdls) {
                 const type = mdl.rawModule.type
-                if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                    if(!mdl.getRequired().value){
+                if (type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod) {
+                    if (!mdl.getRequired().value) {
                         mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
                     } else {
-                        if(mdl.subModules.length > 0){
+                        if (mdl.subModules.length > 0) {
                             const v = scanOptionalSubModules(mdl.subModules, mdl)
-                            if(typeof v === 'object'){
+                            if (typeof v === 'object') {
                                 mods[mdl.getVersionlessMavenIdentifier()] = v
                             }
                         }
@@ -798,7 +575,7 @@ function syncModConfigurations(data){
 function ensureJavaSettings(data) {
 
     // Nothing too fancy for now.
-    for(const serv of data.servers){
+    for (const serv of data.servers) {
         ConfigManager.ensureJavaConfig(serv.rawServer.id, serv.effectiveJavaOptions, serv.rawServer.javaOptions?.ram)
     }
 
@@ -812,21 +589,21 @@ function ensureJavaSettings(data) {
  * 
  * @returns {boolean | Object} The resolved mod configuration.
  */
-function scanOptionalSubModules(mdls, origin){
-    if(mdls != null){
+function scanOptionalSubModules(mdls, origin) {
+    if (mdls != null) {
         const mods = {}
 
-        for(let mdl of mdls){
+        for (let mdl of mdls) {
             const type = mdl.rawModule.type
             // Optional types.
-            if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
+            if (type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod) {
                 // It is optional.
-                if(!mdl.getRequired().value){
+                if (!mdl.getRequired().value) {
                     mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
                 } else {
-                    if(mdl.hasSubModules()){
+                    if (mdl.hasSubModules()) {
                         const v = scanOptionalSubModules(mdl.subModules, mdl)
-                        if(typeof v === 'object'){
+                        if (typeof v === 'object') {
                             mods[mdl.getVersionlessMavenIdentifier()] = v
                         }
                     }
@@ -834,11 +611,11 @@ function scanOptionalSubModules(mdls, origin){
             }
         }
 
-        if(Object.keys(mods).length > 0){
+        if (Object.keys(mods).length > 0) {
             const ret = {
                 mods
             }
-            if(!origin.getRequired().value){
+            if (!origin.getRequired().value) {
                 ret.value = origin.getRequired().def
             }
             return ret
@@ -856,27 +633,27 @@ function scanOptionalSubModules(mdls, origin){
  * 
  * @returns {boolean | Object} The merged configuration.
  */
-function mergeModConfiguration(o, n, nReq = false){
-    if(typeof o === 'boolean'){
-        if(typeof n === 'boolean') return o
-        else if(typeof n === 'object'){
-            if(!nReq){
+function mergeModConfiguration(o, n, nReq = false) {
+    if (typeof o === 'boolean') {
+        if (typeof n === 'boolean') return o
+        else if (typeof n === 'object') {
+            if (!nReq) {
                 n.value = o
             }
             return n
         }
-    } else if(typeof o === 'object'){
-        if(typeof n === 'boolean') return typeof o.value !== 'undefined' ? o.value : true
-        else if(typeof n === 'object'){
-            if(!nReq){
+    } else if (typeof o === 'object') {
+        if (typeof n === 'boolean') return typeof o.value !== 'undefined' ? o.value : true
+        else if (typeof n === 'object') {
+            if (!nReq) {
                 n.value = typeof o.value !== 'undefined' ? o.value : true
             }
 
             const newMods = Object.keys(n.mods)
-            for(let i=0; i<newMods.length; i++){
+            for (let i = 0; i < newMods.length; i++) {
 
                 const mod = newMods[i]
-                if(o.mods[mod] != null){
+                if (o.mods[mod] != null) {
                     n.mods[mod] = mergeModConfiguration(o.mods[mod], n.mods[mod])
                 }
             }
@@ -893,27 +670,31 @@ function mergeModConfiguration(o, n, nReq = false){
 let lastValidationTime = 0
 const VALIDATION_COOLDOWN = 30000 // 30 secondes
 
-async function validateSelectedAccount(){
+/**
+ * Validate the currently selected account.
+ * @param {boolean} force If true, bypass cooldown and force validation.
+ */
+async function validateSelectedAccount(force = false) {
     const now = Date.now()
-    
-    // Éviter les validations trop fréquentes
-    if (now - lastValidationTime < VALIDATION_COOLDOWN) {
+
+    // Éviter les validations trop fréquentes sauf si forcé
+    if (!force && (now - lastValidationTime < VALIDATION_COOLDOWN)) {
         console.debug('[UIBINDER] Validation skipped (cooldown active)')
         return
     }
-    
+
     const selectedAcc = ConfigManager.getSelectedAccount()
-    if(selectedAcc != null){
+    if (selectedAcc != null) {
         lastValidationTime = now
         console.debug('[UIBINDER] Starting account validation for', selectedAcc.displayName)
-        
+
         const val = await AuthManager.validateSelected()
-        if(!val){
+        if (!val) {
             console.warn('[UIBINDER] Account validation failed for', selectedAcc.displayName)
-            
+
             // Donner une chance de reconnecter avant de supprimer le compte
             const accLen = Object.keys(ConfigManager.getAuthAccounts()).length
-            
+
             // Pour les comptes Microsoft, proposer une reconnexion au lieu de supprimer immédiatement
             if (selectedAcc.type === 'microsoft') {
                 setOverlayContent(
@@ -953,7 +734,7 @@ async function validateSelectedAccount(){
                 ConfigManager.removeAuthAccount(selectedAcc.uuid)
                 ConfigManager.save()
             }
-            
+
             setOverlayContent(
                 Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
                 accLen > 0
@@ -966,7 +747,7 @@ async function validateSelectedAccount(){
 
                 const isMicrosoft = selectedAcc.type === 'microsoft'
 
-                if(isMicrosoft) {
+                if (isMicrosoft) {
                     // Empty for now
                 } else {
                     // Mojang
@@ -974,14 +755,14 @@ async function validateSelectedAccount(){
                     document.getElementById('loginUsername').value = selectedAcc.username
                     validateEmail(selectedAcc.username)
                 }
-                
+
                 loginOptionsViewOnLoginSuccess = getCurrentView()
                 loginOptionsViewOnLoginCancel = VIEWS.loginOptions
 
-                if(accLen > 0) {
+                if (accLen > 0) {
                     loginOptionsViewOnCancel = getCurrentView()
                     loginOptionsViewCancelHandler = () => {
-                        if(isMicrosoft) {
+                        if (isMicrosoft) {
                             ConfigManager.addMicrosoftAuthAccount(
                                 selectedAcc.uuid,
                                 selectedAcc.accessToken,
@@ -1005,7 +786,7 @@ async function validateSelectedAccount(){
                 switchView(getCurrentView(), VIEWS.loginOptions)
             })
             setDismissHandler(() => {
-                if(accLen > 1){
+                if (accLen > 1) {
                     prepareAccountSelectionList()
                     $('#overlayContent').fadeOut(250, () => {
                         bindOverlayKeys(true, 'accountSelectContent', true)
@@ -1028,13 +809,22 @@ async function validateSelectedAccount(){
     }
 }
 
+// Expose a helper to force validation from other scripts (bypasses cooldown)
+window.forceValidateSelectedAccount = function () {
+    try {
+        return validateSelectedAccount(true)
+    } catch (e) {
+        console.warn('[UIBINDER] forceValidateSelectedAccount failed', e)
+    }
+}
+
 /**
  * Temporary function to update the selected account along
  * with the relevent UI elements.
  * 
  * @param {string} uuid The UUID of the account.
  */
-function setSelectedAccount(uuid){
+function setSelectedAccount(uuid) {
     const authAcc = ConfigManager.setSelectedAccount(uuid)
     ConfigManager.save()
     updateSelectedAccount(authAcc)
@@ -1092,34 +882,34 @@ try {
 // Synchronous Listener
 document.addEventListener('readystatechange', async () => {
 
-    if (document.readyState === 'interactive' || document.readyState === 'complete'){
-        if(rscShouldLoad){
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        if (rscShouldLoad) {
             rscShouldLoad = false
-            if(!fatalStartupError){
+            if (!fatalStartupError) {
                 const data = await DistroAPI.getDistribution()
                 await showMainUI(data)
             } else {
                 showFatalStartupError()
             }
-        } 
+        }
     }
 
 }, false)
 
 // Actions that must be performed after the distribution index is downloaded.
 ipcRenderer.on('distributionIndexDone', async (event, res) => {
-    if(res) {
+    if (res) {
         const data = await DistroAPI.getDistribution()
         syncModConfigurations(data)
         ensureJavaSettings(data)
-        if(document.readyState === 'interactive' || document.readyState === 'complete'){
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
             await showMainUI(data)
         } else {
             rscShouldLoad = true
         }
     } else {
         fatalStartupError = true
-        if(document.readyState === 'interactive' || document.readyState === 'complete'){
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
             showFatalStartupError()
         } else {
             rscShouldLoad = true

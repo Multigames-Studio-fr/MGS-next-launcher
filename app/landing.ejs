@@ -3,12 +3,8 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    <div class="flex min-h-screen w-full relative fit-content"
-         >
-        <!-- Overlay sombre global -->
-        <div class=" "></div>
-        <!-- Overlay glassmorphism global -->
-
+    <div id="layoutRoot" class="flex min-h-screen w-full relative fit-content flex-row-reverse">
+        
         <style>
             :root {
                 --primary: #451F21;
@@ -17,375 +13,884 @@
                 --white: #FFFFFF;
             }
 
-            /* Sidebar instances styling */
-            .server-instance-item {
-                list-style: none;
-                padding: 0;
-                margin: 0;
+            .glass-sidebar {
+                /* Refined sidebar gray: softer gradient and subtle inner highlight */
+                background: linear-gradient(180deg, #0f1113, #151718);
+                border-right: 1px solid rgba(255,255,255,0.035);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
             }
 
-            .server-instance-btn {
-                background: none;
-         
+            .glass-card {
+                /* Polished non-glass card: subtle gradient, soft border and shadow */
+                background: linear-gradient(180deg, #1b1b1b, #121212);
+                border: 1px solid rgba(248, 186, 89, 0.035);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+                border-radius: 0.75rem;
+            }
+
+            .glass-card:hover {
+                background: linear-gradient(180deg, #222, #141414);
+                border-color: rgba(248, 186, 89, 0.08);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 22px rgba(0,0,0,0.55);
+            }
+
+            .instance-item {
                 cursor: pointer;
-                 
-                display: flex;
-                align-items: center;
+                transition: all 0.2s ease;
+                position: relative;
             }
 
-            /* Animated behavior for instance buttons (CSS-only solution) */
-            .server-instance-btn {
-                /* allow width transitions between Tailwind utility widths */
-                box-sizing:   -box;
-                transition-property: width, background-color, box-shadow, transform;
-                transition-duration: 300ms;
-                transition-timing-function: cubic-bezier(.2, .9, .2, 1);
+            .instance-item.selected {
+                background: linear-gradient(to right, rgba(255, 106, 26, 0.15), rgba(24, 24, 24, 0.6));
+                border-left: 3px solid #F8BA59;
+                border-color: rgba(248, 186, 89, 0.5);
+            }
+
+            .instance-item:hover:not(.selected) {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(248, 186, 89, 0.3);
+            }
+
+            .instance-item:active {
+                transform: scale(0.98);
+            }
+
+            .launch-btn {
+                /* Cleaner launch button base used for small buttons (retry, etc.) */
+                background: linear-gradient(135deg, #FF7A33, #F8BA59 60%);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                position: relative;
                 overflow: hidden;
-                /* hide label overflow when shrinking */
-                align-items: center;
-                will-change: width, transform;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+                border: 1px solid rgba(255,255,255,0.03);
             }
 
-            /* Selection button animations (exit/enter) */
-            .server-instance-btn.instance-btn-exit {
-                animation: btnExit 0.22s cubic-bezier(.2,.9,.2,1) both;
+            .launch-btn::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.08);
+                transform: translate(-50%, -50%);
+                transition: width 0.45s, height 0.45s;
             }
 
-            .server-instance-btn.instance-btn-enter {
-                animation: btnEnter 0.26s cubic-bezier(.2,.9,.2,1) both;
+            .launch-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 26px rgba(0,0,0,0.5);
             }
 
-            @keyframes btnExit {
-                0% { transform: translateX(0) scale(1); opacity: 1; }
-                100% { transform: translateX(-6px) scale(0.995); opacity: 0.95; }
+            .launch-btn:active { transform: translateY(0); }
+
+            .launch-btn:active::before { width: 220px; height: 220px; }
+
+            /* Main large launch button tweaks (apply to both ID and class) */
+            #launch_button, .launch-button {
+                border-radius: 1rem;
+                border: 1px solid rgba(248,186,89,0.12) !important;
+                box-shadow: 0 10px 30px rgba(15,12,10,0.5);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
             }
 
-            @keyframes btnEnter {
-                0% { transform: translateX(6px) scale(0.995); opacity: 0.95; }
-                100% { transform: translateX(0) scale(1); opacity: 1; }
+            #launch_button:hover, .launch-button:hover { transform: translateY(-4px); box-shadow: 0 18px 42px rgba(15,12,10,0.6); }
+
+            #stop_button, .stop-button { border-radius: 1rem; border: 1px solid rgba(255,100,100,0.09) !important; }
+
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
             }
 
-            /* Explicit numeric widths to ensure smooth transitions between Tailwind classes */
-            .server-instance-btn.w-20 {
-                width: 5rem;
+            .animate-spin {
+                animation: spin 1s linear infinite;
             }
 
-            .server-instance-btn.w-64 {
-                width: 16rem;
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
-            /* Icon micro-interaction: scale when the button is wide (selected by Tailwind w-64 class) */
-            .server-instance-btn img {
-                transition: transform 260ms cubic-bezier(.2, .9, .2, 1), box-shadow 260ms;
-                will-change: transform;
+            .fade-in {
+                animation: fadeIn 0.5s ease-out forwards;
             }
 
-            .server-instance-btn.w-64 img {
-                transform: scale(1.04);
-                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
-            /* Animate the label even if it is toggled with Tailwind's 'hidden'/'block' classes.
-               We override the display set by Tailwind with a more specific selector and animate
-               opacity/transform/max-width for a smooth reveal without changing JS. */
-            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight {
+            .slide-up-anim {
+                animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            .progress-bar-container {
+                /* Solid subtle background for progress areas */
+                background: rgba(255, 255, 255, 0.03);
+            }
+
+            .progress-bar-fill {
+                background: linear-gradient(90deg, #FF6A1A, #F8BA59, #FF6A1A);
+                background-size: 200% 100%;
+                transition: width 0.3s ease-out;
+            }
+
+            @keyframes shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            @keyframes shimmer-slow {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+
+            .animate-shimmer-slow {
+                animation: shimmer-slow 8s linear infinite;
+            }
+
+            @keyframes gradient {
+                0%, 100% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+            }
+
+            .animate-gradient {
+                animation: gradient 5s ease infinite;
+            }
+
+            @keyframes ping-slow {
+                0% { transform: scale(1); opacity: 0.8; }
+                50% { transform: scale(1.05); opacity: 0.4; }
+                100% { transform: scale(1.1); opacity: 0; }
+            }
+
+            .animate-ping-slow {
+                animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            }
+
+            @keyframes slide {
+                0% { background-position: 0 0; }
+                100% { background-position: 40px 0; }
+            }
+
+            .animate-slide {
+                animation: slide 1s linear infinite;
+            }
+
+            .progress-bar-fill::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+                background-size: 200% 100%;
+                animation: shimmer 2s linear infinite;
+            }
+
+            /* Simplified card shadow (no glass inset highlight) */
+            .glass-card {
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            /* Override any Tailwind backdrop-blur utility applied alongside cards in this file */
+            .glass-card.backdrop-blur-2xl {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            /* Slightly nicer avatar container */
+            #avatarContainer {
+                background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(248,186,89,0.03));
+                border: 1px solid rgba(255,255,255,0.03);
+            }
+
+            @keyframes glowPulse {
+                0%, 100% { box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); }
+                50% { box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); }
+            }
+
+            .glow-pulse {
+                animation: glowPulse 2s ease-in-out infinite;
+            }
+
+            .news-hero-button {
+                transition: transform 0.3s ease;
+            }
+
+            .news-hero-button:hover {
+                transform: translateX(-50%) translateY(-5px) !important;
+            }
+
+            .social-link {
+                color: #ffffff;
+                transition: all 0.2s ease;
                 display: inline-block;
-                /* override Tailwind 'hidden' display:none when necessary */
-                opacity: 0;
-                transform: translateX(-6px);
-                max-width: 0;
-                transition: opacity 220ms linear, transform 260ms cubic-bezier(.2, .9, .2, 1), max-width 260ms cubic-bezier(.2, .9, .2, 1);
-                white-space: nowrap;
+            }
+
+            .social-link:hover {
+                transform: translateY(-2px);
+            }
+
+            .social-discord:hover { color: #5865F2; }
+            .social-tiktok:hover { color: #000000; }
+            .social-youtube:hover { color: #FF0000; }
+            .social-x:hover { color: #1DA1F2; }
+
+            /* Instance fade animations */
+            @keyframes instanceFadeOut {
+                0% { opacity: 1; transform: translateY(0) scale(1); }
+                100% { opacity: 0; transform: translateY(-12px) scale(0.985); }
+            }
+
+            @keyframes instanceFadeIn {
+                0% { opacity: 0; transform: translateY(12px) scale(0.985); }
+                100% { opacity: 1; transform: translateY(0) scale(1); }
+            }
+
+            .instance-fade-out {
+                animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+
+            .instance-fade-in {
+                animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+
+            /* Text layer for smooth content swap */
+            .text-layer {
+                display: inline-block;
                 vertical-align: middle;
-                pointer-events: none;
+                will-change: transform, opacity;
             }
 
-            /* Slide-label animation utilities (Style #2) */
-            @keyframes labelSlideOut {
-                0% { opacity: 1; transform: translateX(0); }
-                100% { opacity: 0; transform: translateX(18px); }
+            /* Sidebar position helpers
+               - `.sidebar-left` and `.sidebar-right` are applied to the document body
+                 by the small script below. The layout root (`#layoutRoot`) toggles
+                 `flex-row-reverse` to move the sidebar visually. */
+            .sidebar-left #layoutRoot { }
+            .sidebar-right #layoutRoot { }
+
+            /* When sidebar is on the left, show the selection border on the right
+               so visual selection still reads naturally. */
+            .sidebar-left .instance-item.selected {
+                border-left: none;
+                border-right: 3px solid var(--secondary);
             }
 
-            @keyframes labelSlideIn {
-                0% { opacity: 0; transform: translateX(-18px); }
-                100% { opacity: 1; transform: translateX(0); }
+            .sidebar-left .instance-item:hover:not(.selected) {
+                border-left: none;
+                border-right-color: rgba(248,186,89,0.3);
             }
 
-            .label-slide-out {
-                display: inline-block !important;
-                animation: labelSlideOut 0.22s cubic-bezier(.2,.9,.2,1) both;
+            /* Ensure default right-side visuals remain when sidebar on right */
+            .sidebar-right .instance-item.selected {
+                border-left-color: var(--secondary);
+                border-right: none;
             }
 
-            .label-slide-in {
-                display: inline-block !important;
-                animation: labelSlideIn 0.26s cubic-bezier(.2,.9,.2,1) both;
-            }
-
-            /* Slight icon shift to accompany label sliding */
-            .server-instance-btn.instance-btn-exit img {
-                transform: translateX(-6px) scale(0.995);
-            }
-
-            .server-instance-btn.instance-btn-enter img {
-                transform: translateX(6px) scale(1);
-            }
-
-            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight.block {
-                opacity: 1;
-                transform: translateX(0);
-                max-width: 160px;
-                /* matches the tailwind max width used in markup */
-                pointer-events: auto;
-            }
-
-            .server-instance-btn>div>span.font-semibold.text-xl.leading-tight.hidden {
-                opacity: 0;
-                transform: translateX(-6px);
-                max-width: 0;
-                pointer-events: none;
-            }
-
-            /* Fix the player info area width so avatar/username layout doesn't shift during animations */
-            .player-top-info {
-                min-width: 12.5rem;
-                /* fixed width for player info block */
-                max-width: 12.5rem;
-                box-sizing:   -box;
-            }
-
-            /* Respect reduced motion */
             @media (prefers-reduced-motion: reduce) {
-
-                .server-instance-btn,
-                .server-instance-btn>div>span.font-semibold.text-xl.leading-tight,
-                .server-instance-btn img {
+                * {
+                    animation: none !important;
                     transition: none !important;
                 }
             }
+
+            /* Reusable button styles */
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                border-radius: 0.75rem;
+                padding: 0.6rem 1rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+                border: 1px solid rgba(255,255,255,0.04);
+                background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+                color: #fff;
+            }
+
+            .btn:active { transform: translateY(0); }
+
+            .btn:hover { transform: translateY(-3px); }
+
+            .btn-ghost {
+                background: transparent;
+                border-color: rgba(255,255,255,0.06);
+                box-shadow: none;
+                padding: 0.625rem 0.9rem;
+            }
+
+            .btn-icon { padding: 0.5rem; border-radius: 0.75rem; }
+
+            .btn-primary {
+                background: linear-gradient(90deg, #FF6A1A, #F8BA59 60%);
+                box-shadow: 0 8px 24px rgba(15,12,10,0.45);
+                border-color: rgba(248,186,89,0.12);
+            }
+
+            .btn-danger {
+                background: linear-gradient(90deg,#e74c3c,#c0392b);
+                box-shadow: 0 8px 24px rgba(200,50,50,0.25);
+                border-color: rgba(255,80,80,0.12);
+            }
+
+            .btn-lg { padding: 0.9rem 1.25rem; border-radius: 1rem; font-size: 1.05rem; }
+
+            /* Color variants */
+            .btn-accent {
+                background: linear-gradient(90deg, rgba(248,186,89,0.95), rgba(255,138,66,0.95));
+                border-color: rgba(248,186,89,0.14);
+                box-shadow: 0 10px 26px rgba(248,186,89,0.08);
+            }
+
+            .btn-success {
+                background: linear-gradient(90deg,#34d399,#10b981);
+                border-color: rgba(16,185,129,0.12);
+                box-shadow: 0 10px 26px rgba(16,185,129,0.06);
+            }
+
+            .btn-info {
+                background: linear-gradient(90deg,#60a5fa,#3b82f6);
+                border-color: rgba(59,130,246,0.12);
+                box-shadow: 0 10px 26px rgba(59,130,246,0.06);
+            }
+
+            .btn-warning {
+                background: linear-gradient(90deg,#f59e0b,#f97316);
+                border-color: rgba(245,158,11,0.12);
+                box-shadow: 0 10px 26px rgba(245,158,11,0.06);
+            }
+
+            /* Instance item specific color tweaks */
+            .instance-item {
+                background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+                border-left: 3px solid transparent;
+                transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+            }
+
+            .instance-item:hover:not(.selected) {
+                background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(248,186,89,0.02));
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+            }
+
+            .instance-item.selected {
+                background: linear-gradient(90deg, rgba(255,106,26,0.12), rgba(24,24,24,0.6));
+                border-left-color: var(--secondary);
+                box-shadow: 0 10px 30px rgba(15,12,10,0.45);
+            }
+
+            .instance-item .bi-check-circle-fill { color: var(--secondary); }
+
+            /* Small colored badges for instance types (optional) */
+            .instance-badge {
+                width: 10px; height: 10px; border-radius: 999px; display:inline-block; margin-left:6px;
+            }
+            .instance-badge.pvp { background: linear-gradient(90deg,#ef4444,#f97316); }
+            .instance-badge.rp  { background: linear-gradient(90deg,#22c55e,#10b981); }
+            .instance-badge.mod { background: linear-gradient(90deg,#3b82f6,#6366f1); }
+
+            /* Global link and button color rules */
+            a {
+                color: var(--secondary);
+                text-decoration: none;
+                transition: color 0.18s ease, transform 0.12s ease;
+            }
+
+            a:hover, a:focus {
+                color: #FF6A1A;
+                text-decoration: underline;
+                transform: translateY(-1px);
+            }
+
+            /* Ensure anchor elements can use .btn utilities */
+            a.btn { display: inline-flex; }
+
+            /* Make native buttons more colorful by default */
+            button, input[type="button"], input[type="submit"] {
+                color: #fff;
+                background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+                border: 1px solid rgba(255,255,255,0.04);
+            }
+
+            button:focus, input[type="button"]:focus, input[type="submit"]:focus, a:focus {
+                outline: none;
+                box-shadow: 0 0 0 4px rgba(248,186,89,0.12), 0 6px 18px rgba(0,0,0,0.45);
+            }
+
+            /* Outline variants for bordered buttons */
+            .btn-outline-primary {
+                background: transparent;
+                color: #FF6A1A;
+                border: 1px solid rgba(255,106,26,0.18);
+            }
+
+            .btn-outline-info {
+                background: transparent;
+                color: #3b82f6;
+                border: 1px solid rgba(59,130,246,0.14);
+            }
+
+            .btn-outline-success {
+                background: transparent;
+                color: #10b981;
+                border: 1px solid rgba(16,185,129,0.12);
+            }
+
+            /* Small decorative accent for links inside cards */
+            .link-accent::after {
+                content: '';
+                display: inline-block;
+                width: 8px;
+                height: 2px;
+                background: linear-gradient(90deg,#FF6A1A,#F8BA59);
+                margin-left: 8px;
+                vertical-align: middle;
+                border-radius: 2px;
+            }
+
+            /* ===== Launch animations (targeted, override global disable) ===== */
+            @keyframes launchPulse {
+                0% { transform: translateY(0) scale(1); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+                50% { transform: translateY(-3px) scale(1.02); box-shadow: 0 18px 36px rgba(15,12,10,0.45); }
+                100% { transform: translateY(0) scale(1); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+            }
+
+            @keyframes shineSlide {
+                0% { transform: translateX(-120%); }
+                100% { transform: translateX(120%); }
+            }
+
+            @keyframes progressStripe {
+                0% { background-position: 0 0; }
+                100% { background-position: 40px 0; }
+            }
+
+            /* Button pulse + shine — use !important to override the global disable
+               and class selectors so they can be reused without IDs. */
+            #launch_button.is-launching, .launch-button.is-launching {
+                animation: launchPulse 1.2s ease-in-out infinite !important;
+            }
+
+            /* subtle moving shine across the button */
+            #launch_button.is-launching::after, .launch-button.is-launching::after {
+                content: '' !important;
+                position: absolute !important;
+                inset: 0 !important;
+                background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%) !important;
+                transform: translateX(-120%) !important;
+                mix-blend-mode: overlay !important;
+                pointer-events: none !important;
+                animation: shineSlide 1.0s linear infinite !important;
+                border-radius: inherit !important;
+            }
+
+            /* Progress bar shimmer for the launch progress fill */
+            #launch_progress_bar, .launch-progress-bar {
+                background-size: 200% 100% !important;
+                background-image: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 100%) !important;
+                animation: progressStripe 1s linear infinite !important;
+            }
+
+            /* When progress is active, give a glow to the progress container */
+            #launch_progress_bar.active, .launch-progress-bar.active {
+                box-shadow: 0 6px 18px rgba(248,186,89,0.12) !important;
+            }
+
+            /* Position main content centered vertically on the left */
+            .main-left-center {
+                position: absolute;
+                left: 3.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 20;
+                
+                width: auto;
+            }
+
+            @media (max-width: 900px) {
+                .main-left-center {
+                    position: static;
+                    transform: none;
+                    max-width: none;
+                    left: auto;
+                    top: auto;
+                }
+            }
+
+        </style>
         </style>
 
+        <!-- Sidebar gauche -->
+        <aside class="w-64 sticky top-0 h-screen">
+            <div class="glass-sidebar h-full flex flex-col py-6 px-4">
+                
 
-        <!-- Main content glassmorphism -->
-        <main
-            class="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-8 md:px-12 lg:px-20 xl:px-32       rounded-2xl ">
 
-            <div class="absolute top-0 left-0 z-40 p-6">
-                <img src="./assets/images/logoup.png" class="h-30 " alt="Logo">
-            </div>
-
-            <div style="padding-top: 150px;" class="max-w-3xl space-y-6">
-
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-    mb-2 font-mojang server-title">
-                    <span class="text-layer current" aria-hidden="false">Veuillez sélectionner une instance</span>
-                    <span class="text-layer next" aria-hidden="true" style="display:none"></span>
-                </h1>
-                <p class="text-base sm:text-lg text-white/90 font-medium mb-2 server-desc">
-                    <span class="text-layer current" aria-hidden="false">Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.</span>
-                    <span class="text-layer next" aria-hidden="true" style="display:none"></span>
-                </p>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 text-sm sm:text-base">
-                    <span class="text-white/70 text-sm">Version :</span>
-                    <span class="text-white font-bold server-version">--</span>
-
-                </div>
-                <br>
-                <div class="play-instance flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                    <button id="launch_button"
-                        class="play-btn flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-[#FF6A1A] hover:bg-[#F8BA59] text-white font-bold text-lg sm:text-xl md:text-2xl     transition-all duration-200 w-full sm:w-auto">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6 4l12 6-12 6V4z" />
-                        </svg>
-                        <%- lang('landing.launchButton') %>
-                    </button>
-
-                    <!-- Stop button (visible when instance running) - styled like play button -->
-                    <button id="stop_button" style="display:none;"
-                        class="play-btn stop-btn flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-lg sm:text-xl md:text-2xl     transition-all duration-200 w-full sm:w-auto">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M6 6h12v12H6z" />
-                        </svg>
-                        Arrêter
-                    </button>
-
-                    <button id="settingsMediaButton"
-                        class="settings-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-white/6 backdrop-blur-md hover:bg-[#F8BA59]/80 text-white hover:text-black transition    ">
-                        <i class="bi bi-gear-fill " style="font-size: x-large;" aria-hidden="true"></i>
-                    </button>
-
-                    <!-- News button: ouvre la section Actualités -->
-                    <button id="openNewsButton" title="Actualités"
-                        class="settings-btn news-btn flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-[#181818] hover:bg-[#F8BA59]/80 text-white transition    ">
-                        <i class="bi bi-newspaper w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true"></i>
-                    </button>
-
-                </div>
-
-                <br>
-                <!-- Remplace tout le bloc .play-instance par le bloc .info-starting-game ci-dessous -->
-                <div id="launch_details"
-                    class="info-starting-game hidden game-launch-overlay h-20 z-50 pointer-events-none"
-                    style="display: none; opacity: 0;">
-                    <br>
-                    <div class="flex flex-col  justify-center w-full pb-12 gap-3">
+                <!-- Info joueur -->
+                <div class="mb-6 mt-6">
+                    <div class="glass-card rounded-lg  p-3">
                         <div class="flex items-center gap-3">
-                            <span class="inline-flex ">
-                                <svg class="w-6 h-6 text-[#F8BA59] animate-spin" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10" stroke-opacity=".4" />
-                                    <path d="M12 6v6l3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </span>
-                            <div id="launch_details_text"
-                                class="info-starting-game-text text-white text-xl font-bold tracking-wide"
-                                aria-live="polite">Préparation du jeu...</div>
-                        </div>
-                        <div class=" max-w-xl flex flex-col gap-2">
-                            <div
-                                class="relative h-4 rounded-lg overflow-hidden bg-white/15 backdrop-blur-sm      -white/10">
-                                <div id="launch_progress_bar"
-                                    class="progress-bar-inner h-full w-0 bg-gradient-to-r from-[#FF6A1A] via-[#F8BA59] to-[#FF6A1A]
-                                            shadow-[0_0_0_1px_#00000055_inset] transition-[width] duration-300 ease-out"></div>
-                                <div
-                                    class="absolute inset-0 bg-[linear-gradient(120deg,#ffffff22_25%,transparent_25%,transparent_50%,#ffffff22_50%,#ffffff22_75%,transparent_75%,transparent)] bg-[length:200%_100%] animate-[shine_2.2s_linear_infinite] pointer-events-none mix-blend-overlay">
+                            
+                            <div class="flex-1 min-w-0">
+                                <div id="username" class="text-white font-semibold text-sm truncate">Chargement...</div>
+                                <div class="flex items-center gap-1.5 mt-1">
+                                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                                    <span class="text-gray-400 text-xs">En ligne</span>
                                 </div>
-                                <progress id="launch_progress" style="display: none;" value="22" max="100"></progress>
                             </div>
-                            <div class="flex justify-between text-xs font-semibold text-white/70 tabular-nums">
-                                <span class="progress-label">Initialisation...</span>
-                                <span id="launch_progress_label" class="progress-value">0%</span>
+                            <div id="avatarContainer" class="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <!-- Avatar généré dynamiquement -->
                             </div>
                         </div>
-                        <button type="button"
-                            class="cancel-launch pointer-events-auto mt-1 px-4 py-1.5 text-sm font-semibold rounded-md bg-white/10 hover:bg-white/20 text-white      -white/15 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                            style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display:none;">
-                            Annuler
-                        </button>
-                    </div>
-                </div>
-                <!-- Minecraft Logs Panel removed (moved to Settings -> Logs) -->
-                <!-- Sélecteur d'instance (optionnel, à afficher si plusieurs instances) -->
-                <div class="flex items-center gap-2 mb-8 hidden">
-                    <span class="text-[#F8BA59] font-bold text-xl"><!-- Icone instance dynamique --></span>
-                    <select id="server_selection_button"
-                        class="instance-select bg-white/90 text-[#181818] font-semibold rounded-xl px-4 py-2 shadow focus:outline-none">
-                        <!-- JS: injecte les options ici -->
-                    </select>
-                </div>
-
-
-                <!-- News moved to top-level include in app.ejs -->
-            </div>
-                            <!-- Floating centered News button (bottom of viewport) -->
-                <div id="newsFloatButton" role="button" aria-label="Actualités" tabindex="0">
-                    <div class="news-hero" id="openNewsFloat" style="background-image: url('./assets/images/mascotte.png');" aria-hidden="false">
-                        <div class="news-overlay">
-                            <div class="news-title">News</div>
-                            <svg class="news-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M6 9l6 6 6-6"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-        </main>
-        <!-- Sidebar verticale Multigames style -->
-        <aside class="relative z-10 flex flex-col justify-between py-4 sm:py-6 md:py-8  min-h-screen items-end">
-            <!-- Filtre noir sur la sidebar -->
-
-            <!-- Contenu de la sidebar -->
-            <!-- Contenu de la sidebar -->
-
-            <div class="flex flex-col justify-between h-full min-h-screen w-74 ">
-                <!-- Haut : Avatar -->
-
-                <div class="relative mb-3 ">
-                    <div
-                        id="openSettingsFromAvatar"
-                        role="button"
-                        
-                        tabindex="0"
-                        onclick="document.getElementById('settingsMediaButton') && document.getElementById('settingsMediaButton').click()"
-                        onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); document.getElementById('settingsMediaButton') && document.getElementById('settingsMediaButton').click(); }"
-                        class="bg-white/6 backdrop-blur-md rounded-l-2xl sm:rounded-l-3xl py-3 px-3 flex  gap-3 glass-sidebar     -white/10 cursor-pointer">
-                        <div id="avatarContainer"
-                            class="player-head w-15 h-15 rounded-2xl overflow-hidden bg-white flex items-center justify-center">
-
-                        </div>
-                        <!-- Ajout du pseudo ici -->
-                        <div class="flex flex-col ">
-                            <div id="username" class=" text-white text-2xl font-semibold "></div>
-                            <div class="flex items-center gap-2" aria-live="polite" aria-atomic="true">
-                                <span
-                                    class="server-status-dot status-dot-pulse w-3 h-3 rounded-full bg-green-400   -2   -white"
-                                    role="img" aria-label="Statut : en ligne"></span>
-                                <span class="text-white text-sm">En ligne</span>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-
-                    <!-- username/avatar init removed (centralized later) -->
-                </div>
-
-
-                <!-- Milieu : Liste des serveurs centrée -->
-                <div class="flex flex-col gap-3 mt-6 sm:mt-8 md:mt-10 w-full max-w-sm mx-auto">
-                    <div>
-                        <ul id="sidebar-instances" class="flex flex-col gap-4 sm:gap-6 md:gap-8 items-end">
-                            <!-- JS: injecte dynamiquement les boutons d'instances ici -->
-                            <li class="text-white/50 text-xs text-center">Chargement...</li>
-                        </ul>
                     </div>
                 </div>
 
-                <!-- Bas : Réseaux sociaux -->
-                <div class=" pl-14 pr-14 pt-7 pb-7">
-                    <style>
-                        .social-icon { font-size: 2.5rem; line-height: 1; }
-                        .social-link { color: #ffffff; transition: color 180ms ease, transform 180ms ease; }
-                        .social-link:focus { outline: none; }
-                        .social-link:hover { transform: translateY(-2px); }
-                        .social-discord:hover, .social-discord:focus { color: #5865F2; }
-                        .social-tiktok:hover, .social-tiktok:focus { color: #010101; }
-                        .social-youtube:hover, .social-youtube:focus { color: #FF0000; }
-                        .social-x:hover, .social-x:focus { color: #1DA1F2; }
-                    </style>
+                <!-- Liste des instances -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="mb-3 px-2">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Instances</h3>
+                    </div>
+                    <div id="sidebar-instances" class="space-y-2">
+                        <!-- Instances générées dynamiquement -->
+                        <div class="text-gray-500 text-sm text-center py-4">Chargement...</div>
+                    </div>
+                </div>
 
-                    <div class="flex flex-row gap-4 bg-white/6 backdrop-blur-md      -white/10 rounded-2xl  justify-center mt-8 mb-15">
-                        <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord"
-                            class="social-link social-discord mt-3 mb-3 " aria-label="Discord">
-                            <!-- Discord icon kept as SVG for better fidelity -->
-                            <i class="bi bi-discord social-icon" style="font-size:x-large" aria-hidden="true"></i>
+                <!-- Boutons d'action du bas -->
+                    <div class="mt-6 space-y-3">
+                    <button id="settingsMediaButton" class="btn btn-ghost w-full justify-start">
+                        <i class="bi bi-gear-fill text-lg"></i>
+                        <span class="text-sm font-medium">Paramètres</span>
+                    </button>
+                    
+                    <!-- <button id="openNewsButton" class="btn btn-ghost w-full justify-start">
+                        <i class="bi bi-newspaper text-lg"></i>
+                        <span class="text-sm font-medium">Actualités</span>
+                    </button>
+
+                    <button id="toggleSidebarSideButton" class="btn btn-ghost w-full justify-start" aria-label="Position de la barre">
+                        <i class="bi bi-layout-sidebar-inset text-lg"></i>
+                        <span class="text-sm font-medium">Barre: Droite</span>
+                    </button>-->
+                </div>
+
+                <!-- Réseaux sociaux -->
+                <div class="mt-6 pt-4 border-t border-white/10">
+                    <div class="flex justify-around">
+                        <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord" class="social-link social-discord" aria-label="Discord">
+                            <i class="bi bi-discord text-xl"></i>
                         </a>
-
-                        <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok"
-                            class="social-link social-tiktok mt-3 mb-3" aria-label="TikTok">
-                            <!-- Keep TikTok SVG for brand accuracy -->
-                            <i class="bi bi-tiktok social-icon" style="font-size:x-large" aria-hidden="true"></i>
+                        <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok" class="social-link social-tiktok" aria-label="TikTok">
+                            <i class="bi bi-tiktok text-xl"></i>
                         </a>
-
-                        <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube"
-                            class="social-link social-youtube mt-3 mb-3" aria-label="YouTube">
-                            <i class="bi bi-youtube social-icon" style="font-size:x-large" aria-hidden="true"></i>
+                        <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube" class="social-link social-youtube" aria-label="YouTube">
+                            <i class="bi bi-youtube text-xl"></i>
                         </a>
-
-                        <a href="https://x.com/MultigamesStd" target="_blank" title="X"
-                            class="social-link social-x mt-3 mb-3" aria-label="X">
-                            <i class="bi bi-twitter social-icon" style="font-size:x-large" aria-hidden="true"></i>
+                        <a href="https://x.com/MultigamesStd" target="_blank" title="X" class="social-link social-x" aria-label="X">
+                            <i class="bi bi-twitter text-xl"></i>
                         </a>
                     </div>
-                    <!-- Ajoute d'autres réseaux si besoin -->
                 </div>
             </div>
-
-
-
-
         </aside>
+        <!-- Contenu principal -->
+        <main class="flex-1 flex flex-col h-screen max-h-screen overflow-hidden bg-transparent relative">
+            
+            <!-- Hero Section avec design gaming premium -->
+            <div class="flex-1 relative group overflow-hidden">
+              
+
+                <!-- Particle effect decorations -->
+                <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-[#F8BA59] rounded-full opacity-60 animate-ping"></div>
+                    <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40 animate-pulse" style="animation-delay: 0.5s;"></div>
+                    <div class="absolute bottom-1/3 left-1/2 w-2 h-2 bg-[#FF6A1A] rounded-full opacity-50 animate-ping" style="animation-delay: 1s;"></div>
+                </div>
+
+                <!-- Hero background image (Tailwind utilities) -->
+                <div class="absolute inset-0 bg-cover bg-center brightness-[0.45] contrast-[1.05] pointer-events-none" style="background-image: url('./assets/images/backgrounds/hero-landing.svg');" aria-hidden="true"></div>
+
+                <!-- Content Container -->
+                <div class="relative z-10 h-full flex flex-col justify-between p-10">
+
+                    <!-- Inline mini-pub Hardcore (Tailwind utilities, positioned inside content) -->
+
+                   <!--  <div id="hardcorePromo" class="absolute right-5 bottom-5 z-50 w-100 max-w-full" aria-live="polite">
+                        <div class="glass-card hc-card relative overflow-hidden bg-cover bg-center" role="region" aria-label="Publicité Hardcore" style="background-image: url('https://play-lh.googleusercontent.com/VEKyd3t2TLsW16ga3CxvZoO4tv_PY3ALETf-s7o_iZEqqoh831Yn7PMpKaisr4_WtuY=w526-h296');">
+                            <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/50 pointer-events-none"></div>
+                            <img src="https://media.forgecdn.net/avatars/thumbnails/479/106/256/256/637776002185322260.png" alt="Hardcore" class="hc-thumb relative m-3 w-13 h-13 rounded-md object-cover" onerror="this.style.display='none'">
+                            <div class="relative flex-1 min-w-0 p-3 pr-4">
+                                <div class="text-white font-bold text-sm">Multigames — Hardcore</div>
+                                <div class="text-white/80 text-xs mt-1">Survival intense • Permadeath • Events hebdos</div>
+                                <div class="mt-3 flex gap-2">
+                                    <button id="hcJoinBtn" class="btn btn-primary btn-sm">Rejoindre</button>
+                                    <button id="hcMoreBtn" class="btn btn-ghost btn-sm">Détails</button>
+                                </div>
+                            </div>
+                          
+                        </div>
+                    </div>
+
+                    
+                    <div id="ytPromo" class="absolute right-5 bottom-28 z-50 w-80 max-w-full" aria-live="polite">
+                        <div class="glass-card relative overflow-hidden p-3">
+                            <div class="flex items-start gap-3">
+                                <img src="./assets/images/icons/yt-short.svg" alt="YouTube Short" class="w-12 h-12 rounded-md object-cover">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-white font-bold text-sm">Dernier Short</div>
+                                    <div class="text-white/80 text-xs mt-1">Notre dernière vidéo courte — regardez maintenant</div>
+                                    <div class="mt-3 flex gap-2">
+                                        <button id="ytViewBtn" class="btn btn-primary btn-sm" aria-haspopup="dialog" aria-controls="ytModal">Voir le Short</button>
+                                        <a href="https://multigames-studio.fr/embed.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Ouvrir embed</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+
+                    <script>
+                        (function(){
+                            var ytBtn = document.getElementById('ytViewBtn');
+                            var container = document.querySelector('.relative.z-10') || document.body;
+                            if(!ytBtn) return;
+
+                            function buildModal(){
+                                if(document.getElementById('ytModal')) return document.getElementById('ytModal');
+
+                                var overlay = document.createElement('div');
+                                overlay.id = 'ytModal';
+                                overlay.className = 'fixed inset-0 z-60 flex items-center justify-center bg-black/70';
+                                overlay.setAttribute('role','dialog');
+                                overlay.setAttribute('aria-modal','true');
+
+                                var wrapper = document.createElement('div');
+                                wrapper.className = 'relative w-[min(900px,95%)] max-w-[900px] p-4';
+
+                                var closeBtn = document.createElement('button');
+                                closeBtn.id = 'ytModalClose';
+                                closeBtn.className = 'absolute top-3 right-3 btn btn-ghost btn-icon';
+                                closeBtn.setAttribute('aria-label','Fermer');
+                                closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+
+                                var playerWrap = document.createElement('div');
+                                playerWrap.className = 'aspect-video rounded-lg overflow-hidden glass-card';
+
+                                var iframe = document.createElement('iframe');
+                                // Use the provided embed page and request autoplay — user click should allow autoplay
+                                iframe.src = 'https://multigames-studio.fr/embed.html?autoplay=1';
+                                iframe.frameBorder = '0';
+                                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                                iframe.setAttribute('allowfullscreen','');
+                                iframe.style.width = '100%';
+                                iframe.style.height = '100%';
+                                iframe.style.border = '0';
+
+                                playerWrap.appendChild(iframe);
+                                wrapper.appendChild(closeBtn);
+                                wrapper.appendChild(playerWrap);
+                                overlay.appendChild(wrapper);
+
+                                container.appendChild(overlay);
+
+                                // Fade in
+                                overlay.style.opacity = '0';
+                                overlay.style.transition = 'opacity 160ms ease';
+                                setTimeout(function(){ overlay.style.opacity = '1'; }, 10);
+
+                                // Handlers
+                                closeBtn.addEventListener('click', closeModal);
+                                overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
+                                window.addEventListener('keydown', escHandler);
+                                // Focus
+                                closeBtn.focus();
+
+                                return overlay;
+                            }
+
+                            function escHandler(e){ if(e.key === 'Escape') closeModal(); }
+
+                            function closeModal(){
+                                var overlay = document.getElementById('ytModal');
+                                if(!overlay) return;
+                                // stop playback by blanking iframe src before removal
+                                var ifr = overlay.querySelector('iframe'); if(ifr) try{ ifr.src = 'about:blank'; }catch(e){}
+                                overlay.style.opacity = '0';
+                                window.removeEventListener('keydown', escHandler);
+                                setTimeout(function(){ overlay.remove(); }, 180);
+                            }
+
+                            ytBtn.addEventListener('click', function(){
+                                if(document.getElementById('ytModal')){
+                                    closeModal();
+                                } else {
+                                    buildModal();
+                                }
+                            });
+                        })();
+                    </script>
+
+                    <script>
+                        (function(){
+                            var promo = document.getElementById('hardcorePromo');
+                            var join = document.getElementById('hcJoinBtn');
+                            var more = document.getElementById('hcMoreBtn');
+                            var close = document.getElementById('hcCloseBtn');
+
+                            function showToast(text){
+                                var t = document.createElement('div');
+                                t.className = 'absolute right-5 z-50 bg-black/70 text-white px-3 py-2 rounded-md text-sm backdrop-blur';
+                                t.textContent = text;
+                                t.style.bottom = '5.5rem';
+                                var container = document.querySelector('.relative.z-10');
+                                (container || document.body).appendChild(t);
+                                setTimeout(function(){ t.style.opacity=1; }, 10);
+                                setTimeout(function(){ t.style.opacity=0; setTimeout(function(){ t.remove(); },300); }, 2500);
+                            }
+
+                            if(join){
+                                join.addEventListener('click', function(){
+                                    try{ navigator.clipboard.writeText('hc.multigames-studio.fr'); showToast('IP copiée: hc.multigames-studio.fr'); }
+                                    catch(e){ showToast('IP: hc.multigames-studio.fr'); }
+                                });
+                            }
+                            if(more){
+                                more.addEventListener('click', function(){
+                                    var details = document.getElementById('hcDetailsInline');
+                                    if(!details){
+                                        details = document.createElement('div');
+                                        details.id = 'hcDetailsInline';
+                                        details.className = 'glass-card p-4 mt-3 relative';
+                                        details.style.maxWidth = '360px';
+                                        details.innerHTML = '<div class="text-white font-bold">Hardcore — Détails</div><div class="text-gray-300 text-sm mt-2">Permadeath activé. Events hebdomadaires, classement, récompenses. IP: <strong>hc.multigames-studio.fr</strong></div>';
+                                        promo.parentNode.appendChild(details);
+                                    } else {
+                                        details.scrollIntoView({behavior:'smooth', block:'nearest'});
+                                    }
+                                });
+                            }
+                            if(close){ close.addEventListener('click', function(){ promo.style.display='none'; }); }
+                        })();
+                    </script>
+                    
+                    <!-- Main Content Section -->
+                    <div class="space-y-8 pb-8 main-left-center">
+                        <!-- Status Badge Premium -->
+                        <div id="statusBadge" class="status-badge inline-flex items-center gap-3 glass-card px-5 py-2.5 rounded-full w-fit border border-gray-500/30 shadow-lg" style="display: none;">
+                            <div class="relative">
+                                <div id="statusBadgeDot" class="status-badge-dot w-2.5 h-2.5 rounded-full bg-gray-400"></div>
+                                <div id="statusBadgePing" class="status-badge-ping absolute inset-0 w-2.5 h-2.5 rounded-full bg-gray-400" style="display: none;"></div>
+                            </div>
+                            <span id="statusBadgeText" class="status-badge-text text-gray-400 text-xs font-bold uppercase tracking-widest">Vérification...</span>
+                            <div id="latencyDivider" class="latency-divider w-px h-4 bg-white/20" style="display: none;"></div>
+                            <span id="latencyText" class="latency-text text-white/60 text-xs font-medium" style="display: none;"></span>
+                        </div>
+
+                        <!-- Title avec effet 3D -->
+                        <div class="space-y-4">
+                            <h1 class="text-7xl font-mojang  text-white mb-2 server-title tracking-tighter leading-none relative" >
+                                
+                            </h1>
+                            
+                            <!-- Subtitle stylé -->
+                            <p class="text-xl text-gray-300 server-desc font-light tracking-wide max-w-3xl leading-relaxed relative">
+                                <span class="text-layer current">
+                                    Plongez dans une aventure épique où chaque instant compte. 
+                                    <span class="text-[#F8BA59] font-semibold">Rejoignez des milliers de joueurs</span> 
+                                    et forgez votre légende.
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <!-- Version & Technical Info Cards -->
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <!-- Removed Version & Loader cards (user requested cleaner layout) -->
+
+                            <!-- Launch area (minimal, no icon/card) -->
+                            <div class="w-full max-w-sm flex flex-col items-stretch">
+                               
+
+                                <div class="mt-4">
+                                    <button id="launch_button" class="launch-button w-full h-14 btn btn-primary launch-btn flex items-center justify-center gap-3 text-lg font-black">
+                                        <i class="bi bi-play-fill text-2xl"></i>
+                                        <span>Lancer</span>
+                                    </button>
+                                </div>
+
+                                <div class="mt-3">
+                                    <button id="stop_button" style="display:none;" class="stop-button w-full h-14 btn btn-danger launch-btn flex items-center justify-center gap-3 text-lg font-black">
+                                        <i class="bi bi-stop-fill text-2xl"></i>
+                                        <span>Arrêter</span>
+                                    </button>
+                                </div>
+
+                                
+                            </div>
+
+                            <div id="modsCard" class="glass-card px-5 py-3 rounded-xl border border-white/10 hover:border-[#F8BA59]/40 transition-all duration-300 hover:scale-105 cursor-pointer group" style="display: none;">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                                        <i class="bi bi-puzzle text-blue-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-gray-400 text-[10px] uppercase tracking-wider font-semibold">Mods</div>
+                                        <div id="modsCount" class="text-white font-bold text-base">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                        </div>
+                    </div>
+
+                    <!-- Top Section avec stats -->
+                    <div class="flex justify-between items-start">
+                        <!-- Server Stats Cards -->
+                        <div class="flex gap-4">
+                            <div id="playerCountCard" class="glass-card px-4 py-3 rounded-xl border border-[#F8BA59]/20 hover:border-[#F8BA59]/50 transition-all duration-300 group cursor-pointer" style="display: none;">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6A1A]/20 to-[#F8BA59]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <i class="bi bi-people-fill text-[#F8BA59] text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div id="playerCount" class="text-white font-bold text-lg">-</div>
+                                        <div class="text-gray-400 text-xs uppercase tracking-wider">Joueurs</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="serverStatusCard" class="glass-card px-4 py-3 rounded-xl border transition-all duration-300 group cursor-pointer">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-400/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <div id="serverStatusDot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                                    </div>
+                                    <div>
+                                        <div id="serverStatusText" class="text-white font-bold text-lg">-</div>
+                                        <div class="text-gray-400 text-xs uppercase tracking-wider">Statut</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    
+
+                </div>
+            </div>
+
+        </main>
+
+            <!-- moved: promo will be rendered inside content container as inline element -->
+
+      
     </div>
 
-    <!-- Cache les éléments legacy pour compatibilité -->
+    <!-- Éléments cachés pour compatibilité JS -->
     <div style="display: none;">
         <div id="user_content">
             <span id="user_text"><%- lang('landing.usernamePlaceholder') %></span>
@@ -394,8 +899,7 @@
         <div id="launch_content">
             <button id="server_selection_button"><%- lang('landing.launchButtonPlaceholder') %></button>
         </div>
-        <!-- Mojang Status (caché mais gardé pour les fonctions JS) -->
-        <div id="mojangStatusContainer" style="display: none;">
+        <div id="mojangStatusContainer">
             <span id="mojang_status_icon">&#8226;</span>
             <div id="mojangStatusTooltip">
                 <div id="mojangStatusTooltipTitle"><%- lang('landing.mojangStatusTooltipTitle') %></div>
@@ -410,621 +914,119 @@
         </div>
     </div>
 
-    <!-- Styles et scripts pour la nouvelle interface -->
-    <style>
-        /* Apparition douce du contenu principal */
-        main .max-w-2xl {
-            min-height: 1px;
-        }
-
-        .fade-in {
-            opacity: 0;
-            transform: translateY(4px);
-        }
-
-        /* News styles moved to partial: app/news.ejs */
-
-        /* Boutons principaux : effet de survol doux et léger */
-        .play-btn,
-        .settings-btn,
-        .w-14.h-14 {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .play-btn:hover {
-            background: #F8BA59;
-            color: #181818;
-        }
-
-        .settings-btn:hover,
-        .w-14.h-14:hover {
-            background: #F8BA59;
-            color: #181818;
-        }
-
-        /* Animation sur le select d'instance */
-        .instance-select {
-            min-width: 1px;
-        }
-
-        .instance-select:focus {
-              -color: #F8BA59;
-        }
-
-        /* Animation sur le dot de statut serveur */
-        .server-status-dot {
-            width: 8px;
-            height: 8px;
-            display: inline-block;
-              -radius: 9999px;
-        }
-
-        /* Button glass style */
-        .glass-btn {
-            background: rgba(255, 255, 255, 0.06);
-
-            color: #FFFFFF;
-              -radius: 10px;
-        }
-
-        .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.10);
-        }
-
-        /* Modpack cards styles */
-        .modpack-card {
-            cursor: pointer;
-        }
-
-        .modpack-card:hover {
-            opacity: 1 !important;
-        }
-
-        .modpack-card.selected {
-            background: linear-gradient(to right, #f97316, #ea580c) !important;
-        }
-
-        .modpack-avatar {
-            background: #92400e;
-        }
-
-        /* Latest news specific styling */
-        .news-card.glass-global {
-            background: rgba(24, 24, 24, 0.36);
-              -radius: 12px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .news-thumb {
-            width: 140px;
-            height: 84px;
-            background-size: cover;
-            background-position: center;
-              -radius: 8px;
-            flex-shrink: 0;
-        }
-
-        .news-title {
-            margin: 0;
-        }
-
-        .news-excerpt {
-            margin: 0;
-        }
-
-        @keyframes shine {}
-
-        /* --- ADDED: Animations CSS utilities --- */
-        /* Place these rules near the other styles */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideRight {
-            from {
-                opacity: 0;
-                transform: translateX(18px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes popIn {
-            from {
-                opacity: 0;
-                transform: scale(.96) translateY(4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .animate-fade {
-            animation: fadeUp 520ms cubic-bezier(.2, .9, .2, 1) both;
-        }
-
-        .animate-slide-right {
-            animation: slideRight 420ms cubic-bezier(.2, .9, .2, 1) both;
-        }
-
-        .animated-pop {
-            animation: popIn 420ms cubic-bezier(.2, .9, .2, 1) both;
-        }
-
-        /* --- ADDED: Extra animations & polish --- */
-        @keyframes float {
-            0% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-6px);
-            }
-
-            100% {
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 106, 26, 0);
-                transform: scale(1);
-            }
-
-            50% {
-                box-shadow: 0 0 30px 8px rgba(248, 186, 89, 0.06);
-                transform: scale(1.01);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 106, 26, 0);
-                transform: scale(1);
-            }
-        }
-
-        @keyframes progressShimmer {
-            0% {
-                background-position: -200% 0;
-            }
-
-            100% {
-                background-position: 200% 0;
-            }
-        }
-
-        @keyframes wobble {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            25% {
-                transform: rotate(1deg);
-            }
-
-            75% {
-                transform: rotate(-1deg);
-            }
-
-            100% {
-                transform: rotate(0deg);
-            }
-        }
-
-        /* Logo float */
-        .logo-float {
-            animation: float 6s ease-in-out infinite;
-            will-change: transform;
-        }
-
-        /* Button hover pulse (non-intrusive) */
-        .button-pulse {
-            animation: pulse 1.6s ease-in-out infinite;
-        }
-
-        /* News card 3D tilt + hover lift */
-        .news-card {
-            transform-origin: center;
-            transform-style: preserve-3d;
-            transition: transform .22s cubic-bezier(.2, .9, .2, 1), box-shadow .22s ease;
-            backface-visibility: hidden;
-            will-change: transform;
-        }
-
-        .news-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-        }
-
-        /* progress bar shimmer overlay */
-        #launch_progress_bar::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.05) 100%);
-            background-size: 300% 100%;
-            pointer-events: none;
-            animation: progressShimmer 2.2s linear infinite;
-            mix-blend-mode: overlay;
-        }
-
-        .glass-sidebar {
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        /* small floating micro-anim for sidebar status dot */
-        .glass-sidebar .status-dot-pulse {
-            display: inline-block;
-            animation: wobble 3s ease-in-out infinite;
-        }
-
-        /* stagger reveal utilities (intersection-based) */
-        [data-reveal] {
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity .5s ease, transform .5s ease;
-        }
-
-        [data-reveal].revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* accessibility: respect reduced motion */
-        /* --- Instance change animations --- */
-        @keyframes instanceFadeOut {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-12px) scale(0.985); }
-        }
-
-        @keyframes instanceFadeIn {
-            0% { opacity: 0; transform: translateY(12px) scale(0.985); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        @keyframes launchPulse {
-            0%, 100% {
-                transform: scale(1);
-                box-shadow: 0 8px 24px rgba(248, 186, 89, 0.3);
-            }
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 12px 32px rgba(248, 186, 89, 0.5);
-            }
-        }
-
-        @keyframes slideUp {
-            0% {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes glowPulse {
-            0%, 100% {
-                box-shadow: 0 0 20px rgba(248, 186, 89, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 40px rgba(248, 186, 89, 0.7);
-            }
-        }
-
-        /* Animation classes */
-        .instance-fade-out {
-            animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        .instance-fade-in {
-            animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        /* Slide animations for title/description (exit and re-enter) */
-        @keyframes slideOutLeft {
-            0% { opacity: 1; transform: translateX(0); }
-            100% { opacity: 0; transform: translateX(-105%); }
-        }
-
-        @keyframes slideInRight {
-            0% { opacity: 0; transform: translateX(105%); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-
-        .instance-slide-out {
-            animation: slideOutLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        .instance-slide-in {
-            animation: slideInRight 0.30s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        .launch-pulse {
-            animation: launchPulse 1.5s ease-in-out infinite;
-        }
-
-        .slide-up-anim {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .glow-pulse {
-            animation: glowPulse 2s ease-in-out infinite;
-        }
-
-        /* Stagger delays for smooth cascading */
-        .server-title {
-            animation-delay: 0.1s;
-        }
-
-        .server-desc {
-            animation-delay: 0.2s;
-        }
-
-        .server-version {
-            animation-delay: 0.3s;
-        }
-
-        .play-instance {
-            animation-delay: 0.4s;
-        }
-
-        /* Launch button special effects */
-        .play-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .play-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-              -radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .play-btn:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .play-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(248, 186, 89, 0.4);
-        }
-
-        .play-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Initial state for animations */
-        .play-instance,
-        #launch_details {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        /* Hide launch details by default */
-        #launch_details {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        /* Progress bar entrance animation */
-        #launch_details.show {
-            display: flex !important;
-            
-            opacity: 1;
-        }
-
-        /* Spinning animation for loading icon */
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-
-        /* --- Text swap animations (exit -> enter) --- */
-        @keyframes textExit {
-            0% { opacity: 1; transform: translateX(0) scale(1); }
-            100% { opacity: 0; transform: translateX(-14px) scale(0.995); }
-        }
-
-        @keyframes textEnter {
-            0% { opacity: 0; transform: translateX(14px) scale(0.995); }
-            100% { opacity: 1; transform: translateX(0) scale(1); }
-        }
-
-        .text-exit {
-            display: inline-block;
-            animation: textExit 0.22s cubic-bezier(.2,.9,.2,1) both;
-        }
-
-        .text-enter {
-            display: inline-block;
-            animation: textEnter 0.26s cubic-bezier(.2,.9,.2,1) both;
-        }
-
-        /* Layer utilities for two-layer swap */
-        .text-layer {
-            display: inline-block;
-            vertical-align: middle;
-            will-change: transform, opacity;
-        }
-
-        .text-layer.next {
-            display: none;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            .animate-fade,
-            .animate-slide-right,
-            .animated-pop,
-            .logo-float,
-            .button-pulse,
-            .news-card,
-            #launch_progress_bar::after,
-            .instance-fade-out,
-            .instance-fade-in,
-            .launch-pulse,
-            .slide-up-anim,
-            .glow-pulse {
-                animation: none !important;
-                transition: none !important;
-                transform: none !important;
-            }
-        }
-
-        /* --- News fullscreen mode --- */
-        /* When landingContainer has class in-news-mode, hide main UI and show only news fullscreen */
-        #landingContainer.in-news-mode main,
-        #landingContainer.in-news-mode aside {
-            display: none !important;
-        }
-
-        /* Fullscreen news overlay (when visible) */
-        #newsContainer.news-fullscreen {
-            position: fixed;
-            inset: 0;
-            z-index: 80;
-          
-            padding: 28px;
-            overflow: auto;
-            display: block !important;
-        }
-
-        /* Make the news grid narrower and centered in fullscreen */
-        #newsContainer.news-fullscreen .news-grid {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        /* Floating centered News hero (bottom) */
-        #newsFloatButton {
-            position: fixed;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 60;
-            width: min(60vw, 420px);
-            max-width: 480px;
-            pointer-events: auto;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* Hero card containing the image + overlay text */
-        #newsFloatButton .news-hero {
-            width: 50%;
-            height: 600px;
-            max-height: 150px;
-            aspect-ratio: 16 / 5.5;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-        
-            transition: transform .12s ease;
-            background-size: cover;
-            background-position: center;
-        }
-
-        #newsFloatButton .news-hero::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-          
-            pointer-events: none;
-        }
-
-        #newsFloatButton .news-overlay {
-            margin-top: 90px;
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            pointer-events: none;
-        }
-
-        #newsFloatButton .news-title {
-            color: #FFFFFF;
-            font-weight: 900;
-            font-size: clamp(14px, 3vw, 22px);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-
-            line-height: 1;
-        }
-
-        #newsFloatButton .news-chevron {
-            width: 16px;
-            height: 16px;
-            color: #FFFFFF;
-            opacity: 0.95;
-            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));
-        }
-
-        #newsFloatButton .news-hero:hover {
-            transform: translateY(-3px) scale(1.003);
-
-        }
-
-        /* Hide the original small news button to avoid duplication */
-        #openNewsButton { display: none !important; }
-
-        /* ...existing code... */
-    </style>
-
-    <!-- Offline modal: informe l'utilisateur qu'il doit être en ligne -->
-    <div id="offlineModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden pointer-events-auto">
-        <div class="bg-[#181818] p-6 rounded-xl      -white/10 max-w-md text-center pointer-events-auto">
-            <h2 class="text-white text-xl font-bold mb-2">Connexion requise</h2>
-            <p class="text-white/90 mb-4">Vous êtes hors-ligne. Veuillez vous connecter à Internet pour utiliser le launcher.</p>
-                <div class="flex justify-center gap-2">
-                    <button id="retryOfflineButton" tabindex="0" class="px-4 py-2 rounded bg-[#F8BA59] text-black font-semibold">Réessayer</button>
-                </div>
+    <!-- Modal hors ligne -->
+    <div id="offlineModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden">
+            <div class="glass-card rounded-xl p-8 max-w-md text-center">
+            <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <i class="bi bi-wifi-off text-red-400 text-3xl"></i>
+            </div>
+            <h2 class="text-white text-2xl font-bold mb-3">Connexion requise</h2>
+            <p class="text-gray-300 mb-6">Vous êtes hors-ligne. Veuillez vous connecter à Internet pour utiliser le launcher.</p>
+            <button id="retryOfflineButton" class="btn btn-primary">
+                Réessayer
+            </button>
         </div>
     </div>
 
-    <!-- offline modal behavior moved to external script to comply with CSP -->
+        <!-- Scripts -->
+        <script>
+        (function(){
+            function applySide(side){
+                var root = document.getElementById('layoutRoot');
+                var body = document.body;
+                var btn = document.getElementById('toggleSidebarSideButton');
+                if(!root) return;
+                if(side === 'left'){
+                    root.classList.remove('flex-row-reverse');
+                    body.classList.add('sidebar-left');
+                    body.classList.remove('sidebar-right');
+                    if(btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset-reverse text-lg"></i><span class="text-sm font-medium">Barre: Gauche</span>';
+                    if(btn) btn.setAttribute('data-side','left');
+                } else {
+                    root.classList.add('flex-row-reverse');
+                    body.classList.add('sidebar-right');
+                    body.classList.remove('sidebar-left');
+                    if(btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset text-lg"></i><span class="text-sm font-medium">Barre: Droite</span>';
+                    if(btn) btn.setAttribute('data-side','right');
+                }
+                try{ localStorage.setItem('sidebarSide', side); }catch(e){}
+                try{
+                    if(typeof window.forceValidateSelectedAccount === 'function'){
+                        // Trigger a validation after user changes sidebar side (non-intrusive)
+                        window.forceValidateSelectedAccount()
+                    }
+                }catch(e){}
+            }
 
-    <script src="./assets/js/scripts/landing-inline.js"></script>
-    <script src="./assets/js/scripts/landing.js"></script>
-    <script src="./assets/js/scripts/news.js"></script>
+            function toggleSide(){
+                var cur = 'right';
+                try{ cur = localStorage.getItem('sidebarSide') || 'right'; }catch(e){}
+                var next = cur === 'right' ? 'left' : 'right';
+                applySide(next);
+            }
+
+            // Use event delegation so the handler survives DOM replacements.
+            document.addEventListener('click', function(e){
+                if(!e || !e.target) return;
+                var btn = e.target.closest && e.target.closest('#toggleSidebarSideButton');
+                if(btn){
+                    e.preventDefault();
+                    toggleSide();
+                }
+            });
+
+            // Apply saved state on window load and re-apply shortly after to
+            // handle other scripts that may modify the sidebar DOM.
+            window.addEventListener('load', function(){
+                var saved = 'right';
+                try{ saved = localStorage.getItem('sidebarSide') || 'right'; }catch(e){}
+                applySide(saved);
+                setTimeout(function(){
+                    try{ applySide(localStorage.getItem('sidebarSide') || saved); }catch(e){}
+                }, 80);
+            });
+
+            // Observe DOM mutations to handle cases where other scripts replace
+            // the sidebar content (which may recreate the toggle button). When
+            // the toggle appears, reapply the saved side and update the button.
+            try{
+                var _sidebarObserver = new MutationObserver(function(mutations){
+                    console.debug('[LANDING] Sidebar MutationObserver triggered', mutations && mutations.length)
+                    var btn = document.getElementById('toggleSidebarSideButton');
+                    // If the button doesn't exist, try to locate a replacement by heuristics
+                    if(!btn){
+                        try{
+                            var candidates = Array.from(document.querySelectorAll('button, a'))
+                            for(var i=0;i<candidates.length;i++){
+                                var c = candidates[i]
+                                var txt = (c.textContent||'').trim()
+                                var hasIcon = false
+                                try{ hasIcon = c.querySelector && (c.querySelector('.bi-layout-sidebar-inset') || c.querySelector('.bi-layout-sidebar-inset-reverse')) }catch(e){}
+                                if(txt.indexOf('Barre:') !== -1 || hasIcon){
+                                    c.id = c.id || 'toggleSidebarSideButton'
+                                    c.setAttribute('aria-label', c.getAttribute('aria-label') || 'Position de la barre')
+                                    btn = c
+                                    console.debug('[LANDING] Reassigned toggleSidebarSideButton to candidate', c)
+                                    break
+                                }
+                            }
+                        }catch(e){ console.warn('[LANDING] Heuristic search failed', e) }
+                    }
+
+                    if(btn){
+                        try{
+                            var saved = localStorage.getItem('sidebarSide') || 'right';
+                            applySide(saved);
+                        }catch(e){ console.warn('[LANDING] applySide failed in observer', e) }
+                    }
+                });
+                _sidebarObserver.observe(document.body, { childList: true, subtree: true });
+            }catch(e){
+                console.warn('[LANDING] Sidebar MutationObserver failed', e);
+            }
+        })();
+        </script>
+        <script src="./assets/js/scripts/landing-inline.js"></script>
+        <script src="./assets/js/scripts/landing.js"></script>
+        <script src="./assets/js/scripts/news.js"></script>
 </div>

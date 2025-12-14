@@ -724,7 +724,11 @@ ipcMain.handle(SHELL_OPCODE.TRASH_ITEM, async (event, ...args) => {
 app.disableHardwareAcceleration()
 
 // Single instance lock: only allow one instance of the launcher to run at a time
-const gotTheLock = app.requestSingleInstanceLock()
+// In development we allow multiple instances to simplify testing.
+const gotTheLock = isDev ? true : app.requestSingleInstanceLock()
+if (isDev) {
+    try { log && log.info && log.info('[Startup] isDev=true, bypassing single-instance lock for development') } catch (e) {}
+}
 
 if (!gotTheLock) {
     // If we don't have the lock, another instance is already running
@@ -1461,21 +1465,18 @@ ipcMain.handle('fetch-rss', async (event, url) => {
 ipcMain.handle('clean-resource-cache', async (event) => {
     const path = require('path')
     const ConfigManager = require('./app/assets/js/configmanager')
-    const ResourcePackFixer = require('./app/assets/js/resourcepackfixer')
-    
+    const fs = require('fs-extra')
     try {
         const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
-        const result = await ResourcePackFixer.cleanResourcePackCache(instancePath)
-        
-        return {
-            success: true,
-            cacheCleared: result
+        const downloadsPath = path.join(instancePath, 'downloads')
+        let cleaned = false
+        if (await fs.pathExists(downloadsPath)) {
+            await fs.remove(downloadsPath)
+            cleaned = true
         }
+        return { success: true, cacheCleared: cleaned }
     } catch (error) {
-        return {
-            success: false,
-            error: error.message
-        }
+        return { success: false, error: error.message }
     }
 })
 
@@ -1528,29 +1529,25 @@ ipcMain.handle('check-resource-errors', async (event) => {
 ipcMain.handle('auto-fix-resources', async (event) => {
     const path = require('path')
     const ConfigManager = require('./app/assets/js/configmanager')
-    const ResourcePackFixer = require('./app/assets/js/resourcepackfixer')
-    
+    const fs = require('fs-extra')
     try {
         const instancePath = path.join(ConfigManager.getDataDirectory(), 'instances')
-        
-        // Get current errors
-        const checkResult = await ipcMain.emit('check-resource-errors')
-        const errors = checkResult?.errors || []
-        
-        // Perform corrective actions
-        const result = await ResourcePackFixer.performCorrectiveActions(instancePath, errors)
-        
+        const downloadsPath = path.join(instancePath, 'downloads')
+        let cacheCleared = false
+        if (await fs.pathExists(downloadsPath)) {
+            await fs.remove(downloadsPath)
+            cacheCleared = true
+        }
+        // Full auto-repair removed; return informative response
         return {
             success: true,
-            cacheCleared: result.cacheCleared,
-            modelsRepaired: result.modelsRepaired,
-            errors: result.errors
+            cacheCleared,
+            modelsRepaired: 0,
+            errors: [],
+            note: 'resourcepack auto-fix removed; only downloads cleaned'
         }
     } catch (error) {
-        return {
-            success: false,
-            error: error.message
-        }
+        return { success: false, error: error.message }
     }
 })
 

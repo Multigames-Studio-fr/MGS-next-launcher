@@ -9,7 +9,7 @@ const os                    = require('os')
 const path                  = require('path')
 
 const ConfigManager            = require('./configmanager')
-const ResourcePackFixer        = require('./resourcepackfixer')
+// ResourcePackFixer removed: automatic repair of server resourcepacks is disabled.
 const AuthManager              = require('./authmanager')
 const { ipcRenderer }          = require('electron')
 const { MSFT_OPCODE }         = require('./ipcconstants')
@@ -89,34 +89,19 @@ class ProcessBuilder {
         child.stdout.setEncoding('utf8')
         child.stderr.setEncoding('utf8')
 
-        // Initialiser la surveillance des erreurs de packs de ressources
+        // Resource pack auto-fixer removed: do not attempt automatic repairs
+        // for server-provided resourcepacks. Keep a detectedErrors array for
+        // logging/debugging but no automatic corrective actions are executed.
         const detectedErrors = []
-        const logMonitor = ResourcePackFixer.createLogMonitor((error) => {
-            detectedErrors.push(error)
-            
-            // Déclencher une action corrective si nécessaire
-            if (ResourcePackFixer.shouldTriggerCorrection(detectedErrors)) {
-                logger.warn('Problèmes de packs de ressources détectés, application d\'actions correctives...')
-                ResourcePackFixer.performCorrectiveActions(this.gameDir, detectedErrors)
-                    .then(result => {
-                        logger.info('Actions correctives terminées:', result)
-                    })
-                    .catch(err => {
-                        logger.error('Erreur lors des actions correctives:', err)
-                    })
-            }
-        })
 
         child.stdout.on('data', (data) => {
             data.trim().split('\n').forEach(line => {
                 console.log(`\x1b[32m[Minecraft]\x1b[0m ${line}`)
-                logMonitor(line) // Surveiller les erreurs
             })
         })
         child.stderr.on('data', (data) => {
             data.trim().split('\n').forEach(line => {
                 console.log(`\x1b[31m[Minecraft]\x1b[0m ${line}`)
-                logMonitor(line) // Surveiller les erreurs
                 // Detect and handle MCEF/mcef-libraries related errors (native load failures, etc.)
                 try {
                     this._handleMcefLibrariesError(line)

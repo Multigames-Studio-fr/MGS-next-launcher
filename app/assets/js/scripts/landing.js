@@ -33,7 +33,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
-const ModDeduplicator         = require('./assets/js/moddeduplicator')
+// ModDeduplicator (anti-cheat) removed — keep module out
 
 // DOM sanitization to avoid injecting untrusted HTML into the renderer
 let DOMPurify = { sanitize: (s) => s }
@@ -676,6 +676,72 @@ function updateSidebarSelection(selectedServerId) {
 // Make function globally accessible
 window.updateSidebarSelection = updateSidebarSelection
 
+/**
+ * Update server technical information (mods, RAM allocation, update status)
+ */
+function updateServerTechnicalInfo(serv) {
+    const modsCard = document.getElementById('modsCard')
+    const modsCount = document.getElementById('modsCount')
+    const ramAllocation = document.getElementById('ramAllocation')
+    const updateStatusEl = document.getElementById('updateStatus')
+    const updateStatusTitle = document.getElementById('updateStatusTitle')
+    const updateStatusDesc = document.getElementById('updateStatusDesc')
+    const updateStatusIcon = document.getElementById('updateStatusIcon')
+    
+    if (serv != null) {
+        // Count mods
+        let modCount = 0
+        try {
+            const modules = serv.modules
+            if (modules && Array.isArray(modules)) {
+                modCount = modules.filter(m => m.rawModule && m.rawModule.type === 'ForgeMod').length
+            }
+        } catch (e) {
+            console.debug('[Landing] Failed to count mods', e)
+        }
+        
+        // Update mods card
+        if (modsCard && modsCount) {
+            if (modCount > 0) {
+                modsCard.style.display = 'block'
+                modsCount.textContent = `${modCount} actifs`
+            } else {
+                modsCard.style.display = 'none'
+            }
+        }
+        
+        // Update RAM allocation
+        if (ramAllocation) {
+            try {
+                const selectedServer = ConfigManager.getSelectedServer()
+                const javaOptions = ConfigManager.getServerJavaOptions(selectedServer)
+                if (javaOptions && javaOptions.maxRAM) {
+                    const ramGB = Math.round(javaOptions.maxRAM / 1024)
+                    ramAllocation.textContent = `${ramGB} GB`
+                } else {
+                    ramAllocation.textContent = 'Auto'
+                }
+            } catch (e) {
+                ramAllocation.textContent = 'Auto'
+            }
+        }
+        
+        // Update status info
+        if (updateStatusEl && updateStatusTitle && updateStatusDesc && updateStatusIcon) {
+            updateStatusEl.style.display = 'flex'
+            updateStatusTitle.textContent = 'Prêt à jouer'
+            updateStatusDesc.textContent = 'Aucune mise à jour'
+            updateStatusIcon.className = 'w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 flex items-center justify-center'
+            updateStatusIcon.innerHTML = '<i class="bi bi-check-circle-fill text-green-400 text-xl"></i>'
+        }
+    } else {
+        // Hide all when no server selected
+        if (modsCard) modsCard.style.display = 'none'
+        if (ramAllocation) ramAllocation.textContent = 'Auto'
+        if (updateStatusEl) updateStatusEl.style.display = 'none'
+    }
+}
+
 // Bind selected server
 async function updateSelectedServer(serv, instant = false){
     if(getCurrentView() === VIEWS.settings){
@@ -811,6 +877,13 @@ async function updateSelectedServer(serv, instant = false){
         }
     }
     
+    // Update server technical info (mods count, RAM allocation)
+    try {
+        updateServerTechnicalInfo(serv)
+    } catch (e) {
+        console.debug('[Landing] updateServerTechnicalInfo failed', e)
+    }
+    
     // Update sidebar visual selection
     updateSidebarSelection(serv != null ? serv.rawServer.id : null)
     
@@ -926,52 +999,132 @@ const refreshServerStatus = async (fade = false) => {
 
     let pLabel = Lang.queryJS('landing.serverStatus.server')
     let pVal = Lang.queryJS('landing.serverStatus.offline')
+    let isOnline = false
+    let currentPlayers = 0
+    let maxPlayers = 0
 
     try {
         const servStat = await getServerStatus(47, serv.hostname, serv.port)
         console.log(servStat)
         pLabel = Lang.queryJS('landing.serverStatus.players')
         pVal = servStat.players.online + '/' + servStat.players.max
+        isOnline = true
+        currentPlayers = servStat.players.online
+        maxPlayers = servStat.players.max
     } catch (err) {
         loggerLanding.warn('Unable to refresh server status, assuming offline.')
         loggerLanding.debug(err)
     }
     
-    // Update new UI elements
-    const playerCountNew = document.querySelector('.player-count')
-    const serverStatusDot = document.querySelector('.server-status-dot')
-    const serverStatusText = document.querySelector('.server-status-text')
+    // Update new modern UI elements
+    const playerCountCard = document.getElementById('playerCountCard')
+    const playerCount = document.getElementById('playerCount')
+    const serverStatusCard = document.getElementById('serverStatusCard')
+    const serverStatusDot = document.getElementById('serverStatusDot')
+    const serverStatusText = document.getElementById('serverStatusText')
+    const statusBadge = document.getElementById('statusBadge')
+    const statusBadgeDot = document.getElementById('statusBadgeDot')
+    const statusBadgePing = document.getElementById('statusBadgePing')
+    const statusBadgeText = document.getElementById('statusBadgeText')
     
-    if (playerCountNew) playerCountNew.textContent = pVal.split('/')[0] || '0'
-    
-    // Update server status dot color based on online/offline
-    if (serverStatusDot) {
-        if (pVal === Lang.queryJS('landing.serverStatus.offline')) {
-            serverStatusDot.className = 'server-status-dot w-3 h-3 rounded-full bg-red-400'
-        } else {
-            serverStatusDot.className = 'server-status-dot w-3 h-3 rounded-full bg-green-400'
+    if (isOnline) {
+        // Show and update player count card
+        if (playerCountCard) {
+            playerCountCard.style.display = 'block'
+            playerCountCard.className = 'glass-card px-4 py-3 rounded-xl border border-[#F8BA59]/20 hover:border-[#F8BA59]/50 transition-all duration-300 group cursor-pointer'
+        }
+        if (playerCount) playerCount.textContent = currentPlayers
+        
+        // Update server status card - online
+        if (serverStatusCard) {
+            serverStatusCard.className = 'glass-card px-4 py-3 rounded-xl border border-green-500/20 hover:border-green-500/50 transition-all duration-300 group cursor-pointer'
+        }
+        if (serverStatusDot) {
+            serverStatusDot.className = 'w-3 h-3 rounded-full bg-green-400 animate-pulse'
+        }
+        if (serverStatusText) {
+            serverStatusText.textContent = 'En ligne'
+        }
+        
+        // Update status badge
+
+        if (statusBadgeDot) {
+            statusBadgeDot.className = 'w-2.5 h-2.5 rounded-full bg-green-400'
+        }
+        if (statusBadgePing) {
+            statusBadgePing.style.display = 'block'
+            statusBadgePing.className = 'absolute inset-0 w-2.5 h-2.5 rounded-full bg-green-400 animate-ping'
+        }
+        if (statusBadgeText) {
+            statusBadgeText.textContent = 'Serveur opérationnel'
+            statusBadgeText.className = 'text-green-400 text-xs font-bold uppercase tracking-widest'
+        }
+    } else {
+        // Hide player count card when offline
+        if (playerCountCard) playerCountCard.style.display = 'none'
+        
+        // Update server status card - offline
+        if (serverStatusCard) {
+            serverStatusCard.className = 'glass-card px-4 py-3 rounded-xl border border-red-500/20 hover:border-red-500/50 transition-all duration-300 group cursor-pointer'
+        }
+        if (serverStatusDot) {
+            serverStatusDot.className = 'w-3 h-3 rounded-full bg-red-400'
+        }
+        if (serverStatusText) {
+            serverStatusText.textContent = 'Hors ligne'
+        }
+        
+        // Update status badge
+        if (statusBadge) {
+            statusBadge.style.display = 'inline-flex'
+            statusBadge.className = 'inline-flex items-center gap-3 glass-card px-5 py-2.5 rounded-full w-fit border border-red-500/30 shadow-lg shadow-red-500/10'
+        }
+        if (statusBadgeDot) {
+            statusBadgeDot.className = 'w-2.5 h-2.5 rounded-full bg-red-400'
+        }
+        if (statusBadgePing) {
+            statusBadgePing.style.display = 'none'
+        }
+        if (statusBadgeText) {
+            statusBadgeText.textContent = 'Serveur hors ligne'
+            statusBadgeText.className = 'text-red-400 text-xs font-bold uppercase tracking-widest'
         }
     }
     
-    if (serverStatusText) {
-        const status = pVal === Lang.queryJS('landing.serverStatus.offline') ? 'Hors ligne' : 'Opérationnel'
-        serverStatusText.innerHTML = `${status} • <span class="font-bold text-[#F8BA59] player-count">${pVal.split('/')[0] || '0'}</span> joueurs`
+    // Update old UI for compatibility
+    const playerCountNew = document.querySelector('.player-count')
+    const serverStatusDotOld = document.querySelector('.server-status-dot')
+    const serverStatusTextOld = document.querySelector('.server-status-text')
+    
+    if (playerCountNew) playerCountNew.textContent = currentPlayers || '0'
+    
+    // Update server status dot color based on online/offline
+    if (serverStatusDotOld) {
+        if (!isOnline) {
+            serverStatusDotOld.className = 'server-status-dot w-3 h-3 rounded-full bg-red-400'
+        } else {
+            serverStatusDotOld.className = 'server-status-dot w-3 h-3 rounded-full bg-green-400'
+        }
     }
     
-    // Update old UI for compatibility
+    if (serverStatusTextOld) {
+        const status = !isOnline ? 'Hors ligne' : 'Opérationnel'
+        serverStatusTextOld.innerHTML = `${status} • <span class="font-bold text-[#F8BA59] player-count">${currentPlayers || '0'}</span> joueurs`
+    }
+    
     if(fade && typeof $ !== 'undefined'){
         $('#server_status_wrapper').fadeOut(250, () => {
             const landingPlayerLabel = document.getElementById('landingPlayerLabel')
-            const playerCount = document.getElementById('player_count')
+            const playerCountEl = document.getElementById('player_count')
             if (landingPlayerLabel) landingPlayerLabel.innerHTML = pLabel
-            if (playerCount) playerCount.innerHTML = pVal
+            if (playerCountEl) playerCountEl.innerHTML = pVal
             $('#server_status_wrapper').fadeIn(500)
         })
     } else {
         const landingPlayerLabel = document.getElementById('landingPlayerLabel')
-        const playerCount = document.getElementById('player_count')
+        const playerCountEl = document.getElementById('player_count')
         if (landingPlayerLabel) landingPlayerLabel.innerHTML = pLabel
-        if (playerCount) playerCount.innerHTML = pVal
+        if (playerCountEl) playerCountEl.innerHTML = pVal
     }
 }
 
@@ -1588,32 +1741,9 @@ async function dlAsync(login = true) {
         loggerLaunchSuite.warn('Failed to restore resourcepacks from backup', e)
     }
 
-    // Vérification des mods de triche avant le lancement
-    setLaunchDetails('Vérification des mods de triche...')
-    try {
-        const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
-        // yield briefly before starting filesystem-heavy scan so the renderer can paint
-        try { await new Promise(resolve => setTimeout(resolve, 30)) } catch (e) { /* ignore */ }
-        const cleanResult = await ModDeduplicator.scanAndCleanCheatMods(modsDir)
-        
-        if (cleanResult.deleted > 0) {
-            loggerLaunchSuite.warn(`Supprimé ${cleanResult.deleted} mod(s) de triche détecté(s)`)
-            setLaunchDetails(`${cleanResult.deleted} mod(s) de triche supprimé(s). Redémarrage du launcher...`)
-            
-            // Attendre 3 secondes pour que l'utilisateur voie le message
-            await new Promise(resolve => setTimeout(resolve, 3000))
-            
-            // Redémarrer le launcher
-            const { ipcRenderer } = require('electron')
-            ipcRenderer.send('relaunchApplication')
-            return
-        } else {
-            loggerLaunchSuite.info('Aucun mod de triche trouvé')
-        }
-    } catch (err) {
-        loggerLaunchSuite.error('Erreur lors de la vérification des mods de triche:', err)
-        // Continuer le lancement même en cas d'erreur
-    }
+    // Vérification des mods de triche avant le lancement (désactivée)
+    setLaunchDetails('Vérification des mods de triche désactivée')
+    // Anti-cheat / suppression automatique des mods de triche désactivée - continuer le lancement
 
     // Verify and download critical mod loader files (e.g., VersionManifest for Fabric)
     setLaunchDetails('Vérification des fichiers du mod loader...')
@@ -1788,81 +1918,7 @@ async function dlAsync(login = true) {
             // Build Minecraft process.
             proc = pb.build()
 
-            // Variable pour tracker les détections de triche
-            let cheatDetected = false
-            let detectedCheatMod = null
-
-            // Démarrer la surveillance des mods de triche pendant le jeu
-            let modWatcher = null
-            try {
-                const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
-                modWatcher = ModDeduplicator.watchForCheatMods(modsDir, async (cheatMod) => {
-                    loggerLaunchSuite.warn(`Mod de triche détecté pendant le jeu: ${cheatMod.baseName}`)
-                    
-                    if (cheatDetected) return // Éviter les détections multiples
-                    cheatDetected = true
-                    detectedCheatMod = cheatMod
-                    
-                    // Fermer le jeu
-                    try {
-                        if (proc && typeof proc.kill === 'function') {
-                            proc.kill()
-                        }
-                    } catch (err) {
-                        loggerLaunchSuite.error('Erreur lors de la fermeture du jeu:', err)
-                    }
-                })
-            } catch (err) {
-                loggerLaunchSuite.error('Erreur lors du démarrage de la surveillance des mods:', err)
-            }
-
-            // Listener pour détecter les comportements de triche dans les logs
-            const cheatDetectionListener = async (data) => {
-                if (cheatDetected) return // Éviter les détections multiples
-                
-                const logLine = ('' + data).trim()
-                
-                // Analyser chaque ligne pour détecter un comportement de triche
-                if (ModDeduplicator.detectCheatBehaviorInLog(logLine)) {
-                    loggerLaunchSuite.warn(`Comportement de triche détecté dans les logs: ${logLine.substring(0, 200)}`)
-                    cheatDetected = true
-                    
-                    // Afficher une notification
-                    setLaunchDetails('⚠️ Mod de triche détecté ! Fermeture du jeu...')
-                    
-                    // Fermer le jeu
-                    try {
-                        if (proc && typeof proc.kill === 'function') {
-                            proc.kill()
-                            loggerLaunchSuite.info('Jeu fermé suite à la détection de triche')
-                        }
-                    } catch (err) {
-                        loggerLaunchSuite.error('Erreur lors de la fermeture du jeu:', err)
-                    }
-                    
-                    // Attendre que le jeu se ferme
-                    await new Promise(resolve => setTimeout(resolve, 2000))
-                    
-                    // Scanner et supprimer les mods de triche
-                    try {
-                        const modsDir = path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id, 'mods')
-                        const cleanResult = await ModDeduplicator.scanAndCleanCheatMods(modsDir)
-                        
-                        if (cleanResult.deleted > 0) {
-                            loggerLaunchSuite.info(`${cleanResult.deleted} mod(s) de triche supprimé(s)`)
-                            setLaunchDetails(`${cleanResult.deleted} mod(s) de triche supprimé(s). Redémarrage du launcher...`)
-                            
-                            await new Promise(resolve => setTimeout(resolve, 2000))
-                            
-                            // Redémarrer le launcher
-                            const { ipcRenderer } = require('electron')
-                            ipcRenderer.send('relaunchApplication')
-                        }
-                    } catch (err) {
-                        loggerLaunchSuite.error('Erreur lors de la suppression des mods de triche:', err)
-                    }
-                }
-            }
+            // Anti-cheat entièrement désactivé dans cette build — aucune surveillance ou suppression.
 
             // Ensure log panel functions exist
             window.appendMinecraftLog = function (txt) {
@@ -1923,9 +1979,7 @@ async function dlAsync(login = true) {
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)
-            proc.stdout.on('data', cheatDetectionListener) // Ajouter le listener de détection de triche
             proc.stderr.on('data', gameErrorListener)
-            proc.stderr.on('data', cheatDetectionListener) // Vérifier aussi stderr
 
             // If configured, stream stdout/stderr to the logs panel
             try {
@@ -1983,33 +2037,7 @@ async function dlAsync(login = true) {
                             }
                         }
                         
-                        // Si un mod de triche a été détecté, supprimer et redémarrer
-                        if (cheatDetected && !detectedCheatMod) {
-                            loggerLaunchSuite.warn('Jeu fermé suite à détection de triche dans les logs')
-                            
-                            // Le nettoyage et le redémarrage sont déjà gérés dans cheatDetectionListener
-                            // Pas besoin de dupliquer ici
-                        } else if (detectedCheatMod) {
-                            loggerLaunchSuite.warn(`Jeu fermé suite à détection du mod de triche: ${detectedCheatMod.baseName}`)
-                            
-                            setLaunchDetails(`Mod de triche détecté: ${detectedCheatMod.baseName}. Suppression...`)
-                            
-                            // Supprimer le mod détecté
-                            try {
-                                await ModDeduplicator.deleteCheatMods([detectedCheatMod.path])
-                                loggerLaunchSuite.info(`Mod de triche supprimé: ${detectedCheatMod.fileName}`)
-                                
-                                setLaunchDetails('Mod de triche supprimé. Redémarrage du launcher...')
-                                await new Promise(resolve => setTimeout(resolve, 2000))
-                                
-                                // Redémarrer le launcher
-                                const { ipcRenderer } = require('electron')
-                                ipcRenderer.send('relaunchApplication')
-                                return
-                            } catch (err) {
-                                loggerLaunchSuite.error('Erreur lors de la suppression du mod de triche:', err)
-                            }
-                        }
+                        // Anti-cheat disabled — no action on process close
                         
                         const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
                         console.info('[Landing] process closed, notifying instance stopped', { code, signal })
@@ -2596,7 +2624,8 @@ async function populateSidebarInstances() {
 }
 
 /**
- * Populate fallback sidebar with old system
+ * Populate sidebar with new settings-style interface
+ * Completely redesigned for the new modern UI
  */
 function populateFallbackSidebar(instances, selectedServerId) {
     const sidebarContainer = document.getElementById('sidebar-instances')
@@ -2605,83 +2634,80 @@ function populateFallbackSidebar(instances, selectedServerId) {
         return
     }
     
-    let htmlString = ''
-    
-    for (let i = 0; i < instances.length; i++) {
-        const instance = instances[i]
-        const isSelected = instance.id === selectedServerId
-        
-        htmlString += `
-
-<li class="server-instance-item group relative">
-    <div class="server-instance-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 backdrop-blur-sm border border-gray-700/50 hover:border-[#F8BA59]/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#F8BA59]/20">
-        <!-- Background gradient overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30"></div>
-        
-        <!-- Glow effect on hover -->
-        <div class="absolute inset-0 bg-gradient-to-r from-[#F8BA59]/0 via-[#F8BA59]/5 to-[#F8BA59]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
-        <button class="server-instance-btn w-full h-full p-4 relative z-10 ${isSelected ? 'selected' : ''}" 
-                data-server-id="${instance.id}"
-                title="${instance.name}">
-            
-            <!-- Status indicator -->
-            <div class="absolute top-3 right-3 w-3 h-3 rounded-full ${isSelected ? 'bg-[#F8BA59] shadow-lg shadow-[#F8BA59]/50' : 'bg-gray-500'} transition-all duration-300"></div>
-            
-            <!-- Main content container -->
-            <div class="flex flex-col items-center space-y-3">
-                <!-- Icon container with enhanced styling -->
-                <div class="relative group-hover:scale-110 transition-transform duration-300">
-                    <div class="absolute inset-0 bg-[#F8BA59] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-                    <img src="${instance.icon}" 
-                         alt="${instance.name}"
-                         class="relative w-16 h-16 rounded-2xl object-cover border-2 ${isSelected ? 'border-[#F8BA59] shadow-lg shadow-[#F8BA59]/30' : 'border-gray-600 group-hover:border-[#F8BA59]/70'} transition-all duration-300" 
-                         onerror="this.src='./assets/images/minecraft.ico'" />
-                    
-                    <!-- Shine effect -->
-                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    // Handle empty instances
+    if (!instances || instances.length === 0) {
+        sidebarContainer.innerHTML = `
+            <div class="text-center py-8">
+                <div class="glass-card rounded-lg p-6 inline-block">
+                    <i class="bi bi-inbox text-gray-500 text-4xl mb-3 block"></i>
+                    <p class="text-gray-400 text-sm">Aucune instance disponible</p>
                 </div>
-                
-                <!-- Instance info -->
-                <div class="text-center space-y-1">
-                    <h3 class="server-instance-name text-white font-semibold text-sm leading-tight group-hover:text-[#F8BA59] transition-colors duration-300 max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.name}">
-                        ${instance.name}
-                    </h3>
-                    
-                    <!-- Version/Type badge -->
-                    <div class="flex items-center justify-center space-x-2">
-                        <span class="px-2 py-1 text-xs rounded-full bg-gray-700/80 text-gray-300 border border-gray-600/50 max-w-20 overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.version || 'Unknown'}">
-                            ${instance.version || 'Unknown'}
-                        </span>
-                        ${instance.type ? `
-                        <span class="px-2 py-1 text-xs rounded-full ${instance.type === 'STAFF' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'} max-w-16 overflow-hidden text-ellipsis whitespace-nowrap" title="${instance.type}">
-                            ${instance.type}
-                        </span>
-                        ` : ''}
-                    </div>
-                </div>
-               
             </div>
-            
-            <!-- Selection indicator -->
-            ${isSelected ? `
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#F8BA59] to-yellow-400"></div>
-            ` : ''}
-        </button>
-        
-        <!-- Animated border on hover -->
-        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#F8BA59]/0 via-[#F8BA59]/50 to-[#F8BA59]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style="padding: 1px;">
-            <div class="w-full h-full rounded-2xl bg-gray-800/90"></div>
-        </div>
-    </div>
-</li>
-// ...existing code...
         `
+        return
     }
     
-    sidebarContainer.innerHTML = htmlString
+    // Build simple instance cards
+    const instanceCards = instances.map((instance) => {
+        const isSelected = instance.id === selectedServerId
+        const instanceName = DOMPurify.sanitize(instance.name || 'Instance')
+        const instanceIcon = instance.icon || './assets/images/minecraft.ico'
+        const instanceVersion = DOMPurify.sanitize(instance.version || 'Version inconnue')
+        const instanceLoader = instance.loader || ''
+        
+        return `
+            <button class="instance-item glass-card rounded-lg p-3 w-full text-left transition-all group ${isSelected ? 'selected' : ''}"
+                    data-server-id="${instance.id}"
+                    title="${instanceName}">
+                <div class="flex items-center gap-3">
+                    <!-- Instance Icon -->
+                    <div class="relative flex-shrink-0">
+                        <img src="${instanceIcon}" 
+                             alt="${instanceName}"
+                             class="w-10 h-10 rounded-lg object-cover"
+                             onerror="this.src='./assets/images/minecraft.ico'" />
+                        ${isSelected ? `
+                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-[#F8BA59] rounded-full border-2 border-[#181818]"></div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Instance Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="text-white font-semibold text-sm truncate">
+                            ${instanceName}
+                        </div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-gray-400 text-xs truncate">${instanceVersion}</span>
+                            ${instanceLoader ? `
+                            <span class="px-1.5 py-0.5 text-[10px] rounded bg-gray-700/50 text-gray-300 uppercase font-medium">
+                                ${instanceLoader}
+                            </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Selection Indicator -->
+                    ${isSelected ? `
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-check-circle-fill text-[#F8BA59] text-lg"></i>
+                    </div>
+                    ` : `
+                    <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="bi bi-arrow-right-circle text-gray-500 text-lg"></i>
+                    </div>
+                    `}
+                </div>
+            </button>
+        `
+    }).join('')
+    
+    // Set the HTML
+    sidebarContainer.innerHTML = instanceCards
+    
+    // Bind events after rendering
     bindSidebarInstanceEvents()
-    console.log('[SIDEBAR] Fallback sidebar populated')
+    
+    console.log('[SIDEBAR] Populated sidebar with ' + instances.length + ' instance cards')
 }
 
 
@@ -2697,34 +2723,90 @@ if (typeof window.triggerSidebarPopulation === 'function') {
 }
 
 /**
- * Bind events to sidebar instance buttons
+ * Bind events to sidebar instance buttons with modern interactions
  */
 function bindSidebarInstanceEvents() {
-    const instanceButtons = document.querySelectorAll('.server-instance-btn')
+    const instanceButtons = document.querySelectorAll('.instance-item, .server-instance-btn')
     
-    instanceButtons.forEach(button => {
-        button.addEventListener('click', async (e) => {
+    if (instanceButtons.length === 0) {
+        console.warn('[SIDEBAR] No instance buttons found to bind events')
+        return
+    }
+    
+    instanceButtons.forEach((button, index) => {
+        // Remove any existing listeners to prevent duplicates
+        const newButton = button.cloneNode(true)
+        button.parentNode.replaceChild(newButton, button)
+        
+        // Click handler
+        newButton.addEventListener('click', async (e) => {
             e.preventDefault()
-            e.target.closest('button').blur()
+            e.stopPropagation()
             
-            const serverId = button.getAttribute('data-server-id')
+            const btn = e.currentTarget
+            btn.blur()
+            
+            const serverId = btn.getAttribute('data-server-id')
+            
+            if (!serverId) {
+                console.warn('[SIDEBAR] No server ID found on button')
+                return
+            }
+            
+            // Don't reselect if already selected
+            if (btn.classList.contains('selected')) {
+                console.log('[SIDEBAR] Instance already selected:', serverId)
+                return
+            }
             
             try {
+                console.log('[SIDEBAR] Selecting instance:', serverId)
+                
                 const distro = await DistroAPI.getDistribution()
                 const server = distro.getServerById(serverId)
                 
-                if (server) {
-                    // Update selected server
-                    updateSelectedServer(server)
-                    
-                    // Refresh server status for the new server
-                    await refreshServerStatus(true)
+                if (!server) {
+                    console.error('[SIDEBAR] Server not found:', serverId)
+                    return
                 }
+                
+                // Update selected server
+                await updateSelectedServer(server, false)
+                
+                // Refresh server status
+                await refreshServerStatus(true)
+                
+                // Re-populate sidebar to update selection state
+                setTimeout(() => {
+                    populateSidebarInstances()
+                }, 100)
+                
+                console.log('[SIDEBAR] Instance selected successfully:', serverId)
+                
             } catch (error) {
-                console.error('Error selecting server:', error)
+                console.error('[SIDEBAR] Error selecting server:', error)
             }
         })
+        
+        // Keyboard navigation
+        newButton.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                newButton.click()
+            } else if (e.key === 'ArrowDown' && index < instanceButtons.length - 1) {
+                e.preventDefault()
+                instanceButtons[index + 1].focus()
+            } else if (e.key === 'ArrowUp' && index > 0) {
+                e.preventDefault()
+                instanceButtons[index - 1].focus()
+            }
+        })
+        
+        // Make keyboard focusable
+        newButton.setAttribute('tabindex', '0')
     })
+    
+    console.log('[SIDEBAR] Bound events for ' + instanceButtons.length + ' instance buttons')
 }
 
 
@@ -2776,7 +2858,7 @@ function initNewInterface() {
     // Set initial loading message in sidebar
     const sidebarContainer = document.getElementById('sidebar-instances')
     if (sidebarContainer) {
-        sidebarContainer.innerHTML = '<li class="text-white/50 text-xs text-center animate-pulse">En attente de la distribution...</li>'
+        sidebarContainer.innerHTML = '<div class="text-gray-500 text-sm text-center py-4 animate-pulse">Chargement des instances...</div>'
     }
     
     // Check if modpack container exists and functions are available
