@@ -210,12 +210,31 @@ function safeQuitAndInstall(caller) {
                                 try {
                                     log.info('[AutoUpdater] Found installer, launching directly:', installerPath)
                                 } catch (e) {}
-                                // Launch installer detached so it continues after app quits
+                                // Launch installer via a small detached wrapper so we can relaunch
+                                // the launcher after the installer completes. This avoids leaving
+                                // the user without the launcher once installation finishes.
                                 try {
                                     const spawnOpts = { detached: true, stdio: 'ignore' }
+                                    if (process.platform === 'win32') {
+                                        try {
+                                            const tmp = require('os').tmpdir()
+                                            const batchPath = path.join(tmp, `mgs_apply_update_${Date.now()}.cmd`)
+                                            const launcherExe = process.execPath
+                                            // Use start /wait to wait for installer to finish, then restart launcher
+                                            const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nexit\r\n`
+                                            try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                                            const childProc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
+                                            try { childProc.unref && childProc.unref() } catch (e) {}
+                                            try { app.quit() } catch (e) { process.exit(0) }
+                                            return true
+                                        } catch (e) {
+                                            try { log.warn('[AutoUpdater] failed to spawn installer wrapper', e && e.message) } catch (le) {}
+                                        }
+                                    }
+
+                                    // Fallback for non-Windows: spawn installer directly detached
                                     const childProc = child.spawn(installerPath, [], spawnOpts)
                                     try { childProc.unref && childProc.unref() } catch (e) {}
-                                    // Quit the app to allow installer to run/replace files
                                     try { app.quit() } catch (e) { process.exit(0) }
                                     return true
                                 } catch (e) {
@@ -1143,31 +1162,31 @@ function getPlatformIcon(filename){
     return path.join(__dirname, 'app', 'assets', 'images', `${filename}.${ext}`)
 }
 
-// Prefer to check for updates and install them before creating the main window
-// when possible. ensureUpdatesThenStart will attempt to initialize the updater,
-// check for updates and if an update is downloaded, will quit+install. If no
-// update is available or the process times out, it will continue to create
-// the main window so the app still starts for the user.
-function ensureUpdatesThenStart() {
-    // Maximum time to wait for update check/download before starting UI (ms)
-    const MAX_WAIT = 15 * 1000 // 15 seconds - reasonable for most connections
+// Simple, silent updater flow for startup.
+// Behavior: on app ready, check for updates; if an update is available,
+// download it and install immediately without asking the user. If the
+// update process doesn't complete within a short timeout, continue startup
+// so the launcher is usable.
+function ensureSimpleAutoUpdateThenStart() {
+    const MAX_WAIT = 10 * 1000 // 10s - small window to avoid blocking startup
 
-    // If auto-updater has already been initialized or download already finished,
-    // just proceed to start the UI.
     try {
         if (global.__autoUpdaterDownloaded) {
-            // There's an update ready; install immediately
-            try { log.info('[AutoUpdater] installer already present - quitting to install') } catch (e) {}
-            try { safeQuitAndInstall('early-install') } catch (e) { log.warn('[AutoUpdater] quitAndInstall failed during early install', e && e.message) }
+            try { log.info('[AutoUpdater:simple] installer already present - quitting to install') } catch (e) {}
+            try { safeQuitAndInstall('simple-early-install') } catch (e) { log.warn('[AutoUpdater:simple] quitAndInstall failed', e && e.message) }
             return
         }
     } catch (e) { /* ignore */ }
 
-    // Initialize auto-updater listeners if not already
-    try { initAutoUpdater(undefined, false) } catch (e) { log.warn('[AutoUpdater] init failed', e && e.message) }
+    // Initialize updater (this sets up shared listeners used elsewhere)
+    try { initAutoUpdater(undefined, false) } catch (e) { log.warn('[AutoUpdater:simple] init failed', e && e.message) }
 
-    // Try a single check and wait for either update-downloaded, update-not-available,
-    // or an error. We'll set up temporary one-time handlers to drive the flow.
+    // Ensure silent behavior
+    try {
+        autoUpdater.autoDownload = true
+        autoUpdater.autoInstallOnAppQuit = true
+    } catch (e) { /* ignore */ }
+
     let settled = false
 
     function startUI() {
@@ -1180,61 +1199,54 @@ function ensureUpdatesThenStart() {
     function onDownloaded(info) {
         if (settled) return
         settled = true
-        try { log.info('[AutoUpdater] update downloaded during startup, installing now', info && info.version) } catch (e) {}
+        try { log.info('[AutoUpdater:simple] update downloaded - installing now', info && info.version) } catch (e) {}
         try {
-            // Mark downloaded so other code knows and attempt to quit+install
             global.__autoUpdaterDownloaded = info || true
-            if (!safeQuitAndInstall('startup-onDownloaded')) {
-                // If installer couldn't be run, continue to UI as fallback
+            // silent install: attempt quit+install immediately
+            if (!safeQuitAndInstall('simple-startup-onDownloaded')) {
+                // If quitting/installing failed, continue to UI
                 startUI()
             }
         } catch (e) {
-            log.error('[AutoUpdater] quitAndInstall failed during startup', e && e.message)
-            // Fallback: start the UI instead of leaving user blocked
+            log.error('[AutoUpdater:simple] quitAndInstall failed during startup', e && e.message)
             startUI()
         }
     }
 
     function onNotAvailable() {
         if (settled) return
-        try { log.info('[AutoUpdater] no update available at startup - proceeding to UI') } catch (e) {}
+        try { log.info('[AutoUpdater:simple] no update available - proceeding to UI') } catch (e) {}
         startUI()
     }
 
     function onError(err) {
         if (settled) return
-        try { log.warn('[AutoUpdater] error during startup update check', err && (err.message || err)) } catch (e) {}
+        try { log.warn('[AutoUpdater:simple] error during startup update check', err && (err.message || err)) } catch (e) {}
         startUI()
     }
 
-    // Attach one-time listeners (do not replace existing persistent ones)
     try {
         autoUpdater.once && autoUpdater.once('update-downloaded', onDownloaded)
         autoUpdater.once && autoUpdater.once('update-not-available', onNotAvailable)
         autoUpdater.once && autoUpdater.once('error', onError)
     } catch (e) {
-        log.warn('[AutoUpdater] failed to attach one-time startup listeners', e && e.message)
+        log.warn('[AutoUpdater:simple] failed to attach one-time listeners', e && e.message)
     }
 
-    // Kick off the check. If autoDownload is true it may download automatically,
-    // otherwise the update-available handler in initAutoUpdater will trigger a
-    // download. We only wait a short period and then fall back to starting UI.
     try {
         autoUpdater.checkForUpdates()
             .then((res) => {
-                try { log.info('[AutoUpdater] checkForUpdates early result', res && res.updateInfo && res.updateInfo.version) } catch (e) {}
+                try { log.info('[AutoUpdater:simple] checkForUpdates result', res && res.updateInfo && res.updateInfo.version) } catch (e) {}
             })
-            .catch((err) => {
-                onError(err)
-            })
+            .catch((err) => onError(err))
     } catch (e) {
         onError(e)
     }
 
-    // Fallback timeout to avoid blocking startup indefinitely
+    // Timeout fallback
     setTimeout(() => {
         if (!settled) {
-            try { log.warn('[AutoUpdater] startup wait timeout reached - proceeding to UI') } catch (e) {}
+            try { log.warn('[AutoUpdater:simple] startup wait timeout reached - proceeding to UI') } catch (e) {}
             settled = true
             try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed (timeout)', e && e.message) }
             try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed (timeout)', e && e.message) }
@@ -1243,8 +1255,71 @@ function ensureUpdatesThenStart() {
 }
 
 // Start the app by attempting to apply updates before creating windows
-app.on('ready', ensureUpdatesThenStart)
-app.on('ready', createMenu)
+// If the app is launched with an installer path argument, run it silently and exit.
+// Supported arguments: `--apply-update=<path>` or `--installer=<path>`
+function tryApplyInstallerArg() {
+    try {
+        const prefixes = ['--apply-update=', '--installer=']
+        let found = null
+        for (const p of prefixes) {
+            const arg = process.argv.find(a => typeof a === 'string' && a.startsWith(p))
+            if (arg) { found = arg; break }
+        }
+        if (!found) return false
+        const installerPath = path.resolve(found.split('=')[1])
+        if (!installerPath) return false
+        if (!fs.existsSync(installerPath)) {
+            try { log.warn('[AutoUpdater:arg] installer arg provided but file not found', installerPath) } catch (e) {}
+            return false
+        }
+
+        try {
+            const child = require('child_process')
+            const spawnOpts = { detached: true, stdio: 'ignore' }
+            // On Windows create a small batch wrapper to relaunch the launcher after install
+            if (process.platform === 'win32') {
+                try {
+                    const tmp = require('os').tmpdir()
+                    const batchPath = path.join(tmp, `mgs_apply_update_arg_${Date.now()}.cmd`)
+                    const launcherExe = process.execPath
+                    const batchContent = `@echo off\r\nstart /wait "" "${installerPath}"\r\nstart "" "${launcherExe}"\r\nexit\r\n`
+                    try { fs.writeFileSync(batchPath, batchContent, { encoding: 'utf8' }) } catch (e) { /* ignore write errors */ }
+                    const proc = child.spawn('cmd.exe', ['/c', batchPath], spawnOpts)
+                    try { proc.unref && proc.unref() } catch (e) {}
+                    try { log.info('[AutoUpdater:arg] Launched installer wrapper:', batchPath) } catch (e) {}
+                    try { app.quit() } catch (e) { process.exit(0) }
+                    return true
+                } catch (e) {
+                    try { log.error('[AutoUpdater:arg] failed to spawn installer wrapper', e && e.message) } catch (le) {}
+                }
+            }
+
+            const proc = child.spawn(installerPath, [], spawnOpts)
+            try { proc.unref && proc.unref() } catch (e) {}
+            try { log.info('[AutoUpdater:arg] Launched installer:', installerPath) } catch (e) {}
+            try { app.quit() } catch (e) { process.exit(0) }
+            return true
+        } catch (e) {
+            try { log.error('[AutoUpdater:arg] failed to spawn installer', e && e.message) } catch (le) {}
+            return false
+        }
+    } catch (e) {
+        try { log.warn('[AutoUpdater:arg] unexpected error parsing installer arg', e && e.message) } catch (le) {}
+        return false
+    }
+}
+
+// Attempt to apply installer from argument before normal ready flow
+try {
+    if (!tryApplyInstallerArg()) {
+        app.on('ready', ensureSimpleAutoUpdateThenStart)
+        app.on('ready', createMenu)
+    }
+} catch (e) {
+    // Fallback to normal ready handlers if anything goes wrong
+    try { app.on('ready', ensureSimpleAutoUpdateThenStart) } catch (ee) {}
+    try { app.on('ready', createMenu) } catch (ee) {}
+}
 
 app.on('window-all-closed', () => {
     // On macOS it is common for applications and their menu bar
