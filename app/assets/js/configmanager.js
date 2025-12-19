@@ -219,16 +219,27 @@ exports.load = function () {
     }
     if (doValidate) {
       config = validateKeySet(DEFAULT_CONFIG, config);
-      // Initialize sqlite storage and merge persisted auth accounts
+      // Initialize sql.js storage asynchronously and merge persisted auth accounts when ready
       try {
         SqlStorage.init(authDbPath)
-        const authAccounts = SqlStorage.getAllAuthAccounts()
-        if (authAccounts && Object.keys(authAccounts).length > 0) {
-          config.authenticationDatabase = authAccounts
-        }
+          .then((authAccounts) => {
+            try {
+              if (authAccounts && Object.keys(authAccounts).length > 0) {
+                config.authenticationDatabase = authAccounts
+                exports.save();
+                logger.info('Merged auth accounts from sql.js storage')
+              }
+            } catch (e) {
+              logger.warn('Failed to merge auth accounts from sql storage', e && e.message)
+            }
+          })
+          .catch((e) => {
+            logger.warn('SqlStorage init failed', e && e.message)
+          })
       } catch (e) {
         logger.warn('SqlStorage init/merge failed', e && e.message)
       }
+      // Save initial config immediately; will be updated if sql storage provides accounts
       exports.save();
     }
   }

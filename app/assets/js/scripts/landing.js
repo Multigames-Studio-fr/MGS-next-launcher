@@ -1917,6 +1917,10 @@ async function dlAsync(login = true) {
         try {
             // Build Minecraft process.
             proc = pb.build()
+            // Capture the server id at launch time so we can reliably
+            // notify instance stop for the same server even if the
+            // user changes the selected server while the game runs.
+            const launchedServerId = ConfigManager.getSelectedServer()
 
             // Anti-cheat entièrement désactivé dans cette build — aucune surveillance ou suppression.
 
@@ -1960,7 +1964,7 @@ async function dlAsync(login = true) {
 
             // Notify UI that the instance has started (so landing-inline watcher updates the launch overlay)
             try {
-                const payload = { started: true, pid: proc && proc.pid ? proc.pid : null, serverId: ConfigManager.getSelectedServer() }
+                const payload = { started: true, pid: proc && proc.pid ? proc.pid : null, serverId: launchedServerId }
                 if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
                     console.info('[Landing] calling window.onInstanceStateChanged', payload)
                     window.onInstanceStateChanged(payload)
@@ -2039,7 +2043,7 @@ async function dlAsync(login = true) {
                         
                         // Anti-cheat disabled — no action on process close
                         
-                        const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
+                        const payload = { started: false, serverId: launchedServerId }
                         console.info('[Landing] process closed, notifying instance stopped', { code, signal })
                         if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
                             window.onInstanceStateChanged(payload)
