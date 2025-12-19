@@ -721,7 +721,7 @@ function populateAuthAccounts() {
           <img
             class="settingsAuthAccountImage w-full h-full object-cover"
             alt="${acc.displayName}"
-            src="https://crafatar.com/renders/body/${acc.uuid}?size=160&overlay=true"
+            src="https://avatar.kalifondation.fr/renders/body/${acc.uuid}?size=160&overlay=true"
             onerror="this.onerror=null;this.src='https://mc-heads.net/avatar/${acc.uuid}/60';"
           />
         </div>

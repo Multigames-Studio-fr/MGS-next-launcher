@@ -108,6 +108,17 @@ LangLoader.setupLanguage()
 
 // Load ConfigManager early in main so config is available to main process code.
 try {
+    // Ensure renderer processes can reliably determine the same userData path
+    // by exposing it via an environment variable. This avoids inconsistencies
+    // when renderers can't access `app`/`@electron/remote` and would otherwise
+    // fall back to a different path.
+    try {
+        if (!process.env.LAUNCHER_USERDATA && app && typeof app.getPath === 'function') {
+            process.env.LAUNCHER_USERDATA = app.getPath('userData')
+        }
+    } catch (e) {
+        try { log && log.warn && log.warn('[Startup] failed to set LAUNCHER_USERDATA', e && e.message) } catch (ee) {}
+    }
     const ConfigManager = require('./app/assets/js/configmanager')
     try { ConfigManager.load() } catch (e) { try { log && log.warn && log.warn('[Startup] ConfigManager.load() failed', e && e.message) } catch (ee) {} }
 } catch (e) {

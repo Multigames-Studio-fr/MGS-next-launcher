@@ -4,6 +4,7 @@ const os = require("os");
 const path = require("path");
 
 const logger = LoggerUtil.getLogger("ConfigManager");
+const SqlStorage = require('./sqlstorage')
 
 const sysRoot =
   process.env.APPDATA ||
@@ -15,12 +16,16 @@ const dataPath = path.join(sysRoot, ".multigames");
 
 // Determine launcher directory in a way that works both from the main
 // process and from renderer windows using @electron/remote.
-let launcherDir = null
+// Prefer an explicit environment variable set by the main process so both main
+// and renderer contexts resolve to the same `userData` path. Fall back to
+// electron APIs and finally to a dot-folder under the user's home.
+let launcherDir = process.env.LAUNCHER_USERDATA || null
 try {
-  // In the main process, prefer the electron.app provided by core
-  const { app } = require('electron')
-  if (app && typeof app.getPath === 'function') {
-    launcherDir = app.getPath('userData')
+  if (!launcherDir) {
+    const { app } = require('electron')
+    if (app && typeof app.getPath === 'function') {
+      launcherDir = app.getPath('userData')
+    }
   }
 } catch (e) {
   // ignore - fallback to remote
@@ -71,6 +76,7 @@ exports.setDataDirectory = function (dataDirectory) {
 
 const configPath = path.join(exports.getLauncherDirectory(), "config.json");
 const configPathLEGACY = path.join(dataPath, "config.json");
+const authDbPath = path.join(exports.getLauncherDirectory(), 'auth.db')
 
 // Determine whether this appears to be the first launch. Historically this
 // was purely driven by presence of the configuration file, however when the
@@ -165,6 +171,16 @@ let config = null;
  * Save the current configuration to a file.
  */
 exports.save = function () {
+  try {
+    // Persist authenticationDatabase to sqlite for robustness
+    try {
+      if (SqlStorage && typeof SqlStorage.setAuthAccounts === 'function') {
+        SqlStorage.setAuthAccounts(config.authenticationDatabase || {})
+      }
+    } catch (e) {
+      logger.warn('Failed to persist authenticationDatabase to sqlite', e && e.message)
+    }
+  } catch (e) {}
   fs.writeFileSync(configPath, JSON.stringify(config, null, 4), "UTF-8");
 };
 
@@ -203,6 +219,16 @@ exports.load = function () {
     }
     if (doValidate) {
       config = validateKeySet(DEFAULT_CONFIG, config);
+      // Initialize sqlite storage and merge persisted auth accounts
+      try {
+        SqlStorage.init(authDbPath)
+        const authAccounts = SqlStorage.getAllAuthAccounts()
+        if (authAccounts && Object.keys(authAccounts).length > 0) {
+          config.authenticationDatabase = authAccounts
+        }
+      } catch (e) {
+        logger.warn('SqlStorage init/merge failed', e && e.message)
+      }
       exports.save();
     }
   }

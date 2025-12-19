@@ -15,31 +15,8 @@ const { RestResponseStatus } = require('helios-core/common')
 const { MojangRestAPI, mojangErrorDisplayable, MojangErrorCode } = require('helios-core/mojang')
 const { MicrosoftAuth, microsoftErrorDisplayable, MicrosoftErrorCode } = require('helios-core/microsoft')
 
-// Defensive wrapper: some versions of helios-core may not export
-// `microsoftErrorDisplayable` as a function (or it may be undefined).
-// Provide a safe fallback that returns a simple error-like object with
-// a `microsoftErrorCode` property and a readable message so callers
-// can continue to handle errors without throwing TypeError.
-function makeMicrosoftDisplayable(code) {
-    try {
-        if (typeof microsoftErrorDisplayable === 'function') {
-            return microsoftErrorDisplayable(code)
-        }
-    } catch (e) {
-        // ignore and fallback
-    }
-    // Fallback object structure expected by callers in this module.
-    // Provide `title` and `desc` so UI code that expects a displayable
-    // error (with .title and .desc) can show a meaningful message.
-    const msgStr = typeof code === 'string' ? code : String(code || 'Microsoft error')
-    return {
-        microsoftErrorCode: code,
-        title: 'Microsoft Login Error',
-        desc: msgStr,
-        message: msgStr
-    }
-}
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
+const { fullMicrosoftAuthFlow, calculateExpiryDate, AUTH_MODE } = require('./msauth')
 
 const log = LoggerUtil.getLogger('AuthManager')
 
@@ -82,121 +59,7 @@ exports.addMojangAccount = async function(username, password) {
     }
 }
 
-const AUTH_MODE = { FULL: 0, MS_REFRESH: 1, MC_REFRESH: 2 }
 
-/**
- * Perform the full MS Auth flow in a given mode.
- * 
- * AUTH_MODE.FULL = Full authorization for a new account.
- * AUTH_MODE.MS_REFRESH = Full refresh authorization.
- * AUTH_MODE.MC_REFRESH = Refresh of the MC token, reusing the MS token.
- * 
- * @param {string} entryCode FULL-AuthCode. MS_REFRESH=refreshToken, MC_REFRESH=accessToken
- * @param {*} authMode The auth mode.
- * @returns An object with all auth data. AccessToken object will be null when mode is MC_REFRESH.
- */
-async function fullMicrosoftAuthFlow(entryCode, authMode) {
-    try {
-
-        let accessTokenRaw
-        let accessToken
-        if(authMode !== AUTH_MODE.MC_REFRESH) {
-            const accessTokenResponse = await MicrosoftAuth.getAccessToken(entryCode, authMode === AUTH_MODE.MS_REFRESH, AZURE_CLIENT_ID)
-            if(accessTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-                return Promise.reject(makeMicrosoftDisplayable(accessTokenResponse.microsoftErrorCode))
-            }
-            accessToken = accessTokenResponse.data
-            accessTokenRaw = accessToken.access_token
-        } else {
-            accessTokenRaw = entryCode
-        }
-        
-        const xblResponse = await MicrosoftAuth.getXBLToken(accessTokenRaw)
-        if(xblResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(makeMicrosoftDisplayable(xblResponse.microsoftErrorCode))
-        }
-        const xstsResonse = await MicrosoftAuth.getXSTSToken(xblResponse.data)
-        if(xstsResonse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(makeMicrosoftDisplayable(xstsResonse.microsoftErrorCode))
-        }
-        const mcTokenResponse = await MicrosoftAuth.getMCAccessToken(xstsResonse.data)
-        if(mcTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(makeMicrosoftDisplayable(mcTokenResponse.microsoftErrorCode))
-        }
-
-        // Some versions of the underlying Microsoft library (or the HTTP client it uses)
-        // may throw an HTTPError for non-2xx responses (for example a 404 from
-        // https://api.minecraftservices.com/minecraft/profile). In that case we want
-        // to convert a 404/NOT_FOUND into a user-friendly "no minecraft profile" error
-        // instead of letting the thrown error bubble to the outer catch and become
-        // an UNKNOWN error. Wrap the call to getMCProfile and map 404/NOT_FOUND.
-        let mcProfileResponse
-        try {
-            mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
-        } catch (err) {
-            // Try to detect a 404 NOT_FOUND response from common error shapes
-            const status = err && (err.statusCode || (err.response && err.response.statusCode))
-            const body = err && ((err.response && err.response.body) || err.body) || {}
-            if (status === 404 || (body && (body.error === 'NOT_FOUND' || (body.errorMessage && String(body.errorMessage).toLowerCase().includes('not found'))))) {
-                return Promise.reject({
-                    microsoftErrorCode: 'NO_MINECRAFT_PROFILE',
-                    title: 'No Minecraft profile',
-                    desc: 'This Microsoft account does not have an associated Minecraft profile (it may not own Minecraft). Please verify the account owns Minecraft or use a different account.',
-                    message: 'No Minecraft profile'
-                })
-            }
-            // rethrow unknown errors so the outer catch will handle them
-            throw err
-        }
-
-        if(mcProfileResponse.responseStatus === RestResponseStatus.ERROR) {
-            // Some Microsoft responses (e.g. when the account does not own Minecraft)
-            // return a 404 / NOT_FOUND from the Minecraft services endpoint.
-            // Detect that case and return a user-friendly displayable error so
-            // the UI can show a helpful message instead of a numeric code.
-            const body = mcProfileResponse.data || mcProfileResponse.error || {}
-            if (body && (body.error === 'NOT_FOUND' || (body.errorMessage && String(body.errorMessage).toLowerCase().includes('not found')))) {
-                return Promise.reject({
-                    microsoftErrorCode: 'NO_MINECRAFT_PROFILE',
-                    title: 'No Minecraft profile',
-                    desc: 'This Microsoft account does not have an associated Minecraft profile (it may not own Minecraft). Please verify the account owns Minecraft or use a different account.',
-                    message: 'No Minecraft profile'
-                })
-            }
-
-            return Promise.reject(makeMicrosoftDisplayable(mcProfileResponse.microsoftErrorCode))
-        }
-        return {
-            accessToken,
-            accessTokenRaw,
-            xbl: xblResponse.data,
-            xsts: xstsResonse.data,
-            mcToken: mcTokenResponse.data,
-            mcProfile: mcProfileResponse.data
-        }
-    } catch(err) {
-        log.error(err)
-    return Promise.reject(makeMicrosoftDisplayable(MicrosoftErrorCode.UNKNOWN))
-    }
-}
-
-/**
- * Calculate the expiry date. Set token expiration to 1 year to avoid frequent disconnections.
- * 
- * @param {number} nowMs Current time milliseconds.
- * @param {number} epiresInS Expires in (seconds) - ignored, using 1 year instead
- * @returns 
- */
-function calculateExpiryDate(nowMs, epiresInS) {
-    // Use the provided expires_in value when available so refresh logic
-    // can determine accurately when to request new tokens. Fall back to
-    // one hour if the value is missing or invalid.
-    if (typeof epiresInS === 'number' && epiresInS > 0) {
-        return nowMs + (epiresInS * 1000)
-    }
-    // Fallback: 1 hour
-    return nowMs + (60 * 60 * 1000)
-}
 
 /**
  * Retry helper with exponential backoff for transient failures.
