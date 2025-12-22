@@ -1,6 +1,6 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.7.12",
+  "version": "3.7.13",
   "description": "MultiGames Studios Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio <noreply@multigames-studio.fr>",
   "license": "MIT",
@@ -12,7 +12,7 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "dev": "node electron . --dev",
+    "dev": "electron . --dev",
     "dist": "electron-builder build",
     "dist:win": "npm run dist -- -w",
     "dist:mac": "npm run dist -- -m",
@@ -21,7 +21,8 @@
     "lint": "eslint --config .eslintrc.json .",
     "build-css": "tailwindcss -i ./app/assets/css/tailwind.css -o ./app/assets/css/tailwind-compiled.css",
     "watch-css": "tailwindcss -i ./app/assets/css/tailwind.css -o ./app/assets/css/tailwind-compiled.css --watch",
-    "create-icon": "node create-icon.mjs"
+    "create-icon": "node create-icon.mjs",
+    "postinstall": "node scripts/patch-helios-core.js"
   },
   "engines": {
     "node": "20.x.x"

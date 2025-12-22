@@ -194,6 +194,7 @@ function toggleLaunchArea(loading){
     const playInstance = document.querySelector('.play-instance')
     const launchDetails = document.getElementById('launch_details')
     const launchBtn = document.getElementById('launch_button')
+    const progressContainer = document.getElementById('launch_progress_container')
     
     if(loading){
         // Animate play buttons out
@@ -204,6 +205,16 @@ function toggleLaunchArea(loading){
             setTimeout(() => {
                 playInstance.style.display = 'none'
             }, 300)
+        }
+        
+        // Show progress container
+        if (progressContainer) {
+            progressContainer.style.display = 'block'
+            progressContainer.style.opacity = '0'
+            setTimeout(() => {
+                progressContainer.style.transition = 'opacity 0.3s ease'
+                progressContainer.style.opacity = '1'
+            }, 50)
         }
         
         // Animate launch details in
@@ -222,6 +233,14 @@ function toggleLaunchArea(loading){
             launchBtn.classList.add('launch-pulse')
         }
     } else {
+        // Hide progress container
+        if (progressContainer) {
+            progressContainer.style.opacity = '0'
+            setTimeout(() => {
+                progressContainer.style.display = 'none'
+            }, 300)
+        }
+        
         // Animate launch details out
         if (launchDetails) {
             launchDetails.style.opacity = '0'
@@ -255,33 +274,126 @@ function toggleLaunchArea(loading){
  * @param {string} details The new text for the loading details.
  */
 function setLaunchDetails(details){
-    const newDetailsText = document.getElementById('launch_details_text')
-    const detailsContainer = document.getElementById('launch_details')
+    console.log('[Landing] setLaunchDetails called with:', details)
     
-    // Add entrance animation if showing for first time
-    if (detailsContainer && !detailsContainer.classList.contains('shown')) {
-        detailsContainer.classList.remove('hidden')
-        detailsContainer.classList.add('show', 'shown')
+    const detailsText = document.getElementById('launch_details_text')
+    const detailsOverlay = document.getElementById('launch_details_overlay')
+    const launchBtn = document.getElementById('launch_button')
+    const launchIcon = document.getElementById('launch_icon')
+    const launchText = document.getElementById('launch_text')
+    
+    if (details && details.trim()) {
+        // Hide normal button content
+        if (launchIcon) {
+            launchIcon.style.display = 'none'
+        }
+        if (launchText) {
+            launchText.style.display = 'none'
+        }
         
-        // Add pulse animation to launch button
-        const launchBtn = document.getElementById('launch_button')
-        if (launchBtn && !launchBtn.classList.contains('launch-pulse')) {
-            launchBtn.classList.add('launch-pulse')
+        // Show loading overlay with details
+        if (detailsOverlay) {
+            detailsOverlay.style.opacity = '1'
+            detailsOverlay.style.display = 'flex'
+        }
+        
+        if (detailsText) {
+            detailsText.textContent = details
+        }
+        
+        // Add loading class
+        if (launchBtn) {
+            launchBtn.classList.add('is-loading')
+        }
+        
+        console.log('[Landing] Loading mode activated with details:', details)
+    } else {
+        // Restore normal button content
+        if (launchIcon) {
+            launchIcon.style.display = 'block'
+        }
+        if (launchText) {
+            launchText.style.display = 'block'
+        }
+        
+        if (detailsOverlay) {
+            detailsOverlay.style.opacity = '0'
+        }
+        
+        if (launchBtn) {
+            launchBtn.classList.remove('is-loading')
+        }
+    }
+}
+
+/**
+ * Update launch button text, icon, and progress based on current launch step
+ * 
+ * @param {string} step The current launch step text
+ * @param {number} progress Progress percentage (0-100), optional
+ */
+function updateLaunchButton(step, progress = 0) {
+    const launchBtn = document.getElementById('launch_button')
+    const launchText = document.getElementById('launch_text')
+    const launchIcon = document.getElementById('launch_icon')
+    const progressBg = document.getElementById('launch_progress_bg')
+    const progressBar = document.getElementById('launch_progress_bar')
+    
+    if (!launchBtn || !launchText || !launchIcon) return
+    
+    // Update text based on step
+    let buttonText = 'Lancer'
+    let iconClass = 'bi-play-fill'
+    
+    if (step) {
+        if (step.includes('serveur') || step.includes('distribution')) {
+            buttonText = 'Chargement serveur...'
+            iconClass = 'bi-cloud-download'
+        } else if (step.includes('Java') || step.includes('JVM')) {
+            buttonText = 'Vérification Java...'
+            iconClass = 'bi-gear'
+        } else if (step.includes('mod') || step.includes('téléchargement') || step.includes('download')) {
+            buttonText = 'Téléchargement...'
+            iconClass = 'bi-download'
+        } else if (step.includes('vérif') || step.includes('validation') || step.includes('intégrité')) {
+            buttonText = 'Vérification...'
+            iconClass = 'bi-check-circle'
+        } else if (step.includes('lancement') || step.includes('Démarrage')) {
+            buttonText = 'Lancement...'
+            iconClass = 'bi-rocket-takeoff'
+        } else if (step.includes('synchronisation') || step.includes('sync')) {
+            buttonText = 'Synchronisation...'
+            iconClass = 'bi-arrow-repeat'
         }
     }
     
-    // Animate text change with fade
-    if (newDetailsText) {
-        newDetailsText.style.opacity = '0'
-        setTimeout(() => {
-            newDetailsText.innerHTML = details
-            newDetailsText.style.transition = 'opacity 0.3s ease'
-            newDetailsText.style.opacity = '1'
-        }, 150)
+    // Update text with animation
+    launchText.style.opacity = '0'
+    setTimeout(() => {
+        launchText.textContent = buttonText
+        launchText.style.opacity = '1'
+    }, 150)
+    
+    // Update icon
+    launchIcon.className = `${iconClass} text-2xl transition-all duration-300`
+    
+    // Update progress background
+    if (progressBg) {
+        progressBg.style.width = `${Math.max(0, Math.min(100, progress))}%`
     }
     
-    // Keep old functionality for compatibility
-    if (launch_details_text) launch_details_text.innerHTML = details
+    // Update main progress bar
+    if (progressBar) {
+        progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`
+        progressBar.style.opacity = progress > 0 ? '0.9' : '0'
+    }
+    
+    // Add loading state if progress > 0
+    if (progress > 0) {
+        launchBtn.classList.add('is-loading')
+    } else {
+        launchBtn.classList.remove('is-loading')
+    }
 }
 
 /**
@@ -290,39 +402,52 @@ function setLaunchDetails(details){
  * @param {number} percent Percentage (0-100)
  */
 function setLaunchPercentage(percent){
+    console.log('[Landing] setLaunchPercentage called with:', percent)
+    
     const progressBar = document.getElementById('launch_progress_bar')
     const progressLabel = document.getElementById('launch_progress_label')
+    const progressOverlay = document.getElementById('launch_progress_overlay')
+    const launchBtn = document.getElementById('launch_button')
     
-    // Update new UI with smooth transition
+    // Update progress bar width and opacity
     if (progressBar) {
-        progressBar.style.transition = 'width 0.3s ease-out'
+        progressBar.style.transition = 'width 0.4s ease-out, opacity 0.3s ease'
         progressBar.style.width = percent + '%'
+        progressBar.style.opacity = percent > 0 ? '0.8' : '0'
         
-        // Add glow effect when reaching milestones
-        if (percent >= 100) {
-            progressBar.classList.add('glow-pulse')
-            setTimeout(() => {
-                progressBar.classList.remove('glow-pulse')
-            }, 2000)
+        // Add active class for animation
+        if (percent > 0) {
+            progressBar.classList.add('active')
+        } else {
+            progressBar.classList.remove('active')
         }
+        
+        console.log('[Landing] Progress bar updated to', percent + '%')
+    }
+    
+    // Show/hide progress percentage overlay
+    if (progressOverlay) {
+        if (percent > 0) {
+            progressOverlay.style.opacity = '1'
+            progressOverlay.style.display = 'flex'
+        } else {
+            progressOverlay.style.opacity = '0'
+        }
+        console.log('[Landing] Progress overlay visibility:', percent > 0 ? 'shown' : 'hidden')
     }
     
     if (progressLabel) {
-        progressLabel.style.transition = 'opacity 0.2s ease'
-        progressLabel.style.opacity = '0'
-        setTimeout(() => {
-            progressLabel.innerHTML = percent + '%'
-            progressLabel.style.opacity = '1'
-        }, 100)
+        progressLabel.textContent = percent + '%'
+        console.log('[Landing] Progress label updated to', percent + '%')
     }
     
-    // Keep old progress bar for compatibility
-    if (launch_progress) {
-        launch_progress.setAttribute('max', 100)
-        launch_progress.setAttribute('value', percent)
-    }
-    if (launch_progress_label) {
-        launch_progress_label.innerHTML = percent + '%'
+    // Update launch button state
+    if (launchBtn && percent > 0) {
+        launchBtn.classList.add('is-launching')
+        console.log('[Landing] Launch button set to launching state')
+    } else if (launchBtn && percent === 0) {
+        launchBtn.classList.remove('is-launching')
+        console.log('[Landing] Launch button launching state removed')
     }
 }
 
@@ -419,7 +544,13 @@ document.getElementById('launch_button').addEventListener('click', async e => {
             toggleLaunchArea(true)
             setLaunchPercentage(0, 100)
 
-            const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
+            let details = null
+            try {
+                details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
+            } catch (jvmErr) {
+                loggerLanding.error('Error validating JVM:', jvmErr)
+                details = null
+            }
             if(details != null){
                 loggerLanding.info('Jvm Details', details)
                 // If we appear to be offline but a local account is selected, use offline mode
@@ -980,10 +1111,17 @@ async function asyncSystemScan(effectiveJavaOptions, launchAfter = true){
     toggleLaunchArea(true)
     setLaunchPercentage(0, 100)
 
-    const jvmDetails = await discoverBestJvmInstallation(
-        ConfigManager.getDataDirectory(),
-        effectiveJavaOptions.supported
-    )
+    let jvmDetails = null
+    try {
+        jvmDetails = await discoverBestJvmInstallation(
+            ConfigManager.getDataDirectory(),
+            effectiveJavaOptions.supported
+        )
+    } catch (jvmScanErr) {
+        // Handle errors from helios-core JavaGuard (e.g., null registry values on Windows)
+        loggerLanding.error('Error during JVM discovery, treating as no Java found:', jvmScanErr)
+        jvmDetails = null
+    }
 
     if(jvmDetails == null) {
         // If the result is null, no valid Java installation was found.
@@ -1379,6 +1517,296 @@ async function safeDownload(url, dest, progressCb) {
     }
 }
 
+/**
+ * Comprehensive recovery function for missing mod loader files
+ * Attempts to identify and download all missing components needed for mod loading
+ * @param {Object} serv - Server configuration
+ * @param {Error} originalError - The original error that triggered the recovery
+ * @returns {Promise<{success: boolean, modLoaderData?: Object, error?: string}>}
+ */
+async function comprehensiveModLoaderRecovery(serv, originalError) {
+    const logger = LoggerUtil.getLogger('ModLoaderRecovery')
+    logger.info('Starting comprehensive mod loader recovery...')
+    
+    try {
+        // Step 1: Find and recover VersionManifest files
+        setLaunchDetails('Téléchargement des fichiers de version manquants...')
+        await recoverVersionManifestFiles(serv)
+        
+        // Step 2: Verify and recover Fabric loader artifacts
+        setLaunchDetails('Vérification du Fabric loader...')
+        await recoverFabricLoaderFiles(serv)
+        
+        // Step 3: Verify and recover any missing libraries
+        setLaunchDetails('Vérification des bibliothèques...')
+        await recoverMissingLibraries(serv)
+        
+        // Step 4: Try to load the mod loader version JSON again
+        setLaunchDetails('Rechargement des données de mod loader...')
+        const distributionIndexProcessor = new DistributionIndexProcessor(
+            ConfigManager.getCommonDirectory(),
+            await DistroAPI.getDistribution(),
+            serv.rawServer.id
+        )
+        
+        const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+        
+        logger.info('Mod loader recovery completed successfully')
+        return { success: true, modLoaderData }
+        
+    } catch (error) {
+        logger.error('Comprehensive mod loader recovery failed:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Recover missing VersionManifest files for all mod loaders
+ * @param {Object} serv - Server configuration
+ */
+async function recoverVersionManifestFiles(serv) {
+    const logger = LoggerUtil.getLogger('VersionManifestRecovery')
+    
+    // Find all mod loader modules (Fabric, Forge, etc.)
+    const modLoaderModules = serv.modules.filter(m => 
+        ['Fabric', 'Forge', 'ForgeHosted'].includes(m.rawModule.type)
+    )
+    
+    for (const modLoaderModule of modLoaderModules) {
+        if (modLoaderModule.subModules) {
+            const versionManifests = modLoaderModule.subModules.filter(sm => 
+                sm.rawModule.type === 'VersionManifest'
+            )
+            
+            for (const versionManifest of versionManifests) {
+                try {
+                    const artifact = getModuleArtifact(versionManifest)
+                    if (!artifact || !artifact.url) {
+                        logger.warn(`No artifact or URL for VersionManifest: ${versionManifest.rawModule.id}`)
+                        continue
+                    }
+                    
+                    const targetPath = resolveVersionManifestPath(artifact, versionManifest.rawModule.id)
+                    
+                    // Check if file exists and has correct MD5
+                    if (await validateFileIntegrity(targetPath, artifact)) {
+                        logger.info(`VersionManifest OK: ${versionManifest.rawModule.id}`)
+                        continue
+                    }
+                    
+                    logger.info(`Downloading VersionManifest: ${versionManifest.rawModule.id} from ${artifact.url}`)
+                    await safeDownload(artifact.url, targetPath)
+                    
+                    // Validate the downloaded file
+                    if (!(await validateFileIntegrity(targetPath, artifact))) {
+                        throw new Error(`Downloaded VersionManifest failed integrity check: ${targetPath}`)
+                    }
+                    
+                    logger.info(`VersionManifest recovered: ${versionManifest.rawModule.id}`)
+                    
+                } catch (error) {
+                    logger.error(`Failed to recover VersionManifest ${versionManifest.rawModule.id}:`, error)
+                    throw error
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Recover missing Fabric loader files
+ * @param {Object} serv - Server configuration
+ */
+async function recoverFabricLoaderFiles(serv) {
+    const logger = LoggerUtil.getLogger('FabricRecovery')
+    
+    const fabricModules = serv.modules.filter(m => m.rawModule.type === 'Fabric')
+    
+    for (const fabricModule of fabricModules) {
+        try {
+            const artifact = getModuleArtifact(fabricModule)
+            if (!artifact || !artifact.url) {
+                logger.warn(`No artifact or URL for Fabric module: ${fabricModule.rawModule.id}`)
+                continue
+            }
+            
+            const targetPath = resolveFabricLoaderPath(artifact, fabricModule.rawModule.id)
+            
+            // Check if file exists and has correct MD5
+            if (await validateFileIntegrity(targetPath, artifact)) {
+                logger.info(`Fabric loader OK: ${fabricModule.rawModule.id}`)
+                continue
+            }
+            
+            logger.info(`Downloading Fabric loader: ${fabricModule.rawModule.id} from ${artifact.url}`)
+            await safeDownload(artifact.url, targetPath)
+            
+            // Validate the downloaded file
+            if (!(await validateFileIntegrity(targetPath, artifact))) {
+                throw new Error(`Downloaded Fabric loader failed integrity check: ${targetPath}`)
+            }
+            
+            logger.info(`Fabric loader recovered: ${fabricModule.rawModule.id}`)
+            
+        } catch (error) {
+            logger.error(`Failed to recover Fabric loader ${fabricModule.rawModule.id}:`, error)
+            throw error
+        }
+    }
+}
+
+/**
+ * Recover missing library files
+ * @param {Object} serv - Server configuration  
+ */
+async function recoverMissingLibraries(serv) {
+    const logger = LoggerUtil.getLogger('LibraryRecovery')
+    
+    // Find all library modules
+    const libraryModules = []
+    
+    function collectLibraries(modules) {
+        for (const module of modules) {
+            if (module.rawModule.type === 'Library') {
+                libraryModules.push(module)
+            }
+            if (module.subModules) {
+                collectLibraries(module.subModules)
+            }
+        }
+    }
+    
+    collectLibraries(serv.modules)
+    
+    for (const libraryModule of libraryModules) {
+        try {
+            const artifact = getModuleArtifact(libraryModule)
+            if (!artifact || !artifact.url) {
+                logger.warn(`No artifact or URL for library: ${libraryModule.rawModule.id}`)
+                continue
+            }
+            
+            const targetPath = resolveLibraryPath(artifact, libraryModule.rawModule.id)
+            
+            // Check if file exists and has correct MD5
+            if (await validateFileIntegrity(targetPath, artifact)) {
+                continue // File is OK
+            }
+            
+            logger.info(`Downloading library: ${libraryModule.rawModule.id} from ${artifact.url}`)
+            await safeDownload(artifact.url, targetPath)
+            
+            // Validate the downloaded file
+            if (!(await validateFileIntegrity(targetPath, artifact))) {
+                throw new Error(`Downloaded library failed integrity check: ${targetPath}`)
+            }
+            
+        } catch (error) {
+            // Non-critical error - log but continue
+            logger.warn(`Failed to recover library ${libraryModule.rawModule.id}: ${error.message}`)
+        }
+    }
+}
+
+/**
+ * Resolve the correct path for a VersionManifest file
+ * @param {Object} artifact - Artifact object
+ * @param {string} moduleId - Module ID
+ * @returns {string} - Full path to the VersionManifest file
+ */
+function resolveVersionManifestPath(artifact, moduleId) {
+    const commonDir = ConfigManager.getCommonDirectory()
+    
+    // If artifact has a path property, use it
+    if (artifact && artifact.path) {
+        return path.join(commonDir, artifact.path)
+    }
+    
+    // Otherwise, construct the path based on moduleId
+    // moduleId format: "1.21.4-fabric-0.17.2"
+    // expected path: "versions/1.21.4-fabric-0.17.2/1.21.4-fabric-0.17.2.json"
+    return path.join(commonDir, 'versions', moduleId, `${moduleId}.json`)
+}
+
+/**
+ * Resolve the correct path for a Fabric loader file
+ * @param {Object} artifact - Artifact object
+ * @param {string} moduleId - Module ID
+ * @returns {string} - Full path to the Fabric loader file
+ */
+function resolveFabricLoaderPath(artifact, moduleId) {
+    const commonDir = ConfigManager.getCommonDirectory()
+    
+    if (artifact.path) {
+        return path.join(commonDir, 'libraries', artifact.path)
+    }
+    
+    // Parse maven coordinates to build path
+    const parts = moduleId.split(':')
+    if (parts.length >= 3) {
+        const [groupId, artifactId, version] = parts
+        const groupPath = groupId.replace(/\./g, '/')
+        const filename = `${artifactId}-${version}.jar`
+        return path.join(commonDir, 'libraries', groupPath, artifactId, version, filename)
+    }
+    
+    // Fallback
+    return path.join(commonDir, 'libraries', path.basename(artifact.url || `${moduleId}.jar`))
+}
+
+/**
+ * Resolve the correct path for a library file
+ * @param {Object} artifact - Artifact object
+ * @param {string} moduleId - Module ID
+ * @returns {string} - Full path to the library file
+ */
+function resolveLibraryPath(artifact, moduleId) {
+    const commonDir = ConfigManager.getCommonDirectory()
+    
+    if (artifact.path) {
+        return path.join(commonDir, 'libraries', artifact.path)
+    }
+    
+    // Parse maven coordinates to build path
+    const parts = moduleId.split(':')
+    if (parts.length >= 3) {
+        const [groupId, artifactId, version] = parts
+        const groupPath = groupId.replace(/\./g, '/')
+        const extension = parts[3] ? parts[3].split('@')[1] || 'jar' : 'jar'
+        const filename = `${artifactId}-${version}.${extension}`
+        return path.join(commonDir, 'libraries', groupPath, artifactId, version, filename)
+    }
+    
+    // Fallback
+    return path.join(commonDir, 'libraries', path.basename(artifact.url || `${moduleId}.jar`))
+}
+
+/**
+ * Validate file integrity by checking existence and MD5 hash if available
+ * @param {string} filePath - Path to the file
+ * @param {Object} artifact - Artifact object with potential MD5 hash
+ * @returns {Promise<boolean>} - True if file is valid, false otherwise
+ */
+async function validateFileIntegrity(filePath, artifact) {
+    try {
+        if (!fs.existsSync(filePath)) {
+            return false
+        }
+        
+        // If no MD5 is specified, just check existence
+        const expectedMD5 = artifact.MD5 || artifact.md5 || artifact.Md5
+        if (!expectedMD5) {
+            return true
+        }
+        
+        const actualMD5 = await computeFileMD5(filePath)
+        return actualMD5.toLowerCase() === expectedMD5.toLowerCase()
+        
+    } catch (error) {
+        return false
+    }
+}
+
 async function dlAsync(login = true) {
 
     // Login parameter is temporary for debug purposes. Allows testing the validation/downloads without
@@ -1386,11 +1814,14 @@ async function dlAsync(login = true) {
 
     const loggerLaunchSuite = LoggerUtil.getLogger('LaunchSuite')
 
+    // Initialize progress bar
+    console.log('[Landing] Starting launch process...')
+    setLaunchPercentage(0)
     setLaunchDetails(Lang.queryJS('landing.dlAsync.loadingServerInfo'))
 
     // Let the renderer paint the updated launch UI before starting heavy work.
     // Small non-blocking yield to the event loop so the progress bar becomes visible.
-    try { await new Promise(resolve => setTimeout(resolve, 50)) } catch (e) { /* ignore */ }
+    try { await new Promise(resolve => setTimeout(resolve, 100)) } catch (e) { /* ignore */ }
 
     let distro
 
@@ -1426,9 +1857,52 @@ async function dlAsync(login = true) {
         }
     }
 
+    // Progress: 10% - Starting validation
+    setLaunchPercentage(10)
     setLaunchDetails(Lang.queryJS('landing.dlAsync.pleaseWait'))
     toggleLaunchArea(true)
-    setLaunchPercentage(0, 100)
+
+    // CRITICAL: Download critical mod loader files BEFORE FullRepair validation
+    // FullRepair needs these files (especially VersionManifest) to validate all dependencies
+    setLaunchDetails('Préparation des fichiers du mod loader...')
+    try {
+        // Check for Fabric VersionManifest
+        const fabricModule = serv.modules.find(m => m.rawModule.type === 'Fabric')
+        if (fabricModule && fabricModule.subModules) {
+            const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
+            if (versionManifestModule) {
+                const artifactObj = getModuleArtifact(versionManifestModule)
+                const versionManifestPath = resolveArtifactLocalPath(artifactObj)
+                if (!versionManifestPath || !fs.existsSync(versionManifestPath)) {
+                    loggerLaunchSuite.warn(`VersionManifest not found at ${versionManifestPath || '<unresolved>'}, downloading...`)
+                    
+                    const artifact = artifactObj
+                    try {
+                        const targetPath = versionManifestPath || (artifact && artifact.url ? path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url)) : null)
+                        if (!artifact || !artifact.url || !targetPath) throw new Error('Missing artifact URL or target path')
+                        try { await fs.ensureDir(path.dirname(targetPath)) } catch (e) { console.warn('[Landing] ensureDir failed for', path.dirname(targetPath), e) }
+                        console.log('[Landing] Downloading VersionManifest BEFORE FullRepair:', artifact.url, '->', targetPath)
+                        await safeDownload(artifact.url, targetPath)
+                        loggerLaunchSuite.info('VersionManifest downloaded successfully before FullRepair')
+                        console.log('[Landing] VersionManifest download complete:', targetPath)
+                    } catch (downloadErr) {
+                        loggerLaunchSuite.error('Failed to download VersionManifest:', downloadErr)
+                        showLaunchFailure(
+                            Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
+                            `Impossible de télécharger le fichier de version Fabric. Veuillez vérifier votre connexion Internet. (${downloadErr.message})`
+                        )
+                        return
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        loggerLaunchSuite.error('Error during pre-repair mod loader file verification:', err)
+        // Don't fail here, FullRepair will handle it
+    }
+
+    setLaunchPercentage(15)
+    setLaunchDetails(Lang.queryJS('landing.dlAsync.pleaseWait'))
 
     const fullRepairModule = new FullRepair(
         ConfigManager.getCommonDirectory(),
@@ -1438,6 +1912,8 @@ async function dlAsync(login = true) {
         DistroAPI.isDevMode()
     )
 
+    // Progress: 20% - Spawning receiver
+    setLaunchPercentage(20)
     fullRepairModule.spawnReceiver()
 
     fullRepairModule.childProcess.on('error', (err) => {
@@ -1497,10 +1973,12 @@ async function dlAsync(login = true) {
         // Update UI to reflect offline skipping
         try{
             setLaunchDetails(Lang.queryJS('landing.dlAsync.offlineSkippingValidation') || 'Mode hors-ligne détecté — validation et téléchargement ignorés.')
+            setLaunchPercentage(50) // Progress: 50% for offline mode
         } catch(e){ /* ignore */ }
         var invalidFileCount = 0
     } else {
         loggerLaunchSuite.info('Validating files.')
+        setLaunchPercentage(30) // Progress: 30% - Starting validation
         setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
         // Yield briefly to ensure UI updates before starting potentially expensive file I/O/CPU work
         try { await new Promise(resolve => setTimeout(resolve, 40)) } catch (e) { /* ignore */ }
@@ -1509,11 +1987,14 @@ async function dlAsync(login = true) {
             try {
                 _resourcePackBackup = await backupResourcePacks(serv)
                 if (_resourcePackBackup) loggerLaunchSuite.info('Resourcepacks backed up to ' + _resourcePackBackup)
+                setLaunchPercentage(35) // Progress: 35% - Backup complete
             } catch (e) { loggerLaunchSuite.warn('Failed to backup resourcepacks, continuing', e) }
             invalidFileCount = await fullRepairModule.verifyFiles(percent => {
-                setLaunchPercentage(percent)
+                // Map verification progress from 35% to 75%
+                const mappedPercent = 35 + (percent * 0.4)
+                setLaunchPercentage(Math.round(mappedPercent))
             })
-            setLaunchPercentage(100)
+            setLaunchPercentage(75) // Progress: 75% - Validation complete
         } catch (err) {
             loggerLaunchSuite.error('Error during file validation.')
             showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileVerificationTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
@@ -1540,11 +2021,13 @@ async function dlAsync(login = true) {
         }
     } else {
         loggerLaunchSuite.info('No invalid files, skipping download.')
+        setLaunchPercentage(75) // Progress: 75% - No downloads needed
     }
 
     // Remove download bar.
     remote.getCurrentWindow().setProgressBar(-1)
 
+    setLaunchPercentage(80) // Progress: 80% - Cleanup
     fullRepairModule.destroyReceiver()
     try {
         if (_resourcePackBackup) {
@@ -1555,51 +2038,93 @@ async function dlAsync(login = true) {
         loggerLaunchSuite.warn('Failed to restore resourcepacks from backup', e)
     }
 
+    // CRITICAL: Verify essential Minecraft vanilla files exist before proceeding
+    // FullRepair's "No invalid files" may not catch missing vanilla downloads
+    loggerLaunchSuite.info('Verifying essential Minecraft vanilla files...')
+    setLaunchDetails('Vérification des fichiers Minecraft...')
+    try {
+        const minecraftJarPath = path.join(ConfigManager.getCommonDirectory(), 'versions', serv.rawServer.minecraftVersion, `${serv.rawServer.minecraftVersion}.jar`)
+        const librariesDir = path.join(ConfigManager.getCommonDirectory(), 'libraries')
+        
+        if (!fs.existsSync(minecraftJarPath)) {
+            loggerLaunchSuite.error(`CRITICAL: Minecraft ${serv.rawServer.minecraftVersion}.jar not found at ${minecraftJarPath}`)
+            loggerLaunchSuite.warn('FullRepair failed to download vanilla files. Attempting manual recovery...')
+            
+            // Attempt to re-run repair with forced validation
+            setLaunchDetails('Téléchargement des fichiers Minecraft manquants...')
+            setLaunchPercentage(75)
+            
+            const recoveryRepair = new FullRepair(
+                ConfigManager.getCommonDirectory(),
+                ConfigManager.getInstanceDirectory(),
+                ConfigManager.getLauncherDirectory(),
+                ConfigManager.getSelectedServer(),
+                DistroAPI.isDevMode()
+            )
+            
+            recoveryRepair.spawnReceiver()
+            
+            // Wait for error events
+            let repairError = null
+            const repairPromise = new Promise((resolve, reject) => {
+                recoveryRepair.childProcess.on('error', (err) => {
+                    repairError = err
+                    reject(err)
+                })
+                recoveryRepair.childProcess.on('close', (code) => {
+                    if (code !== 0) {
+                        repairError = new Error(`Recovery repair failed with code ${code}`)
+                        reject(repairError)
+                    } else {
+                        resolve()
+                    }
+                })
+            })
+            
+            try {
+                const invalidCount = await recoveryRepair.verifyFiles(percent => {
+                    setLaunchPercentage(75 + (percent * 0.15))
+                })
+                
+                if (invalidCount > 0) {
+                    loggerLaunchSuite.info(`Recovery validation found ${invalidCount} invalid files, downloading...`)
+                    setLaunchPercentage(80)
+                    await recoveryRepair.download(percent => {
+                        setLaunchPercentage(80 + (percent * 0.15))
+                    })
+                    loggerLaunchSuite.info('Recovery download completed')
+                }
+                
+                await repairPromise
+            } catch (e) {
+                loggerLaunchSuite.error('Recovery repair failed:', e)
+            } finally {
+                recoveryRepair.destroyReceiver()
+            }
+            
+            // Verify again
+            if (!fs.existsSync(minecraftJarPath)) {
+                loggerLaunchSuite.error(`Still missing: ${minecraftJarPath}`)
+                showLaunchFailure(
+                    Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
+                    `Impossible de télécharger les fichiers Minecraft ${serv.rawServer.minecraftVersion}. Vérifiez votre connexion Internet.`
+                )
+                return
+            }
+        }
+        
+        loggerLaunchSuite.info('Essential Minecraft files verified')
+    } catch (err) {
+        loggerLaunchSuite.error('Error during vanilla file verification:', err)
+        // Don't fail - let it try to launch anyway
+    }
+
     // Vérification des mods de triche avant le lancement (désactivée)
+    setLaunchPercentage(85) // Progress: 85% - Mod check
     setLaunchDetails('Vérification des mods de triche désactivée')
     // Anti-cheat / suppression automatique des mods de triche désactivée - continuer le lancement
 
-    // Verify and download critical mod loader files (e.g., VersionManifest for Fabric)
-    setLaunchDetails('Vérification des fichiers du mod loader...')
-    try { await new Promise(resolve => setTimeout(resolve, 20)) } catch (e) { /* ignore */ }
-    
-    try {
-        // Check for Fabric VersionManifest
-        const fabricModule = serv.modules.find(m => m.rawModule.type === 'Fabric')
-        if (fabricModule && fabricModule.subModules) {
-            const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
-            if (versionManifestModule) {
-                const artifactObj = getModuleArtifact(versionManifestModule)
-                const versionManifestPath = resolveArtifactLocalPath(artifactObj)
-                if (!versionManifestPath || !fs.existsSync(versionManifestPath)) {
-                    loggerLaunchSuite.warn(`VersionManifest not found at ${versionManifestPath || '<unresolved>'}, downloading...`)
-                    setLaunchDetails('Téléchargement du fichier de version Fabric...')
-                    
-                    const artifact = artifactObj
-                    try {
-                        const targetPath = versionManifestPath || (artifact && artifact.url ? path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url)) : null)
-                        if (!artifact || !artifact.url || !targetPath) throw new Error('Missing artifact URL or target path')
-                        try { await fs.ensureDir(path.dirname(targetPath)) } catch (e) { console.warn('[Landing] ensureDir failed for', path.dirname(targetPath), e) }
-                        console.log('[Landing] Downloading VersionManifest:', artifact.url, '->', targetPath)
-                        await safeDownload(artifact.url, targetPath)
-                        loggerLaunchSuite.info('VersionManifest downloaded successfully')
-                        console.log('[Landing] VersionManifest download complete:', targetPath)
-                    } catch (downloadErr) {
-                        loggerLaunchSuite.error('Failed to download VersionManifest:', downloadErr)
-                        showLaunchFailure(
-                            Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
-                            `Impossible de télécharger le fichier de version Fabric. Veuillez vérifier votre connexion Internet. (${downloadErr.message})`
-                        )
-                        return
-                    }
-                }
-            }
-        }
-    } catch (err) {
-        loggerLaunchSuite.error('Error during mod loader file verification:', err)
-        // Don't fail here, the recovery code below will handle it
-    }
-
+    setLaunchPercentage(90) // Progress: 90% - Preparing to launch
     setLaunchDetails(Lang.queryJS('landing.dlAsync.preparingToLaunch'))
 
     const mojangIndexProcessor = new MojangIndexProcessor(
@@ -1618,39 +2143,21 @@ async function dlAsync(login = true) {
     try {
         modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
     } catch (err) {
-        loggerLaunchSuite.error('Failed to load mod loader version JSON, attempting recovery...', err)
+        loggerLaunchSuite.error('Failed to load mod loader version JSON, attempting comprehensive recovery...', err)
         
-        // Attempt to download the missing version manifest file
+        // Attempt comprehensive recovery of all missing mod loader files
         try {
-            setLaunchDetails('Téléchargement du fichier de version manquant...')
+            setLaunchDetails('Récupération des fichiers de mod loader manquants...')
             
-            // Find the VersionManifest module in the fabric loader
-            const fabricModule = serv.modules.find(m => m.rawModule.type === 'Fabric')
-            if (fabricModule && fabricModule.subModules) {
-                const versionManifestModule = fabricModule.subModules.find(m => m.rawModule.type === 'VersionManifest')
-                if (versionManifestModule) {
-                    const artifact = getModuleArtifact(versionManifestModule)
-                    loggerLaunchSuite.info(`Downloading missing version manifest from ${artifact && artifact.url}`)
-
-                    // Download the file
-                    const target = resolveArtifactLocalPath(artifact) || (artifact && artifact.url ? path.join(ConfigManager.getCommonDirectory(), path.basename(artifact.url)) : null)
-                    if (!artifact || !artifact.url || !target) throw new Error('Missing artifact URL or target path for version manifest')
-                    try { await fs.ensureDir(path.dirname(target)) } catch (e) { console.warn('[Landing] ensureDir failed for', path.dirname(target), e) }
-                    console.log('[Landing] Downloading missing VersionManifest:', artifact.url, '->', target)
-                    await safeDownload(artifact.url, target)
-                    loggerLaunchSuite.info('Version manifest downloaded successfully')
-                    console.log('[Landing] VersionManifest recovery download complete:', target)
-
-                    // Try loading again
-                    modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
-                } else {
-                    throw new Error('VersionManifest module not found in Fabric configuration')
-                }
+            const recoveryResult = await comprehensiveModLoaderRecovery(serv, err)
+            if (recoveryResult.success) {
+                loggerLaunchSuite.info('Mod loader recovery completed successfully')
+                modLoaderData = recoveryResult.modLoaderData
             } else {
-                throw new Error('Fabric module not found in server configuration')
+                throw new Error(recoveryResult.error)
             }
         } catch (recoveryErr) {
-            loggerLaunchSuite.error('Failed to recover missing version manifest', recoveryErr)
+            loggerLaunchSuite.error('Failed to recover missing mod loader files', recoveryErr)
             showLaunchFailure(
                 Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'),
                 `Impossible de charger le fichier de version du mod loader. Veuillez vérifier votre connexion Internet et réessayer. (${recoveryErr.message})`
@@ -1676,10 +2183,49 @@ async function dlAsync(login = true) {
             await validateSelectedAccount()
             authUser = ConfigManager.getSelectedAccount()
         }
-        loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
-        let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion())
-        setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
+                loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
+        
+        // Step 1: Sync mods with distribution (5% progress)
+        setLaunchDetails('Synchronisation des mods...')
+        updateLaunchButton('Synchronisation des mods...', 5)
+        try{
+          if(typeof DistroAPI.syncServerMods === 'function'){
+            const syncRes = await DistroAPI.syncServerMods(serv.rawServer.id)
+            loggerLaunchSuite.info('Mod sync result', syncRes)
+            if(syncRes.removed && syncRes.removed.length > 0) {
+              setLaunchDetails(`${syncRes.removed.length} mod(s) supprimé(s)`)
+              updateLaunchButton(`${syncRes.removed.length} mod(s) supprimé(s)`, 8)
+            }
+            if(syncRes.reinstalled && syncRes.reinstalled.length > 0) {
+              setLaunchDetails(`${syncRes.reinstalled.length} mod(s) marqué(s) pour réinstallation`)
+              updateLaunchButton(`${syncRes.reinstalled.length} mod(s) marqué(s) pour réinstallation`, 10)
+            }
+          }
+        }catch(e){ loggerLaunchSuite.warn('Error while syncing mods prior to launch', e) }
 
+        // Step 2: Clean MCEF caches (12% progress)
+        setLaunchDetails('Nettoyage des caches MCEF...')
+        updateLaunchButton('Nettoyage des caches MCEF...', 12)
+        try{
+          if(typeof DistroAPI.ensureCleanMcef === 'function'){
+            const cleanRes = await DistroAPI.ensureCleanMcef(serv.rawServer.id)
+            loggerLaunchSuite.info('MCEF clean result', cleanRes)
+            if(cleanRes.removed && cleanRes.removed.length > 0) {
+              setLaunchDetails(`${cleanRes.removed.length} cache(s) MCEF nettoyé(s)`)
+              updateLaunchButton(`${cleanRes.removed.length} cache(s) MCEF nettoyé(s)`, 15)
+            }
+          }
+        }catch(e){ loggerLaunchSuite.warn('Error while cleaning MCEF dirs prior to launch', e) }
+
+        setLaunchPercentage(95) // Progress: 95% - Launching game
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
+        updateLaunchButton('Préparation du lancement...', 95)
+        
+        // Initialize ProcessBuilder
+        const pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion())
+        
+        setLaunchPercentage(100) // Progress: 100% - Game starting
+        
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
         const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
 
@@ -1846,7 +2392,7 @@ async function dlAsync(login = true) {
                 proc.on('close', async (code, signal) => {
                     try {
                         // Arrêter la surveillance des mods
-                        if (modWatcher) {
+                        if (typeof modWatcher !== 'undefined' && modWatcher) {
                             try {
                                 modWatcher.close()
                                 loggerLaunchSuite.info('Surveillance des mods arrêtée')
@@ -2803,6 +3349,56 @@ window.testModpackCards = function() {
 }
 
 /**
+ * Clear launch progress and reset UI to default state
+ */
+function clearLaunchProgress() {
+    console.log('[Landing] Clearing launch progress')
+    
+    const progressBar = document.getElementById('launch_progress_bar')
+    const progressOverlay = document.getElementById('launch_progress_overlay')
+    const detailsOverlay = document.getElementById('launch_details_overlay')
+    const launchBtn = document.getElementById('launch_button')
+    const launchText = document.getElementById('launch_text')
+    const launchIcon = document.getElementById('launch_icon')
+    
+    // Hide progress elements
+    if (progressBar) {
+        progressBar.style.width = '0%'
+        progressBar.style.opacity = '0'
+        progressBar.classList.remove('active')
+    }
+    
+    if (progressOverlay) {
+        progressOverlay.style.opacity = '0'
+        progressOverlay.style.display = 'none'
+    }
+    
+    if (detailsOverlay) {
+        detailsOverlay.style.opacity = '0'
+        detailsOverlay.style.display = 'none'
+    }
+    
+    // Reset button state and restore normal content
+    if (launchBtn) {
+        launchBtn.classList.remove('is-loading', 'is-launching')
+        launchBtn.disabled = false
+    }
+    
+    // Show normal button content
+    if (launchText) {
+        launchText.textContent = 'Lancer'
+        launchText.style.display = 'block'
+    }
+    
+    if (launchIcon) {
+        launchIcon.className = 'bi bi-play-fill text-2xl transition-all duration-300'
+        launchIcon.style.display = 'block'
+    }
+    
+    console.log('[Landing] Launch progress cleared and normal button restored')
+}
+
+/**
  * Global instance state handler used by launch code and IPC.
  * Accepts payloads like { started: boolean, pid?: number, serverId?: string, starting?: boolean }
  */
@@ -2817,6 +3413,13 @@ window.onInstanceStateChanged = function(payload){
         instanceStateMap[serverId].pid = payload.pid || null
         instanceStateMap[serverId].starting = !!payload.starting
         instanceStateMap[serverId].timestamp = Date.now()
+
+        // Clear progress when game stops
+        if (payload.started === false) {
+            setTimeout(() => {
+                clearLaunchProgress()
+            }, 1000) // Small delay to see final state
+        }
 
         // Update UI for selected server and for this serverId
         if (typeof updateLaunchUIForServer === 'function') {

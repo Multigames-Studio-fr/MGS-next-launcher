@@ -991,6 +991,12 @@ class ProcessBuilder {
                     // Location of native zip.
                     const to = path.join(this.libPath, artifact.path)
 
+                    // Verify the file exists before trying to open it
+                    if (!fs.existsSync(to)) {
+                        logger.warn(`Native library file not found: ${to}, skipping extraction`)
+                        continue
+                    }
+
                     let zip = new AdmZip(to)
                     let zipEntries = zip.getEntries()
 
@@ -1029,44 +1035,55 @@ class ProcessBuilder {
                         continue
                     }
 
-                    // Extract the native library.
-                    const exclusionArr = lib.extract != null ? lib.extract.exclude : ['META-INF/', '.git', '.sha1']
-                    const artifact = lib.downloads.artifact
+                    try {
+                        // Extract the native library.
+                        const exclusionArr = lib.extract != null ? lib.extract.exclude : ['META-INF/', '.git', '.sha1']
+                        const artifact = lib.downloads.artifact
 
-                    // Location of native zip.
-                    const to = path.join(this.libPath, artifact.path)
+                        // Location of native zip.
+                        const to = path.join(this.libPath, artifact.path)
 
-                    let zip = new AdmZip(to)
-                    let zipEntries = zip.getEntries()
-
-                    // Unzip the native zip.
-                    for(let i=0; i<zipEntries.length; i++){
-                        if(zipEntries[i].isDirectory) {
+                        // Verify the file exists before trying to open it
+                        if (!fs.existsSync(to)) {
+                            logger.warn(`Native library file not found: ${to}, skipping extraction`)
                             continue
                         }
 
-                        const fileName = zipEntries[i].entryName
+                        let zip = new AdmZip(to)
+                        let zipEntries = zip.getEntries()
 
-                        let shouldExclude = false
-
-                        // Exclude noted files.
-                        exclusionArr.forEach(function(exclusion){
-                            if(fileName.indexOf(exclusion) > -1){
-                                shouldExclude = true
+                        // Unzip the native zip.
+                        for(let i=0; i<zipEntries.length; i++){
+                            if(zipEntries[i].isDirectory) {
+                                continue
                             }
-                        })
 
-                        const extractName = fileName.includes('/') ? fileName.substring(fileName.lastIndexOf('/')) : fileName
+                            const fileName = zipEntries[i].entryName
 
-                        // Extract the file.
-                        if(!shouldExclude){
-                            fs.writeFile(path.join(tempNativePath, extractName), zipEntries[i].getData(), (err) => {
-                                if(err){
-                                    logger.error('Error while extracting native library:', err)
+                            let shouldExclude = false
+
+                            // Exclude noted files.
+                            exclusionArr.forEach(function(exclusion){
+                                if(fileName.indexOf(exclusion) > -1){
+                                    shouldExclude = true
                                 }
                             })
-                        }
 
+                            const extractName = fileName.includes('/') ? fileName.substring(fileName.lastIndexOf('/')) : fileName
+
+                            // Extract the file.
+                            if(!shouldExclude){
+                                fs.writeFile(path.join(tempNativePath, extractName), zipEntries[i].getData(), (err) => {
+                                    if(err){
+                                        logger.error('Error while extracting native library:', err)
+                                    }
+                                })
+                            }
+
+                        }
+                    } catch (nativeErr) {
+                        // Log and continue - natives are optional for some libraries
+                        logger.warn(`Error processing native library for ${lib.name}: ${nativeErr.message}`)
                     }
                 }
                 // No natives

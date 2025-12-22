@@ -758,6 +758,51 @@
                 box-shadow: 0 6px 18px rgba(248,186,89,0.12) !important;
             }
 
+            /* Launch button progress background animations */
+            #launch_progress_bg {
+                background: linear-gradient(90deg, rgba(255,106,26,0.3) 0%, rgba(248,186,89,0.4) 50%, rgba(255,106,26,0.3) 100%) !important;
+                background-size: 200% 100% !important;
+                -webkit-animation: progressStripe 2s linear infinite !important;
+                -moz-animation: progressStripe 2s linear infinite !important;
+                -o-animation: progressStripe 2s linear infinite !important;
+                animation: progressStripe 2s linear infinite !important;
+            }
+
+            /* Launch button states */
+            #launch_button.is-loading #launch_icon {
+                -webkit-animation: spin 1s linear infinite !important;
+                -moz-animation: spin 1s linear infinite !important;
+                -o-animation: spin 1s linear infinite !important;
+                animation: spin 1s linear infinite !important;
+            }
+
+            #launch_button.is-loading #launch_progress_bg {
+                opacity: 1 !important;
+            }
+
+            #launch_button:not(.is-loading) #launch_progress_bg {
+                opacity: 0 !important;
+            }
+
+            /* Styles pour les nouveaux overlays */
+            #launch_details_overlay {
+                pointer-events: none;
+                backdrop-filter: blur(2px);
+            }
+
+            #launch_progress_overlay {
+                pointer-events: none;
+            }
+
+            /* Animation de la barre de progression intégrée */
+            #launch_progress_bar.active {
+                background-image: 
+                    linear-gradient(90deg, #FF6A1A, #F8BA59),
+                    linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%) !important;
+                background-size: 100% 100%, 200% 100% !important;
+                animation: progressStripe 1.5s linear infinite !important;
+            }
+
             /* Position main content centered vertically on the left */
             .main-left-center {
                 position: absolute;
@@ -1049,8 +1094,8 @@
 
                         <!-- Title avec effet 3D -->
                         <div class="space-y-4">
-                            <h1 class="text-7xl font-mojang  text-white mb-2 server-title tracking-tighter leading-none relative" >
-                                
+                            <h1 class="text-7xl font-mojang text-white mb-2 server-title tracking-tighter leading-none relative">
+                                MultiGames Studio
                             </h1>
                             
                             <!-- Subtitle stylé -->
@@ -1072,9 +1117,28 @@
                                
 
                                 <div class="mt-4">
-                                    <button id="launch_button" class="launch-button w-full h-14 btn btn-primary launch-btn flex items-center justify-center gap-3 text-lg font-black">
-                                        <i class="bi bi-play-fill text-2xl"></i>
-                                        <span>Lancer</span>
+                                    <button id="launch_button" class="launch-button relative w-full h-14 btn btn-primary launch-btn flex items-center justify-center gap-3 text-lg font-black overflow-hidden">
+                                        <!-- Background de base -->
+                                        <div id="launch_progress_bg" class="absolute inset-0 bg-gradient-to-r from-[#FF6A1A]/20 to-[#F8BA59]/20 opacity-0 transition-opacity duration-500"></div>
+                                        
+                                        <!-- Barre de progression intégrée dans le bouton -->
+                                        <div id="launch_progress_bar" class="absolute inset-0 bg-gradient-to-r from-[#FF6A1A] to-[#F8BA59] transition-all duration-300 opacity-0 rounded-lg" style="width: 0%;"></div>
+                                        
+                                        <!-- Contenu du bouton -->
+                                        <div class="relative z-10 flex items-center gap-3">
+                                            <i id="launch_icon" class="bi bi-play-fill text-2xl transition-all duration-300"></i>
+                                            <span id="launch_text" class="transition-all duration-300">Lancer</span>
+                                        </div>
+                                        
+                                        <!-- Texte de progression affiché sur la barre -->
+                                        <div id="launch_details_overlay" class="absolute inset-0 flex items-center justify-center z-20 opacity-0 transition-opacity duration-300">
+                                            <span id="launch_details_text" class="text-white text-sm font-bold drop-shadow-lg">Préparation...</span>
+                                        </div>
+                                        
+                                        <!-- Pourcentage affiché dans le coin -->
+                                        <div id="launch_progress_overlay" class="absolute top-2 right-3 z-20 opacity-0 transition-opacity duration-300">
+                                            <span id="launch_progress_label" class="text-white text-xs font-bold drop-shadow-lg">0%</span>
+                                        </div>
                                     </button>
                                 </div>
 
@@ -1156,6 +1220,13 @@
         </div>
         <div id="launch_content">
             <button id="server_selection_button"><%- lang('landing.launchButtonPlaceholder') %></button>
+        </div>
+        <div id="launch_details">
+            <span id="launch_details_text">Préparation du lancement...</span>
+        </div>
+        <div id="launch_progress">
+            <div id="launch_progress_bar" class="launch-progress-bar" style="width: 0%;"></div>
+            <span id="launch_progress_label">0%</span>
         </div>
         <div id="mojangStatusContainer">
             <span id="mojang_status_icon">&#8226;</span>

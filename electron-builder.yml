@@ -36,6 +36,7 @@ nsis:
   uninstallerIcon: "build/icon.ico"
   license: "LICENSE.txt"
   warningsAsErrors: false
+  runAfterFinish: false
 
 # macOS Configuration
 mac:

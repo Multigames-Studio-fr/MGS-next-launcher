@@ -1529,10 +1529,16 @@ async function populateJavaExecDetails(execPath) {
     ConfigManager.getSelectedServer()
   );
 
-  const details = await validateSelectedJvm(
-    ensureJavaDirIsRoot(execPath),
-    server.effectiveJavaOptions.supported
-  );
+  let details = null;
+  try {
+    details = await validateSelectedJvm(
+      ensureJavaDirIsRoot(execPath),
+      server.effectiveJavaOptions.supported
+    );
+  } catch (jvmErr) {
+    console.error('Error validating JVM:', jvmErr);
+    details = null;
+  }
 
   if (details != null) {
     settingsJavaExecDetails.innerHTML = Lang.queryJS(

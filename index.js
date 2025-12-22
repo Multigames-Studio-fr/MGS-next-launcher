@@ -4,38 +4,34 @@ try {
     const os = require('os')
     const path = require('path')
     const fs = require('fs')
+    
     // Use a cache directory inside the userData folder (per-user, writable)
     const appDataPath = path.join(os.homedir(), '.multigames-cache')
-    try { fs.mkdirSync(appDataPath, { recursive: true }) } catch (e) { /* best-effort */ }
+    
+    // Ensure cache directory exists with proper permissions
+    try { 
+        if (!fs.existsSync(appDataPath)) {
+            fs.mkdirSync(appDataPath, { recursive: true, mode: 0o755 })
+        }
+    } catch (mkdirErr) {
+        console.error('[Cache Setup] Failed to create cache directory:', mkdirErr && mkdirErr.message)
+    }
+    
     // Set Chromium switches early so Electron/Chromium uses our cache folder
     try {
-        const electron = require('electron')
-        // Prefer the per-user cache path; this avoids permission issues when running from Program Files
-        electron.app && electron.app.setPath && electron.app.setPath('userData', appDataPath)
+        const { app } = require('electron')
+        if (app && app.commandLine) {
+            // Disable disk cache entirely to avoid permission issues
+            app.commandLine.appendSwitch('disable-extensions-file-access-check')
+            app.commandLine.appendSwitch('disk-cache-dir', appDataPath)
+            app.commandLine.appendSwitch('disk-cache-size', '1048576') // 1MB
+            app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
+        }
     } catch (e) {
-        // If electron isn't available yet, fall back to commandLine switches
-        try {
-            const { app } = require('electron')
-            if (app && app.commandLine) {
-                app.commandLine.appendSwitch('disk-cache-dir', appDataPath)
-            }
-        } catch (ee) {
-            // Last resort: append via process argv for Chromium. This is best-effort and may be ignored.
-            try { process.argv.push(`--disk-cache-dir=${appDataPath}`) } catch (eee) { }
-        }
+        console.error('[Cache Setup] Failed to configure Chromium switches:', e && e.message)
     }
-    // Additional safe switches to reduce disk cache usage / permission issues
-    try {
-        const { app: _app } = require('electron')
-        if (_app && _app.commandLine) {
-            // Use a small, local cache and disable GPU cache which sometimes tries to create files elsewhere
-            _app.commandLine.appendSwitch('disk-cache-size', '1048576') // 1MB
-            _app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
-            _app.commandLine.appendSwitch('disable-application-cache')
-        }
-    } catch (e) { /* best-effort */ }
 } catch (e) {
-    // ignore any errors during cache setup - we made best-effort attempts
+    console.error('[Cache Setup] Unexpected error during cache setup:', e && e.message)
 }
 
 const remoteMain = require('@electron/remote/main')
@@ -1065,13 +1061,23 @@ function createWindow() {
     // delay so the splash/update window has time to be visible.
     win.once('ready-to-show', () => {
         try {
-            // Show after 4 seconds to match requested behavior
+            log.info('[CreateWindow] ready-to-show event fired, isDev=', isDev)
+            // In dev mode, show immediately; in production, wait 4 seconds
+            const delay = isDev ? 0 : 4000
             setTimeout(() => {
-                try { win.show() } catch (e) { /* ignore show errors */ }
+                try { 
+                    log.info('[CreateWindow] Showing main window')
+                    win.show() 
+                } catch (e) { 
+                    log.error('[CreateWindow] Error showing window:', e && e.message)
+                }
                 // If an update status window is waiting to be closed, close it now
                 try { flushPendingUpdateWindowClose() } catch (e) { }
-            }, 4000)
-        } catch (e) { try { win.show() } catch (e) { } }
+            }, delay)
+        } catch (e) { 
+            log.error('[CreateWindow] Error in ready-to-show handler:', e && e.message)
+            try { win.show() } catch (e) { } 
+        }
     })
 
     win.removeMenu()

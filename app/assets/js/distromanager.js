@@ -162,3 +162,35 @@ api.syncServerMods = async function(serverId){
     return result
   }catch(e){ result.errors.push({ global: e && e.message ? e.message : String(e) }); return result }
 }
+
+/**
+ * Remove common MCEF-related caches/libraries for the given instance and common dir.
+ * Returns { removed: [], errors: [] }
+ */
+api.ensureCleanMcef = async function(serverId){
+  const result = { removed: [], errors: [] }
+  try{
+    const instanceMods = path.join(ConfigManager.getInstanceDirectory(), serverId, 'mods')
+    const instanceCache = path.join(ConfigManager.getInstanceDirectory(), serverId, 'mcef-cache')
+    const commonLibs = path.join(ConfigManager.getCommonDirectory(), 'mcef-libraries')
+    const commonCache = path.join(ConfigManager.getCommonDirectory(), 'mcef-cache')
+
+    const toCheck = [
+      path.join(instanceMods, 'mcef-libraries'),
+      instanceCache,
+      commonLibs,
+      commonCache
+    ]
+
+    for(const p of toCheck){
+      try{
+        if(fs.existsSync(p)){
+          await fs.remove(p)
+          result.removed.push(p)
+        }
+      }catch(e){ result.errors.push({ path: p, error: e && e.message ? e.message : String(e) }) }
+    }
+
+    return result
+  }catch(e){ result.errors.push({ global: e && e.message ? e.message : String(e) }); return result }
+}
