@@ -1,4 +1,5 @@
 // Update window UI logic extracted from `app/update.ejs` to comply with CSP
+// Version améliorée - fenêtre de mise à jour silencieuse
 const { ipcRenderer } = require('electron')
 
 const statusEl = document.getElementById('status')
@@ -10,6 +11,9 @@ const percentEl = document.getElementById('percent')
 const actionRow = document.getElementById('actionRow')
 const installBtn = document.getElementById('installBtn')
 const closeBtn = document.getElementById('closeBtn')
+
+// Auto-close timer - ferme la fenêtre automatiquement après le téléchargement
+let autoCloseTimer = null
 
 function showStatus(visible = true) {
   if (!statusEl) return
@@ -32,14 +36,15 @@ function showNoUpdate() {
   statusDesc.innerText = 'Vous utilisez la dernière version.'
   if (progressWrap) progressWrap.style.display = 'none'
   if (actionRow) actionRow.style.display = 'none'
-  setTimeout(() => { try { window.close && window.close() } catch (e) {} }, 900)
+  // Fermer automatiquement après 1.5s
+  setTimeout(() => { try { window.close && window.close() } catch (e) {} }, 1500)
 }
 
 function showUpdateAvailable(info) {
   const ver = (info && info.version) ? info.version : ''
   showStatus(true)
   statusTitle.innerText = 'Mise à jour disponible' + (ver ? (': ' + ver) : '')
-  statusDesc.innerText = 'Téléchargement en cours...'
+  statusDesc.innerText = 'Téléchargement en arrière-plan...'
   if (progressWrap) progressWrap.style.display = 'block'
   if (actionRow) actionRow.style.display = 'none'
 }
@@ -49,24 +54,44 @@ function showProgress(progress) {
   if (p !== null) {
     if (progressBar) progressBar.style.width = Math.min(100, Math.max(0, p)) + '%'
     if (percentEl) percentEl.innerText = p + '%'
+    
+    // Mettre à jour le texte de statut avec plus d'infos
+    if (statusDesc && progress.bytesPerSecond) {
+      const speed = formatBytes(progress.bytesPerSecond) + '/s'
+      statusDesc.innerText = `Téléchargement: ${speed}`
+    }
   } else {
     if (progressBar) progressBar.style.width = '0%'
     if (percentEl) percentEl.innerText = '...'
   }
 }
 
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
 function showDownloaded() {
-  if (statusTitle) statusTitle.innerText = 'Téléchargement terminé'
-  if (statusDesc) statusDesc.innerText = 'La mise à jour est prête à être installée.'
+  if (statusTitle) statusTitle.innerText = 'Téléchargement terminé !'
+  if (statusDesc) statusDesc.innerText = 'La mise à jour s\'installera à la fermeture du launcher.'
   if (progressWrap) progressWrap.style.display = 'none'
   if (actionRow) actionRow.style.display = 'flex'
+  
+  // Fermer automatiquement après 3s - l'utilisateur peut continuer à utiliser le launcher
+  autoCloseTimer = setTimeout(() => { 
+    try { window.close && window.close() } catch (e) {} 
+  }, 3000)
 }
 
 function showError(err) {
   if (statusTitle) statusTitle.innerText = 'Erreur lors de la mise à jour'
   if (statusDesc) statusDesc.innerText = err && err.message ? err.message : String(err || 'Erreur inconnue')
   if (progressWrap) progressWrap.style.display = 'none'
-  if (actionRow) actionRow.style.display = 'flex'
+  if (actionRow) actionRow.style.display = 'none'
+  // Fermer après 3s
   setTimeout(() => { try { window.close && window.close() } catch (e) {} }, 3000)
 }
 
@@ -93,11 +118,14 @@ ipcRenderer.on('autoUpdateNotification', (ev, type, payload) => {
 })
 
 if (installBtn) installBtn.addEventListener('click', () => {
+  // Annuler l'auto-close
+  if (autoCloseTimer) clearTimeout(autoCloseTimer)
   try { ipcRenderer.send('autoUpdateAction', 'installUpdateNow') } catch (e) {}
   setTimeout(() => { try { window.close() } catch (e) {} }, 200)
 })
 
 if (closeBtn) closeBtn.addEventListener('click', () => {
+  // L'update s'installera à la fermeture du launcher principal
   try { window.close() } catch (e) {}
   try { ipcRenderer.send('closeUpdateWindow') } catch (e) {}
 })

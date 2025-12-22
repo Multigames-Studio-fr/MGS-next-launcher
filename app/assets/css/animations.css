@@ -1,0 +1,661 @@
+/*******************************************************************************
+ *                                                                             *
+ * SYSTÈME D'ANIMATIONS COMPATIBLE TOUS PC                                     *
+ * - Préfixes vendor pour compatibilité maximale                               *
+ * - Support de prefers-reduced-motion                                         *
+ * - Fallbacks pour GPU faibles                                                *
+ * - Animations optimisées avec will-change                                    *
+ *                                                                             *
+ ******************************************************************************/
+
+/* =============================================================================
+   CONFIGURATION GLOBALE DES ANIMATIONS
+   ============================================================================= */
+
+:root {
+  /* Durées d'animation */
+  --anim-duration-fast: 150ms;
+  --anim-duration-normal: 300ms;
+  --anim-duration-slow: 500ms;
+  --anim-duration-very-slow: 1000ms;
+  
+  /* Courbes d'animation */
+  --anim-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --anim-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --anim-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --anim-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --anim-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  
+  /* Flag pour activer/désactiver les animations */
+  --anim-enabled: 1;
+}
+
+/* Désactiver les animations si l'utilisateur préfère moins de mouvement */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-enabled: 0;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Classe pour forcer la désactivation des animations */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* =============================================================================
+   KEYFRAMES AVEC PRÉFIXES VENDOR
+   ============================================================================= */
+
+/* --- SPIN / ROTATION --- */
+@-webkit-keyframes spin {
+  from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@-moz-keyframes spin {
+  from { -moz-transform: rotate(0deg); transform: rotate(0deg); }
+  to { -moz-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@-o-keyframes spin {
+  from { -o-transform: rotate(0deg); transform: rotate(0deg); }
+  to { -o-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- LOADER SPIN (pour les spinners de chargement) --- */
+@-webkit-keyframes loader-spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+@-moz-keyframes loader-spin {
+  0% { -moz-transform: rotate(0deg); }
+  100% { -moz-transform: rotate(360deg); }
+}
+@keyframes loader-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- PULSE --- */
+@-webkit-keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@-moz-keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* --- PULSE LENT --- */
+@-webkit-keyframes pulse-slow {
+  0%, 100% { opacity: 1; -webkit-transform: scale(1); }
+  50% { opacity: 0.8; -webkit-transform: scale(0.98); }
+}
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+/* --- FADE IN --- */
+@-webkit-keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@-moz-keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- FADE OUT --- */
+@-webkit-keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* --- FADE IN UP --- */
+@-webkit-keyframes fadeInUp {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- FADE IN DOWN --- */
+@-webkit-keyframes fadeInDown {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- SLIDE IN RIGHT --- */
+@-webkit-keyframes slideInRight {
+  from {
+    -webkit-transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    -webkit-transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* --- SLIDE OUT RIGHT --- */
+@-webkit-keyframes slideOutRight {
+  from {
+    -webkit-transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    -webkit-transform: translateX(100%);
+    opacity: 0;
+  }
+}
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* --- SLIDE IN LEFT --- */
+@-webkit-keyframes slideInLeft {
+  from {
+    -webkit-transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    -webkit-transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* --- SCALE IN --- */
+@-webkit-keyframes scaleIn {
+  from {
+    -webkit-transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    -webkit-transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* --- SCALE OUT --- */
+@-webkit-keyframes scaleOut {
+  from {
+    -webkit-transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    -webkit-transform: scale(0.8);
+    opacity: 0;
+  }
+}
+@keyframes scaleOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* --- SHAKE --- */
+@-webkit-keyframes shake {
+  0%, 100% { -webkit-transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { -webkit-transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { -webkit-transform: translateX(5px); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* --- BOUNCE --- */
+@-webkit-keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { -webkit-transform: translateY(0); }
+  40% { -webkit-transform: translateY(-15px); }
+  60% { -webkit-transform: translateY(-7px); }
+}
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-15px); }
+  60% { transform: translateY(-7px); }
+}
+
+/* --- FLOAT (pour les particules) --- */
+@-webkit-keyframes float {
+  0%, 100% { 
+    -webkit-transform: translateY(0px); 
+  }
+  50% { 
+    -webkit-transform: translateY(-20px); 
+  }
+}
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-20px); 
+  }
+}
+
+/* --- GLOW GROW --- */
+@-webkit-keyframes glow-grow {
+  0% {
+    -webkit-transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    -webkit-transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: scale(1);
+    opacity: 0;
+  }
+}
+@keyframes glow-grow {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* --- SHIMMER --- */
+@-webkit-keyframes shimmer {
+  0% {
+    -webkit-transform: translateX(-100%);
+  }
+  100% {
+    -webkit-transform: translateX(200%);
+  }
+}
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* --- CHECKMARK --- */
+@-webkit-keyframes checkmark {
+  0% { height: 0; width: 0; opacity: 1; }
+  20% { height: 0; width: 4px; opacity: 1; }
+  40% { height: 8px; width: 4px; opacity: 1; }
+  100% { height: 8px; width: 4px; opacity: 1; }
+}
+@keyframes checkmark {
+  0% { height: 0; width: 0; opacity: 1; }
+  20% { height: 0; width: 4px; opacity: 1; }
+  40% { height: 8px; width: 4px; opacity: 1; }
+  100% { height: 8px; width: 4px; opacity: 1; }
+}
+
+/* --- ROTATING (pour les logos tournants) --- */
+@-webkit-keyframes rotating {
+  from { -webkit-transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); }
+}
+@keyframes rotating {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- SERVER CHANGE --- */
+@-webkit-keyframes serverChange {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1) translateY(0);
+  }
+}
+@keyframes serverChange {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- BLINK --- */
+@-webkit-keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+/* --- PROGRESS BAR --- */
+@-webkit-keyframes progress {
+  0% { width: 0%; }
+  50% { width: 100%; }
+  100% { width: 0%; }
+}
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 100%; }
+  100% { width: 0%; }
+}
+
+/* --- SKELETON SHIMMER --- */
+@-webkit-keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* =============================================================================
+   CLASSES UTILITAIRES D'ANIMATION
+   ============================================================================= */
+
+/* Spin */
+.animate-spin {
+  -webkit-animation: spin 1s linear infinite;
+  -moz-animation: spin 1s linear infinite;
+  -o-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse */
+.animate-pulse {
+  -webkit-animation: pulse 2s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  -webkit-animation: pulse-slow 3s ease-in-out infinite;
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Fade */
+.animate-fadeIn {
+  -webkit-animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fadeOut {
+  -webkit-animation: fadeOut 0.3s ease-out forwards;
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+.animate-fadeInUp {
+  -webkit-animation: fadeInUp 0.4s ease-out forwards;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-fadeInDown {
+  -webkit-animation: fadeInDown 0.4s ease-out forwards;
+  animation: fadeInDown 0.4s ease-out forwards;
+}
+
+/* Slide */
+.animate-slideInRight {
+  -webkit-animation: slideInRight 0.3s ease-out forwards;
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animate-slideOutRight {
+  -webkit-animation: slideOutRight 0.3s ease-out forwards;
+  animation: slideOutRight 0.3s ease-out forwards;
+}
+
+.animate-slideInLeft {
+  -webkit-animation: slideInLeft 0.3s ease-out forwards;
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+/* Scale */
+.animate-scaleIn {
+  -webkit-animation: scaleIn 0.2s ease-out forwards;
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-scaleOut {
+  -webkit-animation: scaleOut 0.2s ease-out forwards;
+  animation: scaleOut 0.2s ease-out forwards;
+}
+
+/* Autres */
+.animate-shake {
+  -webkit-animation: shake 0.5s ease-in-out;
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-bounce {
+  -webkit-animation: bounce 1s ease infinite;
+  animation: bounce 1s ease infinite;
+}
+
+.animate-float {
+  -webkit-animation: float 6s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  -webkit-animation: glow-grow 4s ease-out infinite;
+  animation: glow-grow 4s ease-out infinite;
+}
+
+.animate-shimmer {
+  -webkit-animation: shimmer 2s ease-in-out infinite;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.animate-blink {
+  -webkit-animation: blink 1s linear infinite;
+  animation: blink 1s linear infinite;
+}
+
+/* =============================================================================
+   TRANSITIONS OPTIMISÉES
+   ============================================================================= */
+
+.transition-fast {
+  -webkit-transition: all 150ms ease;
+  -moz-transition: all 150ms ease;
+  -o-transition: all 150ms ease;
+  transition: all 150ms ease;
+}
+
+.transition-normal {
+  -webkit-transition: all 300ms ease;
+  -moz-transition: all 300ms ease;
+  -o-transition: all 300ms ease;
+  transition: all 300ms ease;
+}
+
+.transition-slow {
+  -webkit-transition: all 500ms ease;
+  -moz-transition: all 500ms ease;
+  -o-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+/* Transitions spécifiques pour de meilleures performances */
+.transition-opacity {
+  -webkit-transition: opacity 300ms ease;
+  transition: opacity 300ms ease;
+}
+
+.transition-transform {
+  -webkit-transition: -webkit-transform 300ms ease;
+  transition: transform 300ms ease;
+}
+
+.transition-colors {
+  -webkit-transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
+/* =============================================================================
+   OPTIMISATIONS GPU
+   ============================================================================= */
+
+/* Forcer l'accélération GPU pour les éléments animés */
+.gpu-accelerated {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Will-change pour optimiser les animations */
+.will-animate {
+  will-change: transform, opacity;
+}
+
+.will-animate-transform {
+  will-change: transform;
+}
+
+.will-animate-opacity {
+  will-change: opacity;
+}
+
+/* =============================================================================
+   DÉLAIS D'ANIMATION
+   ============================================================================= */
+
+.delay-100 { 
+  -webkit-animation-delay: 100ms; 
+  animation-delay: 100ms; 
+}
+.delay-200 { 
+  -webkit-animation-delay: 200ms; 
+  animation-delay: 200ms; 
+}
+.delay-300 { 
+  -webkit-animation-delay: 300ms; 
+  animation-delay: 300ms; 
+}
+.delay-500 { 
+  -webkit-animation-delay: 500ms; 
+  animation-delay: 500ms; 
+}
+.delay-1000 { 
+  -webkit-animation-delay: 1000ms; 
+  animation-delay: 1000ms; 
+}

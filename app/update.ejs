@@ -45,12 +45,20 @@
     }
     .status .title { font-weight:700; font-size:14px; margin-bottom:6px; }
     .progress { height:8px; background:rgba(255,255,255,0.03); border-radius:8px; overflow:hidden; }
-    .progress > .bar { height:100%; width:0%; background:var(--accent); transition: width 160ms linear; }
+    .progress > .bar { 
+      height:100%; 
+      width:0%; 
+      background:var(--accent); 
+      -webkit-transition: width 160ms linear; 
+      -moz-transition: width 160ms linear; 
+      transition: width 160ms linear; 
+    }
     .percent { font-size:12px; color:var(--muted); margin-top:6px; text-align:right; }
 
-    .action { margin-top:8px; display:flex; gap:8px; justify-content:center; }
+    .action { margin-top:8px; display:-webkit-flex; display:flex; gap:8px; -webkit-justify-content:center; justify-content:center; }
     .btn {
-      padding:8px 12px; background:var(--accent); color:#fff; border-radius:8px; cursor:pointer; user-select:none;
+      padding:8px 12px; background:var(--accent); color:#fff; border-radius:8px; cursor:pointer; 
+      -webkit-user-select:none; user-select:none;
       box-shadow:0 4px 18px rgba(79,157,255,0.14); border:0; font-weight:600;
     }
     .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); box-shadow:none; }
@@ -59,24 +67,18 @@
     .copyright {
       position:fixed;
       left:50%;
+      -webkit-transform:translateX(-50%);
+      -moz-transform:translateX(-50%);
       transform:translateX(-50%);
       bottom:20px;
       font-size:12px;
       color:var(--muted);
       letter-spacing:0.6px;
     }
-/* From Uiverse.io by ZacharyCrespin */ 
-@keyframes square-animation {
- 0% {
-  left: 0;
-  top: 0;
- }
-
- 10.5% {
-  left: 0;
-  top: 0;
- }
-
+/* From Uiverse.io by ZacharyCrespin - avec préfixes vendor */ 
+@-webkit-keyframes square-animation {
+ 0% { left: 0; top: 0; }
+ 10.5% { left: 0; top: 0; }
  12.5% { left: 22px; top: 0; }
  23%   { left: 22px; top: 0; }
  25%   { left: 44px; top: 0; }
@@ -91,19 +93,37 @@
  85.5% { left: 0;    top: 44px; }
  87.5% { left: 0;    top: 22px; }
  98%   { left: 0;    top: 22px; }
- 100% {
-  left: 0;
-  top: 0;
- }
+ 100% { left: 0; top: 0; }
+}
+@keyframes square-animation {
+ 0% { left: 0; top: 0; }
+ 10.5% { left: 0; top: 0; }
+ 12.5% { left: 22px; top: 0; }
+ 23%   { left: 22px; top: 0; }
+ 25%   { left: 44px; top: 0; }
+ 35.5% { left: 44px; top: 0; }
+ 37.5% { left: 44px; top: 22px; }
+ 48%   { left: 44px; top: 22px; }
+ 50%   { left: 22px; top: 22px; }
+ 60.5% { left: 22px; top: 22px; }
+ 62.5% { left: 22px; top: 44px; }
+ 73%   { left: 22px; top: 44px; }
+ 75%   { left: 0;    top: 44px; }
+ 85.5% { left: 0;    top: 44px; }
+ 87.5% { left: 0;    top: 22px; }
+ 98%   { left: 0;    top: 22px; }
+ 100% { left: 0; top: 0; }
 }
 
 .loader {
- position: relative; /* placed inside .center so use flow positioning */
+ position: relative;
  display: inline-block;
  width: 64px;
  height: 64px;
+ -webkit-transform: rotate(45deg);
+ -moz-transform: rotate(45deg);
  transform: rotate(45deg);
- margin-top: 12px; /* small spacing under logo/status */
+ margin-top: 12px;
 }
 
 .loader-square {
@@ -118,38 +138,52 @@
  background-size: cover;
  background-position: center;
  background-attachment: fixed;
+ -webkit-animation: square-animation 10s ease-in-out infinite both;
+ -moz-animation: square-animation 10s ease-in-out infinite both;
  animation: square-animation 10s ease-in-out infinite both;
+ /* Optimisation GPU */
+ -webkit-transform: translateZ(0);
+ transform: translateZ(0);
+ will-change: left, top;
 }
 
 .loader-square:nth-of-type(0) {
+ -webkit-animation-delay: 0s;
  animation-delay: 0s;
 }
 
 .loader-square:nth-of-type(1) {
+ -webkit-animation-delay: -1.4285714286s;
  animation-delay: -1.4285714286s;
 }
 
 .loader-square:nth-of-type(2) {
+ -webkit-animation-delay: -2.8571428571s;
  animation-delay: -2.8571428571s;
 }
 
 .loader-square:nth-of-type(3) {
+ -webkit-animation-delay: -4.2857142857s;
  animation-delay: -4.2857142857s;
 }
 
 .loader-square:nth-of-type(4) {
+ -webkit-animation-delay: -5.7142857143s;
  animation-delay: -5.7142857143s;
 }
 
 .loader-square:nth-of-type(5) {
+ -webkit-animation-delay: -7.1428571429s;
  animation-delay: -7.1428571429s;
 }
 
 .loader-square:nth-of-type(6) {
+ -webkit-animation-delay: -8.5714285714s;
  animation-delay: -8.5714285714s;
 }
 
 .loader-square:nth-of-type(7) {
+ -webkit-animation-delay: -10s;
  animation-delay: -10s;
 }
     /* clickable body hint removed to avoid accidental closes while update in progress */

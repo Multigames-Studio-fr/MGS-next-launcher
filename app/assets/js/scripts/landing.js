@@ -73,162 +73,62 @@ const buttonAnimationTokens = new WeakMap()
  * Animate swapping selection between two sidebar buttons.
  * Handles cancellation via per-element tokens and updates 'selected' class and image borders.
  */
+/**
+ * Swap selection entre deux boutons de sidebar (mode instantané pour performance)
+ */
 async function animateButtonSwap(prevBtn, nextBtn){
-    // simple helper to wait for animationend (with fallback)
-    const waitAnim = (el, cls, fallback = 260) => new Promise(resolve => {
-        if(!el) return resolve()
-        let done = false
-        const onEnd = () => { if(done) return; done = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() }
-        try{ el.addEventListener('animationend', onEnd) }catch(e){}
-        el.classList.add(cls)
-        setTimeout(() => { if(!done){ done = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() } }, fallback + 40)
-    })
-
-    // tokens
-    const tokenPrev = prevBtn ? (buttonAnimationTokens.get(prevBtn) || 0) + 1 : null
-    const tokenNext = nextBtn ? (buttonAnimationTokens.get(nextBtn) || 0) + 1 : null
-    if(prevBtn) buttonAnimationTokens.set(prevBtn, tokenPrev)
-    if(nextBtn) buttonAnimationTokens.set(nextBtn, tokenNext)
-
+    // Mode instantané - pas d'animations pour améliorer les performances
     try {
-        // exit previous
+        // Retirer la sélection du bouton précédent
         if(prevBtn){
-            // animate label out if present (slide-label style)
+            prevBtn.classList.remove('selected')
+            const img = prevBtn.querySelector('img')
+            if(img){ 
+                img.classList.remove('border-[#F8BA59]') 
+                img.classList.add('border-white/20') 
+            }
+            // Nettoyage des classes d'animation existantes
             try {
                 const labelPrev = prevBtn.querySelector('.font-semibold.text-xl.leading-tight')
-                if(labelPrev) labelPrev.classList.add('label-slide-out')
-            } catch (e) { /* ignore */ }
-
-            await waitAnim(prevBtn, 'instance-btn-exit', 220)
-            // cancelled?
-            if(buttonAnimationTokens.get(prevBtn) !== tokenPrev) {
-                prevBtn.classList.remove('instance-btn-exit')
-            } else {
-                // remove selected state
-                prevBtn.classList.remove('selected')
-                const img = prevBtn.querySelector('img')
-                if(img){ img.classList.remove('border-[#F8BA59]'); img.classList.add('border-white/20') }
-                // cleanup label animation classes
-                try {
-                    const labelPrev = prevBtn.querySelector('.font-semibold.text-xl.leading-tight')
-                    if(labelPrev) labelPrev.classList.remove('label-slide-out','label-slide-in')
-                } catch (e) {}
-                prevBtn.classList.remove('instance-btn-exit')
-            }
+                if(labelPrev) labelPrev.classList.remove('label-slide-out','label-slide-in')
+            } catch (e) {}
+            prevBtn.classList.remove('instance-btn-exit', 'instance-btn-enter')
         }
 
-        // prepare next: add selected then enter animation
+        // Appliquer la sélection au nouveau bouton immédiatement
         if(nextBtn){
-            // If token changed meanwhile, abort
-            if(buttonAnimationTokens.get(nextBtn) !== tokenNext) return
-            // prepare label state
+            nextBtn.classList.add('selected')
+            const img = nextBtn.querySelector('img')
+            if(img){ 
+                img.classList.remove('border-white/20') 
+                img.classList.add('border-[#F8BA59]') 
+            }
+            // Nettoyage des classes d'animation existantes
             try {
                 const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight')
                 if(labelNext) labelNext.classList.remove('label-slide-out','label-slide-in')
             } catch (e) {}
-            // mark selected state before enter so CSS selectors apply
-            nextBtn.classList.add('selected')
-            const img = nextBtn.querySelector('img')
-            if(img){ img.classList.remove('border-white/20'); img.classList.add('border-[#F8BA59]') }
-
-            // animate label in if present
-            try {
-                const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight')
-                if(labelNext) labelNext.classList.add('label-slide-in')
-            } catch (e) {}
-
-            await waitAnim(nextBtn, 'instance-btn-enter', 260)
-            // cleanup
-            if(buttonAnimationTokens.get(nextBtn) === tokenNext){
-                nextBtn.classList.remove('instance-btn-enter')
-                try { const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight'); if(labelNext) labelNext.classList.remove('label-slide-in') } catch (e) {}
-            } else {
-                nextBtn.classList.remove('instance-btn-enter')
-                nextBtn.classList.remove('selected')
-                try { const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight'); if(labelNext) labelNext.classList.remove('label-slide-in') } catch (e) {}
-            }
+            nextBtn.classList.remove('instance-btn-exit', 'instance-btn-enter')
         }
     } catch (e) {
-        // best-effort cleanup
-        try { if(prevBtn) prevBtn.classList.remove('instance-btn-exit') } catch (err) {}
-        try { if(nextBtn) nextBtn.classList.remove('instance-btn-enter') } catch (err) {}
-    } finally {
-        if(prevBtn) buttonAnimationTokens.delete(prevBtn)
-        if(nextBtn) buttonAnimationTokens.delete(nextBtn)
+        console.debug('[Landing] animateButtonSwap error', e)
     }
 }
 
 /**
- * Animate swapping the HTML/text of an element with exit -> content swap -> enter.
- * Uses per-element token to cancel in-flight swaps if a new swap is requested.
- * @param {Element} el DOM element
- * @param {string} newHTML sanitized HTML to insert
- * @param {object} opts options: exitClass, enterClass, exitFallback, enterFallback
+ * Fonction de changement de texte instantanée (optimisée pour performance)
  */
 function animateTextSwap(el, newHTML, opts = {}){
-    const {
-        exitClass = 'text-exit',
-        enterClass = 'text-enter',
-        exitFallback = 260,
-        enterFallback = 300
-    } = opts
-
     if(!el) return Promise.resolve()
-
-    const prev = textAnimationTokens.get(el) || 0
-    const token = prev + 1
-    textAnimationTokens.set(el, token)
-
-    const waitAnimation = (element, className, fallback) => {
-        return new Promise(resolve => {
-            let called = false
-            const onEnd = (e) => {
-                if(called) return
-                called = true
-                try { element.removeEventListener('animationend', onEnd) } catch (e) {}
-                resolve()
-            }
-            try { element.addEventListener('animationend', onEnd) } catch (e) {}
-            // ensure class is applied
-            element.classList.add(className)
-            setTimeout(() => {
-                if(!called) {
-                    called = true
-                    try { element.removeEventListener('animationend', onEnd) } catch (e) {}
-                    resolve()
-                }
-            }, fallback + 40)
-        })
+    
+    // Mode instantané - change directement le contenu
+    try {
+        el.innerHTML = newHTML
+    } catch (e) {
+        console.debug('[Landing] animateTextSwap error', e)
     }
-
-    return (async () => {
-        // exit
-        await waitAnimation(el, exitClass, exitFallback)
-        // cancelled?
-        if(textAnimationTokens.get(el) !== token) {
-            // cleanup classes
-            try { el.classList.remove(exitClass, enterClass) } catch (e) {}
-            return
-        }
-
-        // swap content
-        try { el.innerHTML = newHTML } catch (e) { el.textContent = newHTML }
-
-        // remove exit and force reflow
-        try { el.classList.remove(exitClass) } catch (e) {}
-        void el.offsetHeight
-
-        // enter
-        await waitAnimation(el, enterClass, enterFallback)
-
-        // final cleanup
-        if(textAnimationTokens.get(el) === token) {
-            try { el.classList.remove(enterClass) } catch (e) {}
-            textAnimationTokens.delete(el)
-        } else {
-            try { el.classList.remove(exitClass, enterClass) } catch (e) {}
-        }
-    })()
+    
+    return Promise.resolve()
 }
 
 /**
@@ -482,6 +382,18 @@ document.getElementById('launch_button').addEventListener('click', async e => {
                 launchBtn.disabled = true
             } catch (e) { /* ignore UI update errors */ }
         }
+        
+        // Notify that the instance is starting
+        try {
+            const payload = { starting: true, serverId: ConfigManager.getSelectedServer() }
+            if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
+                window.onInstanceStateChanged(payload)
+            }
+            try {
+                const { ipcRenderer } = require('electron')
+                ipcRenderer.send('instance-state', payload)
+            } catch (e) { /* ignore if not available */ }
+        } catch (e) { /* non-critical */ }
     } catch (e) { /* non-critical */ }
     try {
         // Vérifier l'état des mises à jour avant de lancer
@@ -743,15 +655,14 @@ function updateServerTechnicalInfo(serv) {
 }
 
 // Bind selected server
-async function updateSelectedServer(serv, instant = false){
+async function updateSelectedServer(serv, instant = true){
     if(getCurrentView() === VIEWS.settings){
         fullSettingsSave()
     }
     ConfigManager.setSelectedServer(serv != null ? serv.rawServer.id : null)
     ConfigManager.save()
     
-    // Update server info in the new UI. If `instant` is true, apply changes
-    // immediately without running the animated transition sequence.
+    // Update server info in the new UI. Force instant updates for performance
     const serverTitle = document.querySelector('.server-title')
     const serverDesc = document.querySelector('.server-desc')
     const serverVersion = document.querySelector('.server-version')
@@ -759,122 +670,25 @@ async function updateSelectedServer(serv, instant = false){
     const serverStatusName = document.querySelector('.server-status-name')
     const playInstance = document.querySelector('.play-instance')
 
-    if (instant) {
-        try {
-            if (serv != null) {
-                const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
-                const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
-                if (serverTitle) serverTitle.innerHTML = titleHtml
-                if (serverDesc) serverDesc.innerHTML = descHtml
-                if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
-                if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
-                if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
-            } else {
-                if (serverTitle) serverTitle.innerHTML = 'Veuillez sélectionner une instance'
-                if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
-                if (serverVersion) serverVersion.textContent = '--'
-                if (serverLoader) serverLoader.textContent = '--'
-                if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
-            }
-        } catch (e) {
-            console.debug('[Landing] instant updateSelectedServer failed', e)
+    // Always use instant updates for better performance
+    try {
+        if (serv != null) {
+            const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
+            const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
+            if (serverTitle) serverTitle.innerHTML = titleHtml
+            if (serverDesc) serverDesc.innerHTML = descHtml
+            if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
+            if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
+            if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
+        } else {
+            if (serverTitle) serverTitle.innerHTML = 'Veuillez sélectionner une instance'
+            if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
+            if (serverVersion) serverVersion.textContent = '--'
+            if (serverLoader) serverLoader.textContent = '--'
+            if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
         }
-    } else {
-        // Token for cancelling outdated transitions
-        const myTransitionToken = ++instanceTransitionCounter
-        
-        // Helper: add animation class and wait for animationend on elements (with a fallback timeout)
-        const animateAndWait = (els, addClass, fallback = 360) => {
-            return new Promise(resolve => {
-                if (!els || els.length === 0) return resolve()
-                let remaining = els.length
-                const onEnd = (e) => {
-                    try { e.currentTarget.removeEventListener('animationend', onEnd) } catch (e) {}
-                    remaining--
-                    if (remaining <= 0) resolve()
-                }
-                els.forEach(el => {
-                    try {
-                        el.addEventListener('animationend', onEnd)
-                    } catch (e) {}
-                    // trigger animation
-                    el.classList.add(addClass)
-                })
-                // fallback in case animationend doesn't fire
-                setTimeout(() => resolve(), fallback)
-            })
-        }
-
-        // Apply slide-out for title/desc and fade-out for meta, then update, then slide-in/fade-in
-        const textEls = [serverTitle, serverDesc].filter(el => el)
-        const metaEls = [serverVersion, serverLoader].filter(el => el)
-
-        try {
-            // Start animations in parallel: meta fades out first. Text uses per-element layered animation.
-            const outPromises = []
-            if (metaEls.length) outPromises.push(animateAndWait(metaEls, 'instance-fade-out', 260))
-            await Promise.all(outPromises)
-
-            // If a newer transition started, abort and cleanup
-            if (myTransitionToken !== instanceTransitionCounter) {
-                // remove any out classes left behind
-                textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
-                metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
-                return
-            }
-
-            // Update content while out of view (use two-layer swap if available)
-            if (serv != null) {
-                const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
-                const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
-                // Use layered swap when possible
-                if (serverTitle) await animateTextLayerSwap(serverTitle, titleHtml)
-                if (serverDesc) await animateTextLayerSwap(serverDesc, descHtml)
-                if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
-                if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
-                if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
-            } else {
-                if (serverTitle) await animateTextLayerSwap(serverTitle, 'Veuillez sélectionner une instance')
-                if (serverDesc) await animateTextLayerSwap(serverDesc, 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.')
-                if (serverVersion) serverVersion.textContent = '--'
-                if (serverLoader) serverLoader.textContent = '--'
-                if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
-            }
-
-            // Trigger meta elements fade-in
-            metaEls.forEach(el => {
-                el.classList.remove('instance-fade-out')
-                void el.offsetHeight
-                el.classList.add('instance-fade-in')
-            })
-
-            // Add glow/slide to play button if server selected
-            if (playInstance && serv != null) {
-                playInstance.classList.add('slide-up-anim')
-            }
-
-            // Wait for meta fade-in to complete
-            const inPromises = []
-            if (metaEls.length) inPromises.push(animateAndWait(metaEls, 'instance-fade-in', 300))
-            await Promise.all(inPromises)
-
-            // If a newer transition started while animating in, stop and cleanup
-            if (myTransitionToken !== instanceTransitionCounter) {
-                textEls.forEach(el => { try { el.classList.remove('instance-slide-in','instance-slide-out') } catch (e) {} })
-                metaEls.forEach(el => { try { el.classList.remove('instance-fade-in','instance-fade-out') } catch (e) {} })
-                return
-            }
-        } catch (e) {
-            // Ensure classes are cleaned up
-            textEls.forEach(el => { try { el.classList.remove('instance-slide-out','instance-slide-in') } catch (e) {} })
-            metaEls.forEach(el => { try { el.classList.remove('instance-fade-out','instance-fade-in') } catch (e) {} })
-        } finally {
-            textEls.forEach(el => { try { el.classList.remove('instance-slide-in') } catch (e) {} })
-            metaEls.forEach(el => { try { el.classList.remove('instance-fade-in') } catch (e) {} })
-            if (playInstance) {
-                playInstance.classList.remove('slide-up-anim')
-            }
-        }
+    } catch (e) {
+        console.debug('[Landing] instant updateSelectedServer failed', e)
     }
     
     // Update server technical info (mods count, RAM allocation)
@@ -2987,7 +2801,6 @@ window.testModpackCards = function() {
         console.error('populateModpackInstances not available')
     }
 }
-}
 
 /**
  * Global instance state handler used by launch code and IPC.
@@ -3006,9 +2819,13 @@ window.onInstanceStateChanged = function(payload){
         instanceStateMap[serverId].timestamp = Date.now()
 
         // Update UI for selected server and for this serverId
-        updateLaunchUIForServer(serverId)
+        if (typeof updateLaunchUIForServer === 'function') {
+            updateLaunchUIForServer(serverId)
+        }
         const selected = ConfigManager.getSelectedServer()
-        if(selected && selected !== serverId) updateLaunchUIForServer(selected)
+        if(selected && selected !== serverId && typeof updateLaunchUIForServer === 'function') {
+            updateLaunchUIForServer(selected)
+        }
     } catch(e){ console.debug('[Landing] onInstanceStateChanged error', e) }
 }
 
@@ -3029,94 +2846,54 @@ try {
 } catch(e) {
     // ignore if not running in electron.
 }
+}
 
 /**
- * Animate swapping using two-layer approach. Requires the element to contain
- * two child spans with classes `text-layer current` and `text-layer next`.
+ * Fonction optimisée pour changement instantané de texte avec layers (mode performance)
  */
 function animateTextLayerSwap(containerEl, newHTML, opts = {}){
     if(!containerEl) return Promise.resolve()
-    // find layers
-    const current = containerEl.querySelector('.text-layer.current')
-    const next = containerEl.querySelector('.text-layer.next')
-    if(!current || !next) {
-        // fallback to single-element swap
-        return animateTextSwap(containerEl, newHTML, opts)
-    }
-
-    const tokenPrev = textAnimationTokens.get(containerEl) || 0
-    const token = tokenPrev + 1
-    textAnimationTokens.set(containerEl, token)
-
-    const exitClass = opts.exitClass || 'text-exit'
-    const enterClass = opts.enterClass || 'text-enter'
-    const exitFallback = opts.exitFallback || 220
-    const enterFallback = opts.enterFallback || 260
-
-    const waitAnim = (el, cls, fallback) => new Promise(resolve => {
-        let called = false
-        const onEnd = () => {
-            if(called) return
-            called = true
-            try { el.removeEventListener('animationend', onEnd) } catch (e) {}
-            resolve()
+    
+    // Mode instantané pour améliorer les performances
+    try {
+        // Trouve les layers ou fait un fallback
+        const current = containerEl.querySelector('.text-layer.current')
+        const next = containerEl.querySelector('.text-layer.next')
+        
+        if(!current || !next) {
+            // Fallback - change directement le contenu
+            containerEl.innerHTML = DOMPurify.sanitize(newHTML || '')
+            return Promise.resolve()
         }
-        try { el.addEventListener('animationend', onEnd) } catch(e) {}
-        el.style.display = ''
-        // apply class
-        el.classList.add(cls)
-        setTimeout(() => {
-            if(!called){ called = true; try{ el.removeEventListener('animationend', onEnd) }catch(e){}; resolve() }
-        }, fallback + 40)
-    })
 
-    return (async () => {
-        // Start exit on current and prepare next content
+        // Swap instantané des layers
         const sanitized = DOMPurify.sanitize(newHTML || '')
-        next.innerHTML = sanitized
-
-        // start exit animation
-        await waitAnim(current, exitClass, exitFallback)
-
-        if(textAnimationTokens.get(containerEl) !== token){
-            // cancelled
-            try { current.classList.remove(exitClass); next.classList.remove(enterClass) } catch(e) {}
-            return
-        }
-
-        // switch classes: make next enter, current hidden
+        
+        // Cache l'élément actuel et affiche le nouveau
         current.style.display = 'none'
         current.classList.remove('current')
-        current.classList.remove('text-exit')
+        
+        next.innerHTML = sanitized
+        next.style.display = ''
         next.classList.add('current')
         next.classList.remove('next')
-        next.classList.remove('text-enter')
-
-        // ensure next animates
-        await waitAnim(next, enterClass, enterFallback)
-
-        if(textAnimationTokens.get(containerEl) === token){
-            // cleanup and rotate DOM roles: swap roles to keep structure stable
-            try {
-                // Make former current into next for future swaps
-                current.classList.add('next')
-                current.classList.remove('current')
-                next.classList.add('current')
-                next.classList.remove('next')
-                // swap content positions: move former current after next
-                try { containerEl.appendChild(current) } catch(e) {}
-                current.style.display = 'none'
-                next.style.display = ''
-                // remove animation classes
-                current.classList.remove(exitClass)
-                next.classList.remove(enterClass)
-            } catch (e) {}
-            textAnimationTokens.delete(containerEl)
-        } else {
-            // cancelled while entering
-            try { current.classList.remove(exitClass); next.classList.remove(enterClass) } catch(e) {}
-        }
-    })()
+        
+        // Prépare le prochain swap en renommant les layers
+        current.classList.add('next')
+        
+        // Nettoyage des classes d'animation
+        current.classList.remove('text-exit', 'text-enter')
+        next.classList.remove('text-exit', 'text-enter')
+        
+    } catch (e) {
+        console.debug('[Landing] animateTextLayerSwap error', e)
+        // Fallback en cas d'erreur
+        try {
+            containerEl.innerHTML = DOMPurify.sanitize(newHTML || '')
+        } catch (ee) {}
+    }
+    
+    return Promise.resolve()
 }
 
 // Bind clear cache button

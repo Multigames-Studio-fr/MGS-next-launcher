@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const { LoggerUtil } = require('helios-core')
+const { getSqlJsConfig } = require('./wasm-config')
 const log = LoggerUtil.getLogger('SqlStorage')
 
 let SQL = null
@@ -13,7 +14,8 @@ async function init(dbPath) {
     DB_PATH = dbPath
     try {
         const initSqlJs = require('sql.js')
-        const SQLmod = await initSqlJs()
+        // Utilise la configuration WASM
+        const SQLmod = await initSqlJs(getSqlJsConfig())
         SQL = SQLmod
 
         if (fs.existsSync(DB_PATH)) {

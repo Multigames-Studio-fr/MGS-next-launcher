@@ -36,6 +36,224 @@ remote.getCurrentWebContents().on('devtools-opened', () => {
 webFrame.setZoomLevel(0)
 webFrame.setVisualZoomLevelLimits(1, 1)
 
+// ============================================================================
+// SYSTÈME DE NOTIFICATION D'UPDATE DISCRET
+// ============================================================================
+let updateNotificationState = {
+    available: false,
+    downloaded: false,
+    version: null,
+    downloadProgress: 0,
+    notificationShown: false
+}
+
+// Créer la notification discrète d'update
+function createUpdateNotification() {
+    if (document.getElementById('update-notification-bar')) return
+    
+    const notifBar = document.createElement('div')
+    notifBar.id = 'update-notification-bar'
+    notifBar.innerHTML = `
+        <div class="update-notif-content">
+            <span class="update-notif-icon">🔄</span>
+            <span class="update-notif-text">Mise à jour disponible</span>
+            <div class="update-notif-progress" style="display: none;">
+                <div class="update-notif-progress-bar"></div>
+            </div>
+            <button class="update-notif-btn" style="display: none;">Installer</button>
+            <button class="update-notif-close">✕</button>
+        </div>
+    `
+    
+    // Styles inline pour la notification - avec préfixes vendor
+    notifBar.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(79, 157, 255, 0.3);
+        border-radius: 12px;
+        padding: 12px 16px;
+        z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        -webkit-animation: slideInRight 0.3s ease-out;
+        animation: slideInRight 0.3s ease-out;
+        max-width: 320px;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    `
+    
+    // Ajouter les styles d'animation avec préfixes vendor
+    if (!document.getElementById('update-notif-styles')) {
+        const style = document.createElement('style')
+        style.id = 'update-notif-styles'
+        style.textContent = `
+            @-webkit-keyframes slideInRight {
+                from { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+                to { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideInRight {
+                from { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+                to { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
+            }
+            @-webkit-keyframes slideOutRight {
+                from { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
+                to { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes slideOutRight {
+                from { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
+                to { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+            }
+            @-webkit-keyframes spin {
+                from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+                to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            @keyframes spin {
+                from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+                to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            #update-notification-bar .update-notif-content {
+                display: -webkit-box;
+                display: -webkit-flex;
+                display: flex;
+                -webkit-align-items: center;
+                align-items: center;
+                gap: 10px;
+                color: #fff;
+            }
+            #update-notification-bar .update-notif-icon {
+                font-size: 18px;
+            }
+            #update-notification-bar .update-notif-text {
+                font-size: 13px;
+                font-weight: 500;
+                -webkit-flex: 1;
+                flex: 1;
+            }
+            #update-notification-bar .update-notif-progress {
+                width: 80px;
+                height: 6px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 3px;
+                overflow: hidden;
+            }
+            #update-notification-bar .update-notif-progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #4f9dff, #00d4ff);
+                width: 0%;
+                -webkit-transition: width 0.2s ease;
+                transition: width 0.2s ease;
+            }
+            #update-notification-bar .update-notif-btn {
+                background: linear-gradient(135deg, #4f9dff 0%, #00d4ff 100%);
+                border: none;
+                color: #fff;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                -webkit-transition: -webkit-transform 0.1s ease, box-shadow 0.2s ease;
+                transition: transform 0.1s ease, box-shadow 0.2s ease;
+            }
+            #update-notification-bar .update-notif-btn:hover {
+                -webkit-transform: scale(1.05);
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(79, 157, 255, 0.4);
+            }
+            #update-notification-bar .update-notif-close {
+                background: none;
+                border: none;
+                color: rgba(255,255,255,0.5);
+                font-size: 14px;
+                cursor: pointer;
+                padding: 4px;
+                margin-left: 4px;
+            }
+            #update-notification-bar .update-notif-close:hover {
+                color: #fff;
+            }
+            #update-notification-bar.downloaded .update-notif-icon {
+                -webkit-animation: none;
+                animation: none;
+            }
+            #update-notification-bar.downloading .update-notif-icon {
+                -webkit-animation: spin 1s linear infinite;
+                animation: spin 1s linear infinite;
+            }
+        `
+        document.head.appendChild(style)
+    }
+    
+    document.body.appendChild(notifBar)
+    
+    // Bouton fermer
+    notifBar.querySelector('.update-notif-close').addEventListener('click', () => {
+        hideUpdateNotification()
+    })
+    
+    // Bouton installer
+    notifBar.querySelector('.update-notif-btn').addEventListener('click', () => {
+        if (!isDev) {
+            ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+        }
+    })
+    
+    return notifBar
+}
+
+function showUpdateNotification(type, info) {
+    let notifBar = document.getElementById('update-notification-bar')
+    if (!notifBar) {
+        notifBar = createUpdateNotification()
+    }
+    
+    const textEl = notifBar.querySelector('.update-notif-text')
+    const progressEl = notifBar.querySelector('.update-notif-progress')
+    const progressBar = notifBar.querySelector('.update-notif-progress-bar')
+    const btnEl = notifBar.querySelector('.update-notif-btn')
+    const iconEl = notifBar.querySelector('.update-notif-icon')
+    
+    switch(type) {
+        case 'available':
+            textEl.textContent = `Mise à jour v${info.version || '?'} disponible`
+            iconEl.textContent = '⬇️'
+            notifBar.classList.add('downloading')
+            notifBar.classList.remove('downloaded')
+            progressEl.style.display = 'block'
+            btnEl.style.display = 'none'
+            break
+            
+        case 'progress':
+            const percent = Math.round(info.percent || 0)
+            textEl.textContent = `Téléchargement: ${percent}%`
+            progressBar.style.width = `${percent}%`
+            break
+            
+        case 'downloaded':
+            textEl.textContent = `v${info.version || '?'} prête à installer`
+            iconEl.textContent = '✅'
+            notifBar.classList.remove('downloading')
+            notifBar.classList.add('downloaded')
+            progressEl.style.display = 'none'
+            btnEl.style.display = 'block'
+            break
+    }
+    
+    notifBar.style.display = 'block'
+}
+
+function hideUpdateNotification() {
+    const notifBar = document.getElementById('update-notification-bar')
+    if (notifBar) {
+        notifBar.style.animation = 'slideOutRight 0.3s ease-out forwards'
+        setTimeout(() => {
+            notifBar.remove()
+        }, 300)
+    }
+}
+
 // Initialize auto updates in production environments.
 let updateCheckListener
 if(!isDev){
@@ -47,6 +265,11 @@ if(!isDev){
                 break
             case 'update-available':
                 loggerAutoUpdater.info('New update available', info.version)
+                updateNotificationState.available = true
+                updateNotificationState.version = info.version
+                
+                // Afficher la notification discrète
+                showUpdateNotification('available', info)
                 
                 if(process.platform === 'darwin'){
                     info.darwindownload = `https://github.com/dscalzi/HeliosLauncher/releases/download/v${info.version}/Helios-Launcher-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
@@ -55,8 +278,18 @@ if(!isDev){
                 
                 populateSettingsUpdateInformation(info)
                 break
+            case 'download-progress':
+                // Mettre à jour la barre de progression
+                updateNotificationState.downloadProgress = info.percent
+                showUpdateNotification('progress', info)
+                break
             case 'update-downloaded':
                 loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
+                updateNotificationState.downloaded = true
+                
+                // Afficher la notification avec bouton installer
+                showUpdateNotification('downloaded', info)
+                
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
                     if(!isDev){
                         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
@@ -69,13 +302,15 @@ if(!isDev){
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
                 break
             case 'ready':
-                // Only perform a single check when the updater signals it's ready.
-                // Removed periodic polling so updates are checked at startup only.
+                // Vérifier les mises à jour au démarrage
                 try {
                     ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
                 } catch (e) { loggerAutoUpdater.warn('Failed to request update check', e) }
                 break
             case 'realerror':
+                // Masquer la notification en cas d'erreur
+                hideUpdateNotification()
+                
                 // Ensure errors are visible in the renderer console (DevTools)
                 try {
                     if (info != null && info.code != null) {
@@ -86,19 +321,13 @@ if(!isDev){
                         } else {
                             loggerAutoUpdater.error('Error during update check..', info)
                             loggerAutoUpdater.debug('Error Code:', info.code)
-                            // Also print to DevTools console for easier debugging
                             try { console.error('[AutoUpdater] error:', info) } catch (e) { /* ignore */ }
-                            try { if (info && info.stack) console.debug(info.stack) } catch (e) { /* ignore */ }
-                            // Small user-visible notice (non-blocking)
-                            try { if (!isDev) { /* don't alert in dev */ } else { /* in dev, show lightweight alert */ alert('AutoUpdater error: ' + (info && info.message ? info.message : String(info))) } } catch (e) { }
                         }
                     } else {
-                        // Generic non-coded error: log prominently
                         loggerAutoUpdater.error('AutoUpdater reported an error with no code', info)
                         try { console.error('[AutoUpdater] unknown error:', info) } catch (e) { }
                     }
                 } catch (e) {
-                    // Guard: if logging itself fails, fallback to console
                     try { console.error('[AutoUpdater] error while handling realerror', e) } catch (ee) { }
                 }
                 break

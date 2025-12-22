@@ -3,6 +3,9 @@ const { DistributionAPI } = require("helios-core/common");
 const ConfigManager = require("./configmanager");
 const https = require('https')
 const { URL } = require('url')
+const fs = require('fs-extra')
+const path = require('path')
+const crypto = require('crypto')
 
 // Old WesterosCraft url.
 // exports.REMOTE_DISTRO_URL = 'http://mc.westeroscraft.com/WesterosCraftLauncher/distribution.json'
@@ -73,3 +76,89 @@ api.forceRefreshIfOnline = async function(){
 }
 
 exports.DistroAPI = api;
+
+/**
+ * Synchronise les mods d'une instance serveur avec la distribution:
+ * - supprime les fichiers mods qui ne figurent pas dans la distribution
+ * - supprime les fichiers dont le checksum diffère afin de forcer la réinstallation
+ * Retourne un objet de résumé { removed: [], reinstalled: [], errors: [] }
+ */
+api.syncServerMods = async function(serverId){
+  const result = { removed: [], reinstalled: [], errors: [] }
+  try{
+    // Ensure we have latest distribution when possible
+    await api.forceRefreshIfOnline()
+    const distro = api.getDistribution()
+    if(!distro) return result
+
+    // distribution object exposes getServerById in other codepaths
+    const server = (typeof distro.getServerById === 'function') ? distro.getServerById(serverId) : (distro.servers || []).find(s=>s.id===serverId)
+    if(!server) return result
+
+    const modsDir = path.join(ConfigManager.getInstanceDirectory(), serverId, 'mods')
+    // Build expected filenames from distribution modules (modules and subModules)
+    const expected = new Set()
+    const pushModule = (mdl) => {
+      if(!mdl || !mdl.artifact || !mdl.artifact.url) return
+      // Consider modules with type containing 'Mod' as files that live in mods folder
+      if(typeof mdl.type === 'string' && mdl.type.toLowerCase().includes('mod')){
+        expected.add(path.basename(mdl.artifact.url))
+      }
+    }
+
+    if(Array.isArray(server.modules)){
+      for(const m of server.modules){
+        pushModule(m)
+        if(Array.isArray(m.subModules)){
+          for(const sm of m.subModules) pushModule(sm)
+        }
+      }
+    }
+
+    // If mods directory doesn't exist, nothing to do
+    if(!fs.existsSync(modsDir)) return result
+
+    const files = await fs.readdir(modsDir)
+    for(const f of files){
+      try{
+        const full = path.join(modsDir, f)
+        const stat = await fs.stat(full)
+        if(!stat.isFile()) continue
+
+        if(!expected.has(f)){
+          await fs.remove(full)
+          result.removed.push(f)
+          continue
+        }
+
+        // Find corresponding module to get checksum
+        // Search in server.modules and submodules
+        let found = null
+        const findFor = (mdl) => {
+          if(mdl && mdl.artifact && mdl.artifact.url && path.basename(mdl.artifact.url) === f) return mdl
+          return null
+        }
+        if(Array.isArray(server.modules)){
+          for(const m of server.modules){
+            if(findFor(m)) { found = findFor(m); break }
+            if(Array.isArray(m.subModules)){
+              for(const sm of m.subModules){ if(findFor(sm)){ found = findFor(sm); break } }
+            }
+            if(found) break
+          }
+        }
+
+        if(found && found.artifact && found.artifact.MD5){
+          const data = await fs.readFile(full)
+          const md5 = crypto.createHash('md5').update(data).digest('hex')
+          if(md5.toLowerCase() !== String(found.artifact.MD5).toLowerCase()){
+            await fs.remove(full)
+            result.reinstalled.push(f)
+          }
+        }
+      }catch(e){ result.errors.push({ file: f, error: e && e.message ? e.message : String(e) }) }
+    }
+
+    return result
+  }catch(e){ result.errors.push({ global: e && e.message ? e.message : String(e) }); return result }
+}

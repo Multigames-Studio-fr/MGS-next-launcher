@@ -33,8 +33,8 @@ function calculateExpiryDate(nowMs, expiresInS) {
     if (typeof expiresInS === 'number' && expiresInS > 0) {
         return nowMs + (expiresInS * 1000)
     }
-    // fallback 1 hour
-    return nowMs + (60 * 60 * 1000)
+    // fallback 2 years (730 days)
+    return nowMs + (730 * 24 * 60 * 60 * 1000)
 }
 
 const AUTH_MODE = { FULL: 0, MS_REFRESH: 1, MC_REFRESH: 2 }

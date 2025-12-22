@@ -216,10 +216,14 @@ function bindSidebarInstanceEvents() {
 
                 if (server) {
                     // Update selected server
-                    updateSelectedServer(server)
+                    if (typeof window.updateSelectedServer === 'function') {
+                        window.updateSelectedServer(server)
+                    }
 
                     // Refresh server status
-                    await refreshServerStatus(true)
+                    if (typeof refreshServerStatus === 'function') {
+                        await refreshServerStatus(true)
+                    }
 
                     // Repopulate sidebar
                     await populateSidebarInstances()
@@ -379,8 +383,12 @@ async function showMainUI(data) {
     } catch (err) {
         console.warn('[UIBINDER] prepareSettings threw', err);
     }
-    updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
-    refreshServerStatus()
+    if (typeof window.updateSelectedServer === 'function') {
+        window.updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
+    }
+    if (typeof refreshServerStatus === 'function') {
+        refreshServerStatus()
+    }
 
     // Populate sidebar instances for the new interface
     console.log('[UIBINDER] Calling populateSidebarInstances()...')
@@ -464,8 +472,12 @@ function showFatalStartupError() {
  * @param {Object} data The distro index object.
  */
 function onDistroRefresh(data) {
-    updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
-    refreshServerStatus()
+    if (typeof window.updateSelectedServer === 'function') {
+        window.updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
+    }
+    if (typeof refreshServerStatus === 'function') {
+        refreshServerStatus()
+    }
 
     // Call initNews if it's available
     if (typeof window.initNews === 'function') {
@@ -838,7 +850,7 @@ function setSelectedAccount(uuid) {
 
 // Validation automatique avec contrôle de fréquence
 let lastFocusValidation = 0
-const FOCUS_VALIDATION_COOLDOWN = 300000 // 5 minutes
+const FOCUS_VALIDATION_COOLDOWN = 365 * 24 * 60 * 60 * 1000 // 1 an
 
 // When the app regains focus or becomes visible again, validate tokens with cooldown.
 try {
@@ -922,6 +934,8 @@ async function devModeToggle() {
     DistroAPI.toggleDevMode(true)
     const data = await DistroAPI.refreshDistributionOrFallback()
     ensureJavaSettings(data)
-    updateSelectedServer(data.servers[0])
+    if (typeof window.updateSelectedServer === 'function') {
+        window.updateSelectedServer(data.servers[0])
+    }
     syncModConfigurations(data)
 }

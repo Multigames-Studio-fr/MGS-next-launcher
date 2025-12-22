@@ -1,6 +1,9 @@
 /* Github Code Highlighting. */
 @import "../../../node_modules/github-syntax-dark/lib/github-dark.css";
 
+/* Système d'animations compatible tous PC */
+@import "./animations.css";
+
 /*******************************************************************************
  *                                                                             *
  * Fonts                                                                       *
@@ -730,21 +733,26 @@ button {
   margin-left: 20px;
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-left-color: #F8BA59;
-  animation-name: loader-spin;
-  animation-duration: 1s;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
+  -webkit-animation: loader-spin 1s linear infinite;
+  -moz-animation: loader-spin 1s linear infinite;
+  animation: loader-spin 1s linear infinite;
   position: relative;
   display: inline-block;
   vertical-align: top;
   border-radius: 50%;
   width: 16px;
   height: 16px;
+  /* Optimisation GPU */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .load-complete {
+  -webkit-animation: none;
   animation: none;
   border-color: #F8BA59;
+  -webkit-transition: border 500ms ease-out;
   transition: border 500ms ease-out;
 }
 
@@ -753,9 +761,9 @@ button {
 }
 
 .checkmark.draw:after {
-  animation-duration: 800ms;
-  animation-timing-function: ease;
-  animation-name: checkmark;
+  -webkit-animation: checkmark 800ms ease forwards;
+  animation: checkmark 800ms ease forwards;
+  -webkit-transform: scaleX(-1) rotate(135deg);
   transform: scaleX(-1) rotate(135deg);
 }
 

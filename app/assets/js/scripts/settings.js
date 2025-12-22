@@ -700,6 +700,35 @@ function getSettingsCurrentMicrosoftAccounts() {
 }
 
 /**
+ * Extend token expiration for an account by 2 years without re-login.
+ */
+function extendTokenExpiration(uuid) {
+  const acc = ConfigManager.getAuthAccount(uuid)
+  if (!acc) return false
+  
+  const now = Date.now()
+  const extensionMs = 730 * 24 * 60 * 60 * 1000 // 2 years
+  
+  if (acc.type === 'microsoft') {
+    // Extend Microsoft token expiration
+    const newExpiresAt = now + extensionMs
+    const newMsExpiresAt = acc.microsoft?.expires_at ? (acc.microsoft.expires_at + extensionMs) : newExpiresAt
+    
+    ConfigManager.updateMicrosoftAuthAccount(
+      uuid,
+      acc.accessToken,
+      acc.microsoft.access_token,
+      acc.microsoft.refresh_token,
+      newMsExpiresAt,
+      newExpiresAt
+    )
+    ConfigManager.save()
+    return true
+  }
+  return false
+}
+
+/**
  * Add auth account elements for each one stored in the authentication database.
  */
 function populateAuthAccounts() {
@@ -742,6 +771,7 @@ function populateAuthAccounts() {
               <div class="settingsAuthAccountMenu hidden absolute right-0 mt-2 w-44 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
                 <button class="w-full text-left settingsAuthAccountSelect px-4 py-2 text-sm text-white hover:bg-gray-700">${selectedUUID === acc.uuid ? Lang.queryJS("settings.authAccountPopulate.selectedAccount") : Lang.queryJS("settings.authAccountPopulate.selectAccount")}</button>
                 <button class="w-full text-left settingsAuthAccountRefresh px-4 py-2 text-sm text-white hover:bg-gray-700" refresh-uuid="${acc.uuid}">${Lang.queryJS("settings.authAccountPopulate.checkToken")}</button>
+                <button class="w-full text-left settingsAuthAccountExtend px-4 py-2 text-sm text-green-400 hover:bg-gray-700" extend-uuid="${acc.uuid}">Étendre expiration (+2 ans)</button>
                 <button class="w-full text-left settingsAuthAccountLogOut px-4 py-2 text-sm text-red-400 hover:bg-gray-700">${Lang.queryJS("settings.authAccountPopulate.logout")}</button>
               </div>
             </div>
@@ -835,6 +865,26 @@ function bindAuthAccountMenu() {
   const _container = getSettingsCurrentMicrosoftAccounts();
   if (!_container) return;
   _container.addEventListener('click', (e) => {
+    const extendBtn = e.target.closest && e.target.closest('.settingsAuthAccountExtend');
+    if (extendBtn) {
+      e.stopPropagation();
+      const uuid = extendBtn.getAttribute('extend-uuid');
+      try {
+        const ok = extendTokenExpiration(uuid);
+        if (ok) {
+          const statusEl = document.getElementById(`tokenStatus-${uuid}`);
+          if (statusEl) {
+            statusEl.innerHTML = '✓ Expiration étendue';
+            statusEl.style.color = '#4ade80';
+          }
+          setTimeout(() => { populateAuthAccounts(); }, 1500);
+        } else {
+          try { setOverlayContent('Erreur', "Impossible d'étendre le token pour ce compte", Lang.queryJS('settings.authAccountPopulate.okButton')); setOverlayHandler(() => toggleOverlay(false)); toggleOverlay(true); } catch (err) { /* ignore */ }
+        }
+      } catch (err) { console.warn('extendTokenExpiration failed', err); }
+      return;
+    }
+
     const btn = e.target.closest && e.target.closest('.settingsAuthAccountMenuBtn');
     if (!btn) return;
     e.stopPropagation();

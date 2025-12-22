@@ -350,16 +350,40 @@ ipcMain.on('relaunchApplication', (event) => {
     }
 })
 
-// Setup auto updater.
+// ============================================================================
+// SYSTÈME D'AUTO-UPDATE PERFORMANT - BACKGROUND DOWNLOAD + SILENT INSTALL
+// ============================================================================
+// Configuration de l'auto-updater
+const AUTO_UPDATE_CONFIG = {
+    CHECK_INTERVAL: 15 * 60 * 1000,     // Vérifie toutes les 15 minutes
+    DOWNLOAD_TIMEOUT: 10 * 60 * 1000,   // 10 minutes timeout pour le téléchargement
+    STARTUP_DELAY: 5000,                 // 5 secondes avant la première vérification
+    SILENT_MODE: true,                   // Mode silencieux (pas de popup)
+    AUTO_INSTALL_ON_QUIT: true          // Installer automatiquement à la fermeture
+}
+
+// État global de l'auto-updater
+global.__autoUpdate = {
+    initialized: false,
+    downloading: false,
+    downloaded: false,
+    downloadInfo: null,
+    lastCheck: 0,
+    checkInterval: null,
+    watchdog: null,
+    pendingInstall: false
+}
+
+// Setup auto updater - Version performante sans popup
 function initAutoUpdater(event, data) {
     // Prevent multiple initializations (listeners added multiple times)
-    if (global.__autoUpdaterInitialized) {
-        log.info('Auto updater already initialized, skipping re-init.')
+    if (global.__autoUpdate.initialized) {
+        log.info('[AutoUpdater] Already initialized, skipping re-init.')
         return
     }
-    global.__autoUpdaterInitialized = true
+    global.__autoUpdate.initialized = true
 
-    log.info('Initializing autoUpdater, allowPrerelease=', !!data, 'isDev=', !!isDev, 'platform=', process.platform)
+    log.info('[AutoUpdater] Initializing - allowPrerelease=', !!data, 'isDev=', !!isDev, 'platform=', process.platform)
 
     // Ensure updater pending directories exist to avoid ENOENT rename errors on Windows
     try {
@@ -386,8 +410,9 @@ function initAutoUpdater(event, data) {
         // autoUpdater.allowPrerelease = true
     }
     
-    // Explicit autoDownload default: disable auto-download on macOS, enable elsewhere
-    autoUpdater.autoDownload = process.platform !== 'darwin'
+    // Mode silencieux: téléchargement automatique en arrière-plan
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = AUTO_UPDATE_CONFIG.AUTO_INSTALL_ON_QUIT
 
     if(isDev){
         // In dev mode we don't want the updater to auto-install or auto-download
@@ -396,153 +421,85 @@ function initAutoUpdater(event, data) {
         autoUpdater.autoDownload = false
     }
 
+    // ========== UPDATE AVAILABLE ==========
     autoUpdater.on('update-available', (info) => {
-        log.info('[AutoUpdater] update-available:', info && info.version)
-        try { createUpdateWindow() } catch (e) { /* best-effort */ }
+        log.info('[AutoUpdater] Update available:', info && info.version)
+        
+        // Notifier les renderers (pour afficher une notification discrète)
         sendAutoUpdateNotification(event, 'update-available', info)
 
-        // If autoDownload is disabled (or if we haven't started download yet),
-        // start download and forward download progress to renderer.
-        try {
-            if (!global.__autoUpdaterDownloading) {
-                global.__autoUpdaterDownloading = true
-                log.info('[AutoUpdater] initiating downloadUpdate()')
-                // Start a watchdog timer in case download stalls without emitting progress
-                try {
-                    if (global.__autoUpdaterDownloadWatchdog) {
-                        clearTimeout(global.__autoUpdaterDownloadWatchdog)
-                    }
-                    // 5 minutes watchdog
-                    global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
-                        try {
-                            if (global.__autoUpdaterDownloading) {
-                                log.warn('[AutoUpdater] download watchdog triggered - download appears stalled')
-                                // Notify renderer so UI doesn't stay stuck in 'downloading' state.
-                                try { sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' }) } catch (e) { /* best-effort */ }
-                                global.__autoUpdaterDownloading = false
-                            }
-                        } catch (e) {
-                            // ignore watchdog errors
-                        }
-                    }, 5 * 60 * 1000)
-                } catch (e) {
-                    // ignore
-                }
-                autoUpdater.downloadUpdate()
-                    .then(() => {
-                        log.info('[AutoUpdater] downloadUpdate() completed')
-                        try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
-                    })
-                    .catch((err) => {
-                        log.error('[AutoUpdater] downloadUpdate() failed', err && err.message)
-                        sendAutoUpdateNotification(event, 'realerror', err)
-                        global.__autoUpdaterDownloading = false
-                        try { if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null } } catch (e) { }
-                    })
-            } else {
-                log.info('[AutoUpdater] download already in progress, skipping downloadUpdate()')
-            }
-        } catch (e) {
-            log.error('[AutoUpdater] error while starting download', e && e.message)
-            sendAutoUpdateNotification(event, 'realerror', e)
-            global.__autoUpdaterDownloading = false
+        // Démarrer le téléchargement en arrière-plan si pas déjà en cours
+        if (!global.__autoUpdate.downloading) {
+            global.__autoUpdate.downloading = true
+            log.info('[AutoUpdater] Starting background download...')
+            
+            // Watchdog pour éviter les blocages
+            startDownloadWatchdog(event)
+            
+            autoUpdater.downloadUpdate()
+                .then(() => {
+                    log.info('[AutoUpdater] Background download completed')
+                    clearDownloadWatchdog()
+                })
+                .catch((err) => {
+                    log.error('[AutoUpdater] Background download failed:', err && err.message)
+                    sendAutoUpdateNotification(event, 'realerror', err)
+                    global.__autoUpdate.downloading = false
+                    clearDownloadWatchdog()
+                })
+        } else {
+            log.info('[AutoUpdater] Download already in progress')
         }
     })
 
-    // Forward download progress to renderer and log it.
+    // ========== DOWNLOAD PROGRESS ==========
     autoUpdater.on('download-progress', (progress) => {
-        try {
-            log.info('[AutoUpdater] download-progress', JSON.stringify(progress))
-        } catch (e) {
-            log.info('[AutoUpdater] download-progress')
+        // Log minimal pour ne pas spammer
+        if (progress.percent && (Math.floor(progress.percent) % 25 === 0 || progress.percent > 99)) {
+            log.info('[AutoUpdater] Download progress:', Math.round(progress.percent) + '%')
         }
-        // Reset watchdog when progress is observed
-        try {
-            if (global.__autoUpdaterDownloadWatchdog) {
-                clearTimeout(global.__autoUpdaterDownloadWatchdog)
-                global.__autoUpdaterDownloadWatchdog = setTimeout(() => {
-                    try {
-                        if (global.__autoUpdaterDownloading) {
-                            log.warn('[AutoUpdater] download watchdog triggered after progress reset - download appears stalled')
-                            try { sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' }) } catch (e) { }
-                            global.__autoUpdaterDownloading = false
-                        }
-                    } catch (e) { }
-                }, 5 * 60 * 1000)
-            }
-        } catch (e) {
-            // ignore watchdog errors
-        }
-        // Ensure update window exists and broadcast to all renderer windows if event not present in closure.
-        try { createUpdateWindow() } catch (e) { /* best-effort */ }
-        try {
-            const { BrowserWindow } = require('electron')
-            const wins = BrowserWindow.getAllWindows()
-            for (const w of wins) {
-                try { w.webContents.send('autoUpdateNotification', 'download-progress', progress) } catch (e) { /* ignore */ }
-            }
-        } catch (e) {
-            log.warn('[AutoUpdater] failed to forward download-progress to renderer', e && e.message)
-        }
+        
+        // Reset watchdog à chaque progression
+        resetDownloadWatchdog(event)
+        
+        // Envoyer la progression aux renderers (pour la notification discrète)
+        sendAutoUpdateNotification(event, 'download-progress', progress)
     })
 
+    // ========== UPDATE DOWNLOADED ==========
     autoUpdater.on('update-downloaded', (info) => {
-        log.info('[AutoUpdater] update-downloaded:', info && info.version)
-        // Mark that a downloaded update is available. This prevents calls to
-        // quitAndInstall() when no installer is present which otherwise raises
-        // "No valid update available, can't quit and install" in some cases.
-        try {
-            global.__autoUpdaterDownloaded = info || true
-        } catch (e) { /* noop */ }
+        log.info('[AutoUpdater] Update downloaded:', info && info.version)
+        
+        // Marquer comme téléchargé
+        global.__autoUpdate.downloading = false
+        global.__autoUpdate.downloaded = true
+        global.__autoUpdate.downloadInfo = info
+        global.__autoUpdaterDownloaded = info || true // Compatibilité avec l'ancien système
+        
+        clearDownloadWatchdog()
+        
+        // Notifier les renderers
         sendAutoUpdateNotification(event, 'update-downloaded', info)
-        // Instead of closing the update window immediately, defer closing it
-        // until the main launcher window is started so the user isn't left
-        // looking at an empty splash if the launcher hasn't opened yet.
-        try {
-            if (win && !win.isDestroyed()) {
-                try { if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.close(); updateWindow = null } } catch (e) { }
-            } else {
-                // Mark pending close - will be flushed when createWindow shows the main window
-                global.__closeUpdateWindowWhenLauncherStarted = true
-            }
-        } catch (e) { /* ignore */ }
-        // Download finished, clear downloading flag
-        try {
-            global.__autoUpdaterDownloading = false
-            if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
-        } catch (e) {
-            // ignore
-        }
-        // Attempt silent install immediately after download completes
-        try {
-            try { createMiniUpdateWindow('Mise à jour en cours...') } catch (e) {}
-            try {
-                // safeQuitAndInstall will attempt to launch the installer and quit
-                safeQuitAndInstall('update-downloaded')
-            } catch (e) {
-                try { log.warn('[AutoUpdater] automatic install failed after download', e && e.message) } catch (ee) {}
-            }
-        } catch (e) { /* ignore */ }
+        
+        // NE PAS installer immédiatement - laisser l'utilisateur utiliser le launcher
+        // L'installation se fera à la fermeture du launcher
+        log.info('[AutoUpdater] Update ready - will install on app quit')
     })
 
+    // ========== NO UPDATE ==========
     autoUpdater.on('update-not-available', (info) => {
-        log.info('[AutoUpdater] update-not-available')
+        log.info('[AutoUpdater] No update available')
         sendAutoUpdateNotification(event, 'update-not-available', info)
-        try {
-            if (win && !win.isDestroyed()) {
-                try { if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.close(); updateWindow = null } } catch (e) { }
-            } else {
-                // Defer closing the update window until launcher main window starts
-                global.__closeUpdateWindowWhenLauncherStarted = true
-            }
-        } catch (e) { }
     })
 
+    // ========== CHECKING ==========
     autoUpdater.on('checking-for-update', () => {
-        log.info('[AutoUpdater] checking-for-update')
-        // Reset any previously stored downloaded state when we start a new check
-        try { global.__autoUpdaterDownloaded = false } catch (e) { }
-        try { createUpdateWindow() } catch (e) { /* best-effort */ }
+        log.info('[AutoUpdater] Checking for updates...')
+        global.__autoUpdate.lastCheck = Date.now()
+        // Reset downloaded state when starting a new check
+        if (!global.__autoUpdate.downloading) {
+            global.__autoUpdate.downloaded = false
+        }
         sendAutoUpdateNotification(event, 'checking-for-update')
     })
 
@@ -655,16 +612,107 @@ function initAutoUpdater(event, data) {
             log.warn('[AutoUpdater] recovery logic threw', e && e.message)
         }
 
-    // Notify renderer and keep previous behavior: clear downloading flag on any error to allow retry
-    try { global.__autoUpdaterDownloaded = false } catch (e) { }
-    sendAutoUpdateNotification(event, 'realerror', err)
-        try {
-            global.__autoUpdaterDownloading = false
-            if (global.__autoUpdaterDownloadWatchdog) { clearTimeout(global.__autoUpdaterDownloadWatchdog); global.__autoUpdaterDownloadWatchdog = null }
-        } catch (e) {
-            // ignore
+        // Clear flags on error to allow retry
+        global.__autoUpdate.downloading = false
+        global.__autoUpdate.downloaded = false
+        global.__autoUpdaterDownloaded = false
+        clearDownloadWatchdog()
+        
+        sendAutoUpdateNotification(event, 'realerror', err)
+    })
+    
+    // ========== DÉMARRER LA VÉRIFICATION PÉRIODIQUE ==========
+    startPeriodicUpdateCheck()
+}
+
+// ========== WATCHDOG HELPERS ==========
+function startDownloadWatchdog(event) {
+    try {
+        clearDownloadWatchdog()
+        global.__autoUpdate.watchdog = setTimeout(() => {
+            if (global.__autoUpdate.downloading) {
+                log.warn('[AutoUpdater] Download watchdog triggered - download appears stalled')
+                sendAutoUpdateNotification(event, 'realerror', { message: 'Download timed out' })
+                global.__autoUpdate.downloading = false
+            }
+        }, AUTO_UPDATE_CONFIG.DOWNLOAD_TIMEOUT)
+    } catch (e) {
+        log.warn('[AutoUpdater] Failed to start watchdog:', e && e.message)
+    }
+}
+
+function resetDownloadWatchdog(event) {
+    startDownloadWatchdog(event)
+}
+
+function clearDownloadWatchdog() {
+    try {
+        if (global.__autoUpdate.watchdog) {
+            clearTimeout(global.__autoUpdate.watchdog)
+            global.__autoUpdate.watchdog = null
         }
-    }) 
+    } catch (e) { /* ignore */ }
+}
+
+// ========== VÉRIFICATION PÉRIODIQUE ==========
+function startPeriodicUpdateCheck() {
+    // Ne pas démarrer en mode dev
+    if (isDev) {
+        log.info('[AutoUpdater] Dev mode - skipping periodic update check')
+        return
+    }
+    
+    // Arrêter l'intervalle existant si présent
+    if (global.__autoUpdate.checkInterval) {
+        clearInterval(global.__autoUpdate.checkInterval)
+    }
+    
+    log.info('[AutoUpdater] Starting periodic update check every', AUTO_UPDATE_CONFIG.CHECK_INTERVAL / 1000 / 60, 'minutes')
+    
+    global.__autoUpdate.checkInterval = setInterval(() => {
+        // Ne pas vérifier si un téléchargement est en cours ou si une mise à jour est prête
+        if (global.__autoUpdate.downloading) {
+            log.debug('[AutoUpdater] Periodic check skipped - download in progress')
+            return
+        }
+        if (global.__autoUpdate.downloaded) {
+            log.debug('[AutoUpdater] Periodic check skipped - update already downloaded')
+            return
+        }
+        
+        log.info('[AutoUpdater] Periodic update check...')
+        autoUpdater.checkForUpdates()
+            .then((res) => {
+                log.info('[AutoUpdater] Periodic check result:', res && res.updateInfo ? res.updateInfo.version : 'no update')
+            })
+            .catch((err) => {
+                log.warn('[AutoUpdater] Periodic check failed:', err && err.message)
+            })
+    }, AUTO_UPDATE_CONFIG.CHECK_INTERVAL)
+}
+
+function stopPeriodicUpdateCheck() {
+    if (global.__autoUpdate.checkInterval) {
+        clearInterval(global.__autoUpdate.checkInterval)
+        global.__autoUpdate.checkInterval = null
+        log.info('[AutoUpdater] Stopped periodic update check')
+    }
+}
+
+// ========== INSTALLATION À LA FERMETURE ==========
+function installUpdateOnQuit() {
+    if (!global.__autoUpdate.downloaded || !global.__autoUpdaterDownloaded) {
+        log.debug('[AutoUpdater] No update to install on quit')
+        return false
+    }
+    
+    log.info('[AutoUpdater] Installing update on quit...')
+    try {
+        return safeQuitAndInstall('app-quit')
+    } catch (e) {
+        log.error('[AutoUpdater] Failed to install on quit:', e && e.message)
+        return false
+    }
 }
 
 // Open channel to listen for update actions.
@@ -1230,95 +1278,59 @@ function getPlatformIcon(filename){
 }
 
 // Simple, silent updater flow for startup.
-// Behavior: on app ready, check for updates; if an update is available,
-// download it and install immediately without asking the user. If the
-// update process doesn't complete within a short timeout, continue startup
-// so the launcher is usable.
+// NOUVELLE VERSION: Démarre l'UI immédiatement et télécharge en arrière-plan
+// Le téléchargement se fait pendant que l'utilisateur utilise le launcher
+// L'installation se fait à la fermeture du launcher
 function ensureSimpleAutoUpdateThenStart() {
-    const MAX_WAIT = 10 * 1000 // 10s - small window to avoid blocking startup
-
+    log.info('[AutoUpdater] Starting with background update check...')
+    
+    // Vérifier si une mise à jour est déjà téléchargée
     try {
-        if (global.__autoUpdaterDownloaded) {
-            try { log.info('[AutoUpdater:simple] installer already present - quitting to install') } catch (e) {}
-            try { safeQuitAndInstall('simple-early-install') } catch (e) { log.warn('[AutoUpdater:simple] quitAndInstall failed', e && e.message) }
-            return
+        if (global.__autoUpdaterDownloaded || global.__autoUpdate.downloaded) {
+            log.info('[AutoUpdater] Update already downloaded - will install on quit')
         }
     } catch (e) { /* ignore */ }
 
-    // Initialize updater (this sets up shared listeners used elsewhere)
-    try { initAutoUpdater(undefined, false) } catch (e) { log.warn('[AutoUpdater:simple] init failed', e && e.message) }
-
-    // Ensure silent behavior
-    try {
-        autoUpdater.autoDownload = true
-        autoUpdater.autoInstallOnAppQuit = true
-    } catch (e) { /* ignore */ }
-
-    let settled = false
-
-    function startUI() {
-        if (settled) return
-        settled = true
-        try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed', e && e.message) }
-        try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed', e && e.message) }
+    // Initialiser l'auto-updater (configure les listeners, etc.)
+    try { 
+        initAutoUpdater(undefined, false) 
+    } catch (e) { 
+        log.warn('[AutoUpdater] init failed:', e && e.message) 
     }
 
-    function onDownloaded(info) {
-        if (settled) return
-        settled = true
-        try { log.info('[AutoUpdater:simple] update downloaded - installing now', info && info.version) } catch (e) {}
-        try {
-            global.__autoUpdaterDownloaded = info || true
-            // silent install: attempt quit+install immediately
-            if (!safeQuitAndInstall('simple-startup-onDownloaded')) {
-                // If quitting/installing failed, continue to UI
-                startUI()
-            }
-        } catch (e) {
-            log.error('[AutoUpdater:simple] quitAndInstall failed during startup', e && e.message)
-            startUI()
-        }
+    // DÉMARRER L'UI IMMÉDIATEMENT - pas d'attente pour les mises à jour
+    try { 
+        createWindow() 
+    } catch (e) { 
+        log.warn('[Startup] createWindow failed:', e && e.message) 
+    }
+    
+    try { 
+        createMenu() 
+    } catch (e) { 
+        log.warn('[Startup] createMenu failed:', e && e.message) 
     }
 
-    function onNotAvailable() {
-        if (settled) return
-        try { log.info('[AutoUpdater:simple] no update available - proceeding to UI') } catch (e) {}
-        startUI()
-    }
-
-    function onError(err) {
-        if (settled) return
-        try { log.warn('[AutoUpdater:simple] error during startup update check', err && (err.message || err)) } catch (e) {}
-        startUI()
-    }
-
-    try {
-        autoUpdater.once && autoUpdater.once('update-downloaded', onDownloaded)
-        autoUpdater.once && autoUpdater.once('update-not-available', onNotAvailable)
-        autoUpdater.once && autoUpdater.once('error', onError)
-    } catch (e) {
-        log.warn('[AutoUpdater:simple] failed to attach one-time listeners', e && e.message)
-    }
-
-    try {
-        autoUpdater.checkForUpdates()
-            .then((res) => {
-                try { log.info('[AutoUpdater:simple] checkForUpdates result', res && res.updateInfo && res.updateInfo.version) } catch (e) {}
-            })
-            .catch((err) => onError(err))
-    } catch (e) {
-        onError(e)
-    }
-
-    // Timeout fallback
+    // Vérifier les mises à jour EN ARRIÈRE-PLAN après un court délai
+    // Cela permet à l'UI de se charger d'abord
     setTimeout(() => {
-        if (!settled) {
-            try { log.warn('[AutoUpdater:simple] startup wait timeout reached - proceeding to UI') } catch (e) {}
-            settled = true
-            try { createWindow() } catch (e) { log.warn('[Startup] createWindow failed (timeout)', e && e.message) }
-            try { createMenu() } catch (e) { log.warn('[Startup] createMenu failed (timeout)', e && e.message) }
+        log.info('[AutoUpdater] Starting background update check...')
+        try {
+            autoUpdater.checkForUpdates()
+                .then((res) => {
+                    if (res && res.updateInfo) {
+                        log.info('[AutoUpdater] Update found:', res.updateInfo.version)
+                    } else {
+                        log.info('[AutoUpdater] No update available')
+                    }
+                })
+                .catch((err) => {
+                    log.warn('[AutoUpdater] Background check failed:', err && err.message)
+                })
+        } catch (e) {
+            log.warn('[AutoUpdater] Background check error:', e && e.message)
         }
-    }, MAX_WAIT)
+    }, AUTO_UPDATE_CONFIG.STARTUP_DELAY)
 }
 
 // Start the app by attempting to apply updates before creating windows
@@ -1441,18 +1453,26 @@ app.on('activate', () => {
     }
 })
 
-// Cleanup watchdog/listeners before quit so timers don't hang
-app.on('before-quit', () => {
+// Cleanup watchdog/listeners and install update before quit
+app.on('before-quit', (event) => {
     try {
-        if (global.__autoUpdaterDownloadWatchdog) {
-            clearTimeout(global.__autoUpdaterDownloadWatchdog)
-            global.__autoUpdaterDownloadWatchdog = null
+        // Arrêter la vérification périodique
+        stopPeriodicUpdateCheck()
+        
+        // Nettoyer le watchdog
+        clearDownloadWatchdog()
+        
+        // Installer la mise à jour si disponible
+        if (global.__autoUpdate.downloaded && global.__autoUpdaterDownloaded) {
+            log.info('[AutoUpdater] Update available on quit - installing...')
+            // L'installation est gérée par autoInstallOnAppQuit d'electron-updater
+            // ou par safeQuitAndInstall si nécessaire
         }
-        global.__autoUpdaterDownloading = false
+        
         // remove autoUpdater listeners to avoid leaks on restart (safe-guard)
         try { autoUpdater.removeAllListeners() } catch (e) {}
     } catch (e) {
-        // ignore
+        log.warn('[AutoUpdater] Error during before-quit cleanup:', e && e.message)
     }
 })
 
