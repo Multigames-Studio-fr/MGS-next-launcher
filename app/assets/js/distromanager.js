@@ -9,7 +9,7 @@ const crypto = require('crypto')
 
 // Old WesterosCraft url.
 // exports.REMOTE_DISTRO_URL = 'http://mc.westeroscraft.com/WesterosCraftLauncher/distribution.json'
-exports.REMOTE_DISTRO_URL = 'https://multigames-studio.fr/distribution.json'
+exports.REMOTE_DISTRO_URL = 'https://launcher.download.mg-s.fr/distribution.json'
 
 const api = new DistributionAPI(
   ConfigManager.getLauncherDirectory(),
