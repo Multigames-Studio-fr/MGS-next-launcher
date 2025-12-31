@@ -1,5 +1,8 @@
 // Inline landing scripts extracted from `app/landing.ejs` to satisfy CSP (load as external script)
 
+// If not already set by other scripts, default to false and expose on window.
+if (typeof window.DISABLE_LAUNCH === 'undefined') window.DISABLE_LAUNCH = false;
+
 // Minimal DOM ready hook placeholder
 window.addEventListener('DOMContentLoaded', () => {});
 
@@ -210,6 +213,7 @@ try {
 // INSTANCE STATE WATCHER
 // Affiche #launch_details quand une instance est démarrée (flexible sur le shape de l'objet)
 (function () {
+    if (window.DISABLE_LAUNCH) return;
     function instanceIsStarted(inst) {
         if (!inst) return false;
         try {
@@ -233,8 +237,9 @@ try {
 
     function checkAndToggle(target) {
         try {
-            const root = document.getElementById('launch_details');
+            const root = document.getElementById('overlay_launch_details');
             const anyStarted = Array.isArray(target) ? target.some(instanceIsStarted) : instanceIsStarted(target);
+            console.info('[LandingInline] checkAndToggle called. anyStarted=', anyStarted, 'target=', target)
 
             if (typeof window.gameLaunchUI === 'object' && window.gameLaunchUI) {
                 if (anyStarted) {
@@ -324,11 +329,12 @@ try {
 
 // Progress bar handler compatible avec le code existant
 (function () {
+    if (window.DISABLE_LAUNCH) return;
     const root = document.querySelector('.game-launch-overlay');
     if (!root) return;
-    const bar = root.querySelector('#launch_progress_bar');
-    const valueEl = root.querySelector('#launch_progress_label');
-    const labelEl = root.querySelector('#launch_details_text');
+    const bar = root.querySelector('#overlay_launch_progress_bar');
+    const valueEl = root.querySelector('#overlay_launch_progress_label');
+    const labelEl = root.querySelector('#overlay_launch_details_text');
 
     window.gameLaunchUI = {
         show(label = 'Préparation du jeu...') {
@@ -370,10 +376,10 @@ try {
     window.setLaunchPercentage = function (percent) {
         if (bar) bar.style.width = percent + '%';
         if (valueEl) valueEl.textContent = percent + '%';
-        // Garde l'ancienne progress bar cachée mais mise à jour
-        const oldProgress = document.getElementById('launch_progress');
+        // Also update the overlay progress container (legacy compatibility)
+        const oldProgress = document.getElementById('overlay_launch_progress') || document.getElementById('launch_progress');
         if (oldProgress) {
-            oldProgress.setAttribute('value', percent);
+            try { oldProgress.setAttribute('value', percent); } catch (e) {}
         }
     };
 

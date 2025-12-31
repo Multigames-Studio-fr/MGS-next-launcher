@@ -53,6 +53,10 @@ const launch_details_text     = document.getElementById('launch_details_text')
 const server_selection_button = document.getElementById('server_selection_button')
 const user_text               = document.getElementById('user_text')
 
+// If not already set by another script, default to false. Use window flag to avoid
+// duplicate top-level const declarations across multiple scripts.
+if (typeof window.DISABLE_LAUNCH === 'undefined') window.DISABLE_LAUNCH = false
+
 const loggerLanding = LoggerUtil.getLogger('Landing')
 
 // News Variables - Initialize early to prevent reference errors
@@ -136,6 +140,7 @@ function animateTextSwap(el, newHTML, opts = {}){
  * - updates launch button label and styling to reflect Running / Starting / Play
  */
 function updateLaunchUIForServer(serverId){
+    if (window.DISABLE_LAUNCH) return;
     try {
         const launchBtn = document.getElementById('launch_button')
         const details = document.getElementById('launch_details')
@@ -157,15 +162,15 @@ function updateLaunchUIForServer(serverId){
             try { document.getElementById('stop_button').style.display = '' } catch (e) {}
             try { launchBtn.style.display = 'none' } catch (e) {}
         } else if(state && state.starting){
-            // Starting
+            // Starting - show stop button, hide launch
             launchBtn.textContent = ''
             launchBtn.innerHTML = `<svg class="animate-spin w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity=".2"></circle><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path></svg> Démarrage...`
             launchBtn.classList.remove('bg-[#FF6A1A]')
             launchBtn.classList.add('bg-yellow-600')
             launchBtn.disabled = true
-            // Hide other action buttons while starting
-            try { document.getElementById('stop_button').style.display = 'none' } catch (e) {}
-            try { launchBtn.style.display = '' } catch (e) {}
+            // Show stop button while starting
+            try { document.getElementById('stop_button').style.display = '' } catch (e) {}
+            try { launchBtn.style.display = 'none' } catch (e) {}
         } else {
             // Not running
             launchBtn.innerHTML = `<svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg> ${Lang.queryJS('landing.launchButton')}`
@@ -191,6 +196,7 @@ window.updateLaunchUIForServer = updateLaunchUIForServer
  * @param {boolean} loading True if the loading area should be shown, otherwise false.
  */
 function toggleLaunchArea(loading){
+    if (window.DISABLE_LAUNCH) return;
     const playInstance = document.querySelector('.play-instance')
     const launchDetails = document.getElementById('launch_details')
     const launchBtn = document.getElementById('launch_button')
@@ -216,6 +222,20 @@ function toggleLaunchArea(loading){
                 progressContainer.style.opacity = '1'
             }, 50)
         }
+
+        // Hide Mojang status tooltip and compatibility overlay during active loading
+        try {
+            const mojangTooltip = document.getElementById('mojangStatusTooltip')
+            if (mojangTooltip) mojangTooltip.style.display = 'none'
+        } catch (e) {}
+        try {
+            const mojangContainer = document.getElementById('mojangStatusContainer')
+            if (mojangContainer) mojangContainer.style.display = 'none'
+        } catch (e) {}
+        try {
+            const compatOverlay = document.querySelector('.game-launch-overlay')
+            if (compatOverlay) compatOverlay.style.display = 'none'
+        } catch (e) {}
         
         // Animate launch details in
         if (launchDetails) {
@@ -265,6 +285,20 @@ function toggleLaunchArea(loading){
         if (launchBtn) {
             launchBtn.classList.remove('launch-pulse')
         }
+
+        // Restore Mojang status tooltip and compatibility overlay when not loading
+        try {
+            const mojangTooltip = document.getElementById('mojangStatusTooltip')
+            if (mojangTooltip) mojangTooltip.style.display = ''
+        } catch (e) {}
+        try {
+            const mojangContainer = document.getElementById('mojangStatusContainer')
+            if (mojangContainer) mojangContainer.style.display = ''
+        } catch (e) {}
+        try {
+            const compatOverlay = document.querySelector('.game-launch-overlay')
+            if (compatOverlay) compatOverlay.style.display = ''
+        } catch (e) {}
     }
 }
 
@@ -275,6 +309,7 @@ function toggleLaunchArea(loading){
  */
 function setLaunchDetails(details){
     console.log('[Landing] setLaunchDetails called with:', details)
+    if (window.DISABLE_LAUNCH) return;
     
     const detailsText = document.getElementById('launch_details_text')
     const detailsOverlay = document.getElementById('launch_details_overlay')
@@ -283,18 +318,27 @@ function setLaunchDetails(details){
     const launchText = document.getElementById('launch_text')
     
     if (details && details.trim()) {
-        // Hide normal button content
+        // Hide normal button content completely
+        const buttonContent = launchBtn && launchBtn.querySelector('.relative.z-10')
+        if (buttonContent) {
+            buttonContent.style.opacity = '0'
+            buttonContent.style.visibility = 'hidden'
+        }
         if (launchIcon) {
             launchIcon.style.display = 'none'
+            launchIcon.style.visibility = 'hidden'
         }
         if (launchText) {
             launchText.style.display = 'none'
+            launchText.style.visibility = 'hidden'
         }
         
         // Show loading overlay with details
         if (detailsOverlay) {
             detailsOverlay.style.opacity = '1'
             detailsOverlay.style.display = 'flex'
+            detailsOverlay.style.visibility = 'visible'
+            detailsOverlay.style.zIndex = '20'
         }
         
         if (detailsText) {
@@ -309,15 +353,23 @@ function setLaunchDetails(details){
         console.log('[Landing] Loading mode activated with details:', details)
     } else {
         // Restore normal button content
+        const buttonContent = launchBtn && launchBtn.querySelector('.relative.z-10')
+        if (buttonContent) {
+            buttonContent.style.opacity = '1'
+            buttonContent.style.visibility = 'visible'
+        }
         if (launchIcon) {
             launchIcon.style.display = 'block'
+            launchIcon.style.visibility = 'visible'
         }
         if (launchText) {
             launchText.style.display = 'block'
+            launchText.style.visibility = 'visible'
         }
         
         if (detailsOverlay) {
             detailsOverlay.style.opacity = '0'
+            detailsOverlay.style.visibility = 'hidden'
         }
         
         if (launchBtn) {
@@ -333,6 +385,7 @@ function setLaunchDetails(details){
  * @param {number} progress Progress percentage (0-100), optional
  */
 function updateLaunchButton(step, progress = 0) {
+    if (window.DISABLE_LAUNCH) return;
     const launchBtn = document.getElementById('launch_button')
     const launchText = document.getElementById('launch_text')
     const launchIcon = document.getElementById('launch_icon')
@@ -403,6 +456,7 @@ function updateLaunchButton(step, progress = 0) {
  */
 function setLaunchPercentage(percent){
     console.log('[Landing] setLaunchPercentage called with:', percent)
+    if (window.DISABLE_LAUNCH) return;
     
     const progressBar = document.getElementById('launch_progress_bar')
     const progressLabel = document.getElementById('launch_progress_label')
@@ -413,13 +467,19 @@ function setLaunchPercentage(percent){
     if (progressBar) {
         progressBar.style.transition = 'width 0.4s ease-out, opacity 0.3s ease'
         progressBar.style.width = percent + '%'
-        progressBar.style.opacity = percent > 0 ? '0.8' : '0'
+        progressBar.style.opacity = percent > 0 ? '1' : '0'
+        progressBar.style.visibility = percent > 0 ? 'visible' : 'hidden'
+        // Ensure the element is rendered (in case CSS utility classes hide it)
+        progressBar.style.display = percent > 0 ? 'block' : 'none'
         
         // Add active class for animation
         if (percent > 0) {
             progressBar.classList.add('active')
+            // Remove any tailwind opacity utility that could override inline styles
+            try { progressBar.classList.remove('opacity-0') } catch (e) {}
         } else {
             progressBar.classList.remove('active')
+            try { progressBar.classList.add('opacity-0') } catch (e) {}
         }
         
         console.log('[Landing] Progress bar updated to', percent + '%')
@@ -430,8 +490,10 @@ function setLaunchPercentage(percent){
         if (percent > 0) {
             progressOverlay.style.opacity = '1'
             progressOverlay.style.display = 'flex'
+            progressOverlay.style.visibility = 'visible'
         } else {
             progressOverlay.style.opacity = '0'
+            progressOverlay.style.visibility = 'hidden'
         }
         console.log('[Landing] Progress overlay visibility:', percent > 0 ? 'shown' : 'hidden')
     }
@@ -457,7 +519,8 @@ function setLaunchPercentage(percent){
  * @param {number} percent Percentage (0-100)
  */
 function setDownloadPercentage(percent){
-    remote.getCurrentWindow().setProgressBar(percent/100)
+    if (window.DISABLE_LAUNCH) return;
+    try { remote.getCurrentWindow().setProgressBar(percent/100) } catch(e){}
     setLaunchPercentage(percent)
 }
 
@@ -467,7 +530,9 @@ function setDownloadPercentage(percent){
  * @param {boolean} val True to enable, false to disable.
  */
 function setLaunchEnabled(val){
-    document.getElementById('launch_button').disabled = !val
+    if (window.DISABLE_LAUNCH) return;
+    const lb = document.getElementById('launch_button')
+    if (lb) lb.disabled = !val
 }
 
 // Function to check update status
@@ -491,7 +556,8 @@ async function checkUpdateStatus() {
 }
 
 // Bind launch button
-document.getElementById('launch_button').addEventListener('click', async e => {
+const _launch_button_el = document.getElementById('launch_button')
+if (_launch_button_el) _launch_button_el.addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
     // Immediate UI feedback: show starting state right away to avoid perceived latency
     try {
@@ -501,10 +567,29 @@ document.getElementById('launch_button').addEventListener('click', async e => {
         setLaunchPercentage(0)
         if (launchBtn) {
             try {
-                launchBtn.innerHTML = `<svg class="animate-spin w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity=".2"></circle><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path></svg> Démarrage...`
+                // Update existing icon/text nodes instead of replacing innerHTML
+                const launchIconEl = document.getElementById('launch_icon')
+                const launchTextEl = document.getElementById('launch_text')
+                if (launchIconEl) {
+                    launchIconEl.style.display = 'block'
+                    launchIconEl.className = 'bi bi-arrow-repeat animate-spin text-2xl transition-all duration-300'
+                }
+                if (launchTextEl) {
+                    launchTextEl.style.display = 'block'
+                    launchTextEl.textContent = Lang.queryJS && Lang.queryJS('landing.launch.starting') || 'Démarrage...'
+                }
                 launchBtn.classList.remove('bg-[#FF6A1A]')
                 launchBtn.classList.add('bg-yellow-600')
                 launchBtn.disabled = true
+                // Show stop button immediately and hide primary launch to give clear feedback
+                try {
+                    const stopBtn = document.getElementById('stop_button')
+                    if (stopBtn) {
+                        stopBtn.style.display = ''
+                        stopBtn.disabled = false
+                    }
+                    launchBtn.style.display = 'none'
+                } catch (e) { /* ignore */ }
             } catch (e) { /* ignore UI update errors */ }
         }
         
@@ -893,7 +978,7 @@ const refreshMojangStatuses = async function(){
         loggerLanding.warn('Unable to refresh Mojang service status.')
         statuses = MojangRestAPI.getDefaultStatuses()
     }
-    
+
     greenCount = 0
     greyCount = 0
 
@@ -3404,18 +3489,20 @@ function clearLaunchProgress() {
  */
 window.onInstanceStateChanged = function(payload){
     try {
+        console.info('[Landing] onInstanceStateChanged received', payload)
         if(!payload || typeof payload !== 'object') return
         const serverId = payload.serverId || ConfigManager.getSelectedServer()
         if(!serverId) return
 
         instanceStateMap[serverId] = instanceStateMap[serverId] || {}
+        const prevStarted = !!instanceStateMap[serverId].started
         instanceStateMap[serverId].started = !!payload.started
         instanceStateMap[serverId].pid = payload.pid || null
         instanceStateMap[serverId].starting = !!payload.starting
         instanceStateMap[serverId].timestamp = Date.now()
 
-        // Clear progress when game stops
-        if (payload.started === false) {
+        // Clear progress when game stops, but only if it was previously marked started
+        if (payload.started === false && prevStarted === true) {
             setTimeout(() => {
                 clearLaunchProgress()
             }, 1000) // Small delay to see final state
