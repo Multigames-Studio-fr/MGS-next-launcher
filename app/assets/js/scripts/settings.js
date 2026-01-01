@@ -682,6 +682,8 @@ function refreshAuthAccountSelected(uuid) {
         selBtn.innerHTML = Lang.queryJS(
           "settings.authAccountSelect.selectedButton"
         );
+        // add visual selection class to the whole account card
+        try { val.classList.add('selected-account'); } catch (e) {}
       } else {
         if (selBtn.hasAttribute("selected")) {
           selBtn.removeAttribute("selected");
@@ -689,10 +691,15 @@ function refreshAuthAccountSelected(uuid) {
         selBtn.innerHTML = Lang.queryJS(
           "settings.authAccountSelect.selectButton"
         );
+        // remove visual selection class
+        try { val.classList.remove('selected-account'); } catch (e) {}
       }
     }
   );
 }
+
+// Expose helper for other scripts to update settings UI selection
+try { window.refreshAuthAccountSelected = refreshAuthAccountSelected } catch (e) { /* ignore */ }
 
 // Access the accounts container at call-time to avoid TDZ/circular-require
 function getSettingsCurrentMicrosoftAccounts() {
@@ -737,7 +744,8 @@ function populateAuthAccounts() {
   if (authKeys.length === 0) {
     return;
   }
-  const selectedUUID = ConfigManager.getSelectedAccount().uuid;
+  const selectedAcc = ConfigManager.getSelectedAccount();
+  const selectedUUID = selectedAcc ? selectedAcc.uuid : null;
 
   let microsoftAuthAccountStr = "";
 

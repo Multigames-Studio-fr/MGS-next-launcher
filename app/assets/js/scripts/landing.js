@@ -66,8 +66,15 @@ let newsActive = false
 
 // Per-instance runtime state map: { serverId: { started: boolean, pid: number|null, timestamp: number } }
 const instanceStateMap = {}
+// Track all running instances (max 3) with their PIDs
+const runningInstances = []
+const MAX_INSTANCES = 3
 // Transition counter to cancel in-flight instance-change animations when a new change arrives
 let instanceTransitionCounter = 0
+// Map serverId -> last log timestamp and timer
+const lastLogTimestamps = {}
+const lastLogTimers = {}
+const LOG_INACTIVITY_MS = 30 * 1000 // 30s of no logs => consider stopped
 // Per-element tokens for text swap cancellation
 const textAnimationTokens = new WeakMap()
 // Per-element tokens for button selection animation cancellation
@@ -136,53 +143,155 @@ function animateTextSwap(el, newHTML, opts = {}){
 }
 
 /**
+ * Get the count of currently running instances
+ */
+function getRunningInstanceCount() {
+    return runningInstances.filter(i => i && i.started).length
+}
+
+/**
+ * Add a running instance to the tracker
+ */
+function addRunningInstance(serverId, pid) {
+    // Remove any existing entry for this serverId first
+    removeRunningInstance(serverId)
+    
+    if (getRunningInstanceCount() < MAX_INSTANCES) {
+        runningInstances.push({ serverId, pid, started: true, timestamp: Date.now() })
+        updateInstanceUI()
+        return true
+    }
+    return false
+}
+
+/**
+ * Remove a running instance from the tracker
+ */
+function removeRunningInstance(serverId) {
+    const idx = runningInstances.findIndex(i => i && i.serverId === serverId)
+    if (idx !== -1) {
+        runningInstances.splice(idx, 1)
+        updateInstanceUI()
+    }
+}
+
+/**
+ * Update the UI to reflect running instances
+ */
+function updateInstanceUI() {
+    const launchBtn = document.getElementById('launch_button')
+    const runningControls = document.getElementById('running_controls')
+    const addInstanceBtn = document.getElementById('add_instance_button')
+    const instanceCounter = document.getElementById('instance_counter')
+    const instanceCounterText = document.getElementById('instance_counter_text')
+    const launchStatus = document.getElementById('launch_status')
+    
+    const count = getRunningInstanceCount()
+    
+    console.log('[Landing] updateInstanceUI - running instances:', count)
+    
+    if (count > 0) {
+        // Au moins une instance tourne - afficher les contrôles
+        if (launchBtn) launchBtn.classList.add('hidden')
+        if (runningControls) runningControls.classList.add('visible')
+        if (instanceCounter) instanceCounter.classList.add('visible')
+        
+        // Mettre à jour le compteur
+        if (instanceCounterText) {
+            instanceCounterText.textContent = `${count}/${MAX_INSTANCES} instance${count > 1 ? 's' : ''} active${count > 1 ? 's' : ''}`
+        }
+        
+        // Désactiver le bouton + si on a atteint le max
+        if (addInstanceBtn) {
+            if (count >= MAX_INSTANCES) {
+                addInstanceBtn.disabled = true
+                addInstanceBtn.title = 'Maximum 3 instances atteint'
+            } else {
+                addInstanceBtn.disabled = false
+                addInstanceBtn.title = 'Lancer une instance supplémentaire (max 3)'
+            }
+        }
+        
+        // Cacher le statut de téléchargement
+        if (launchStatus) launchStatus.classList.add('hidden')
+        
+    } else {
+        // Aucune instance - afficher le bouton Lancer
+        if (launchBtn) {
+            launchBtn.classList.remove('hidden')
+            launchBtn.disabled = false
+        }
+        if (runningControls) runningControls.classList.remove('visible')
+        if (instanceCounter) instanceCounter.classList.remove('visible')
+    }
+}
+
+// Expose functions globally
+window.getRunningInstanceCount = getRunningInstanceCount
+window.addRunningInstance = addRunningInstance
+window.removeRunningInstance = removeRunningInstance
+window.updateInstanceUI = updateInstanceUI
+
+/**
  * Update the landing UI for a given server id based on instanceStateMap
  * - updates launch button label and styling to reflect Running / Starting / Play
  */
 function updateLaunchUIForServer(serverId){
     if (window.DISABLE_LAUNCH) return;
     try {
-        const launchBtn = document.getElementById('launch_button')
-        const details = document.getElementById('launch_details')
         const state = serverId && instanceStateMap[serverId] ? instanceStateMap[serverId] : null
+        
+        console.log('[Landing] updateLaunchUIForServer called', { serverId, state, runningCount: getRunningInstanceCount() });
 
-        if (!launchBtn) return
+        const launchBtn = document.getElementById('launch_button')
+        const launchStatus = document.getElementById('launch_status')
 
         if(state && state.started){
-            // Running
-            launchBtn.textContent = ''
-            // add icon + label
-            launchBtn.innerHTML = `<svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg> Relancer`
-            launchBtn.classList.remove('bg-[#FF6A1A]')
-            launchBtn.classList.add('bg-green-600')
-            launchBtn.disabled = false
-            // show small running indicator
-            if(details) setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
-            // Show stop and launch-other buttons, hide primary launch
-            try { document.getElementById('stop_button').style.display = '' } catch (e) {}
-            try { launchBtn.style.display = 'none' } catch (e) {}
+            // === JEU EN COURS ===
+            console.log('[Landing] Game is RUNNING');
+            
+            // Ajouter cette instance au tracker si pas déjà présente
+            addRunningInstance(serverId, state.pid)
+            
+            // Cacher le statut de téléchargement
+            if (launchStatus) {
+                launchStatus.classList.add('hidden');
+            }
+            
         } else if(state && state.starting){
-            // Starting - show stop button, hide launch
-            launchBtn.textContent = ''
-            launchBtn.innerHTML = `<svg class="animate-spin w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity=".2"></circle><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"></path></svg> Démarrage...`
-            launchBtn.classList.remove('bg-[#FF6A1A]')
-            launchBtn.classList.add('bg-yellow-600')
-            launchBtn.disabled = true
-            // Show stop button while starting
-            try { document.getElementById('stop_button').style.display = '' } catch (e) {}
-            try { launchBtn.style.display = 'none' } catch (e) {}
+            // === DÉMARRAGE EN COURS ===
+            console.log('[Landing] Game is STARTING');
+            
+            if (launchBtn && getRunningInstanceCount() === 0) {
+                launchBtn.disabled = true;
+                launchBtn.classList.remove('hidden');
+            }
+            
+            if (window.LaunchUI) {
+                window.LaunchUI.showDownloading('Démarrage en cours...', 0);
+            }
+            
         } else {
-            // Not running
-            launchBtn.innerHTML = `<svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg> ${Lang.queryJS('landing.launchButton')}`
-            launchBtn.classList.remove('bg-green-600','bg-yellow-600')
-            launchBtn.classList.add('bg-[#FF6A1A]')
-            launchBtn.disabled = false
-            if(details) setLaunchDetails(Lang.queryJS('landing.tabLaunchReady') || '')
-            // Ensure primary launch visible, others hidden
-            try { document.getElementById('stop_button').style.display = 'none' } catch (e) {}
-            try { launchBtn.style.display = '' } catch (e) {}
+            // === JEU ARRÊTÉ ===
+            console.log('[Landing] Game is STOPPED for server:', serverId);
+            
+            // Retirer cette instance du tracker
+            removeRunningInstance(serverId)
+            
+            // Cacher le statut
+            if (launchStatus) {
+                launchStatus.classList.add('hidden');
+            }
+            
+            if (window.LaunchUI && getRunningInstanceCount() === 0) {
+                window.LaunchUI.showReady();
+            }
         }
-    } catch(e){ console.debug('[Landing] updateLaunchUIForServer error', e) }
+        
+        // Toujours mettre à jour l'UI des instances
+        updateInstanceUI()
+        
+    } catch(e){ console.error('[Landing] updateLaunchUIForServer error', e) }
 }
 
 // Expose for other modules
@@ -197,108 +306,18 @@ window.updateLaunchUIForServer = updateLaunchUIForServer
  */
 function toggleLaunchArea(loading){
     if (window.DISABLE_LAUNCH) return;
-    const playInstance = document.querySelector('.play-instance')
-    const launchDetails = document.getElementById('launch_details')
-    const launchBtn = document.getElementById('launch_button')
-    const progressContainer = document.getElementById('launch_progress_container')
     
-    if(loading){
-        // Animate play buttons out
-        if (playInstance) {
-            playInstance.style.opacity = '0'
-            playInstance.style.transform = 'translateY(-10px)'
-            playInstance.style.transition = 'all 0.3s ease'
-            setTimeout(() => {
-                playInstance.style.display = 'none'
-            }, 300)
+    console.log('[Landing] toggleLaunchArea called with:', loading);
+    
+    // Utiliser le nouveau LaunchUI
+    if (window.LaunchUI) {
+        if (loading) {
+            // Mode chargement déjà géré par showDownloading
+            return;
+        } else {
+            window.LaunchUI.showReady();
+            return;
         }
-        
-        // Show progress container
-        if (progressContainer) {
-            progressContainer.style.display = 'block'
-            progressContainer.style.opacity = '0'
-            setTimeout(() => {
-                progressContainer.style.transition = 'opacity 0.3s ease'
-                progressContainer.style.opacity = '1'
-            }, 50)
-        }
-
-        // Hide Mojang status tooltip and compatibility overlay during active loading
-        try {
-            const mojangTooltip = document.getElementById('mojangStatusTooltip')
-            if (mojangTooltip) mojangTooltip.style.display = 'none'
-        } catch (e) {}
-        try {
-            const mojangContainer = document.getElementById('mojangStatusContainer')
-            if (mojangContainer) mojangContainer.style.display = 'none'
-        } catch (e) {}
-        try {
-            const compatOverlay = document.querySelector('.game-launch-overlay')
-            if (compatOverlay) compatOverlay.style.display = 'none'
-        } catch (e) {}
-        
-        // Animate launch details in
-        if (launchDetails) {
-            launchDetails.style.display = 'flex'
-            launchDetails.classList.remove('hidden')
-            setTimeout(() => {
-                launchDetails.classList.add('show')
-                launchDetails.style.opacity = '1'
-                launchDetails.style.transform = 'translateY(0)'
-            }, 50)
-        }
-        
-        // Add pulse animation to launch button
-        if (launchBtn) {
-            launchBtn.classList.add('launch-pulse')
-        }
-    } else {
-        // Hide progress container
-        if (progressContainer) {
-            progressContainer.style.opacity = '0'
-            setTimeout(() => {
-                progressContainer.style.display = 'none'
-            }, 300)
-        }
-        
-        // Animate launch details out
-        if (launchDetails) {
-            launchDetails.style.opacity = '0'
-            launchDetails.style.transform = 'translateY(-10px)'
-            setTimeout(() => {
-                launchDetails.style.display = 'none'
-                launchDetails.classList.add('hidden')
-                launchDetails.classList.remove('show', 'shown')
-            }, 300)
-        }
-        
-        // Animate play buttons in
-        if (playInstance) {
-            playInstance.style.display = 'flex'
-            setTimeout(() => {
-                playInstance.style.opacity = '1'
-                playInstance.style.transform = 'translateY(0)'
-            }, 50)
-        }
-        
-        // Remove pulse animation
-        if (launchBtn) {
-            launchBtn.classList.remove('launch-pulse')
-        }
-
-        // Restore Mojang status tooltip and compatibility overlay when not loading
-        try {
-            const mojangTooltip = document.getElementById('mojangStatusTooltip')
-            if (mojangTooltip) mojangTooltip.style.display = ''
-        } catch (e) {}
-        try {
-            const mojangContainer = document.getElementById('mojangStatusContainer')
-            if (mojangContainer) mojangContainer.style.display = ''
-        } catch (e) {}
-        try {
-            const compatOverlay = document.querySelector('.game-launch-overlay')
-            if (compatOverlay) compatOverlay.style.display = ''
-        } catch (e) {}
     }
 }
 
@@ -311,70 +330,16 @@ function setLaunchDetails(details){
     console.log('[Landing] setLaunchDetails called with:', details)
     if (window.DISABLE_LAUNCH) return;
     
-    const detailsText = document.getElementById('launch_details_text')
-    const detailsOverlay = document.getElementById('launch_details_overlay')
-    const launchBtn = document.getElementById('launch_button')
-    const launchIcon = document.getElementById('launch_icon')
-    const launchText = document.getElementById('launch_text')
+    // Utiliser le nouveau LaunchUI si disponible
+    if (window.LaunchUI && window.LaunchUI.state.isLaunching) {
+        window.LaunchUI.updateProgress(window.LaunchUI.state.progress, details);
+        return;
+    }
     
-    if (details && details.trim()) {
-        // Hide normal button content completely
-        const buttonContent = launchBtn && launchBtn.querySelector('.relative.z-10')
-        if (buttonContent) {
-            buttonContent.style.opacity = '0'
-            buttonContent.style.visibility = 'hidden'
-        }
-        if (launchIcon) {
-            launchIcon.style.display = 'none'
-            launchIcon.style.visibility = 'hidden'
-        }
-        if (launchText) {
-            launchText.style.display = 'none'
-            launchText.style.visibility = 'hidden'
-        }
-        
-        // Show loading overlay with details
-        if (detailsOverlay) {
-            detailsOverlay.style.opacity = '1'
-            detailsOverlay.style.display = 'flex'
-            detailsOverlay.style.visibility = 'visible'
-            detailsOverlay.style.zIndex = '20'
-        }
-        
-        if (detailsText) {
-            detailsText.textContent = details
-        }
-        
-        // Add loading class
-        if (launchBtn) {
-            launchBtn.classList.add('is-loading')
-        }
-        
-        console.log('[Landing] Loading mode activated with details:', details)
-    } else {
-        // Restore normal button content
-        const buttonContent = launchBtn && launchBtn.querySelector('.relative.z-10')
-        if (buttonContent) {
-            buttonContent.style.opacity = '1'
-            buttonContent.style.visibility = 'visible'
-        }
-        if (launchIcon) {
-            launchIcon.style.display = 'block'
-            launchIcon.style.visibility = 'visible'
-        }
-        if (launchText) {
-            launchText.style.display = 'block'
-            launchText.style.visibility = 'visible'
-        }
-        
-        if (detailsOverlay) {
-            detailsOverlay.style.opacity = '0'
-            detailsOverlay.style.visibility = 'hidden'
-        }
-        
-        if (launchBtn) {
-            launchBtn.classList.remove('is-loading')
-        }
+    // Fallback: mettre à jour les anciens éléments si présents
+    const statusText = document.getElementById('launch_status_text');
+    if (statusText) {
+        statusText.textContent = details || 'Préparation...';
     }
 }
 
@@ -386,66 +351,11 @@ function setLaunchDetails(details){
  */
 function updateLaunchButton(step, progress = 0) {
     if (window.DISABLE_LAUNCH) return;
-    const launchBtn = document.getElementById('launch_button')
-    const launchText = document.getElementById('launch_text')
-    const launchIcon = document.getElementById('launch_icon')
-    const progressBg = document.getElementById('launch_progress_bg')
-    const progressBar = document.getElementById('launch_progress_bar')
     
-    if (!launchBtn || !launchText || !launchIcon) return
-    
-    // Update text based on step
-    let buttonText = 'Lancer'
-    let iconClass = 'bi-play-fill'
-    
-    if (step) {
-        if (step.includes('serveur') || step.includes('distribution')) {
-            buttonText = 'Chargement serveur...'
-            iconClass = 'bi-cloud-download'
-        } else if (step.includes('Java') || step.includes('JVM')) {
-            buttonText = 'Vérification Java...'
-            iconClass = 'bi-gear'
-        } else if (step.includes('mod') || step.includes('téléchargement') || step.includes('download')) {
-            buttonText = 'Téléchargement...'
-            iconClass = 'bi-download'
-        } else if (step.includes('vérif') || step.includes('validation') || step.includes('intégrité')) {
-            buttonText = 'Vérification...'
-            iconClass = 'bi-check-circle'
-        } else if (step.includes('lancement') || step.includes('Démarrage')) {
-            buttonText = 'Lancement...'
-            iconClass = 'bi-rocket-takeoff'
-        } else if (step.includes('synchronisation') || step.includes('sync')) {
-            buttonText = 'Synchronisation...'
-            iconClass = 'bi-arrow-repeat'
-        }
-    }
-    
-    // Update text with animation
-    launchText.style.opacity = '0'
-    setTimeout(() => {
-        launchText.textContent = buttonText
-        launchText.style.opacity = '1'
-    }, 150)
-    
-    // Update icon
-    launchIcon.className = `${iconClass} text-2xl transition-all duration-300`
-    
-    // Update progress background
-    if (progressBg) {
-        progressBg.style.width = `${Math.max(0, Math.min(100, progress))}%`
-    }
-    
-    // Update main progress bar
-    if (progressBar) {
-        progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`
-        progressBar.style.opacity = progress > 0 ? '0.9' : '0'
-    }
-    
-    // Add loading state if progress > 0
-    if (progress > 0) {
-        launchBtn.classList.add('is-loading')
-    } else {
-        launchBtn.classList.remove('is-loading')
+    // Utiliser le nouveau LaunchUI
+    if (window.LaunchUI) {
+        window.LaunchUI.showDownloading(step, progress);
+        return;
     }
 }
 
@@ -458,58 +368,24 @@ function setLaunchPercentage(percent){
     console.log('[Landing] setLaunchPercentage called with:', percent)
     if (window.DISABLE_LAUNCH) return;
     
-    const progressBar = document.getElementById('launch_progress_bar')
-    const progressLabel = document.getElementById('launch_progress_label')
-    const progressOverlay = document.getElementById('launch_progress_overlay')
-    const launchBtn = document.getElementById('launch_button')
-    
-    // Update progress bar width and opacity
-    if (progressBar) {
-        progressBar.style.transition = 'width 0.4s ease-out, opacity 0.3s ease'
-        progressBar.style.width = percent + '%'
-        progressBar.style.opacity = percent > 0 ? '1' : '0'
-        progressBar.style.visibility = percent > 0 ? 'visible' : 'hidden'
-        // Ensure the element is rendered (in case CSS utility classes hide it)
-        progressBar.style.display = percent > 0 ? 'block' : 'none'
-        
-        // Add active class for animation
+    // Utiliser le nouveau LaunchUI si disponible
+    if (window.LaunchUI) {
         if (percent > 0) {
-            progressBar.classList.add('active')
-            // Remove any tailwind opacity utility that could override inline styles
-            try { progressBar.classList.remove('opacity-0') } catch (e) {}
-        } else {
-            progressBar.classList.remove('active')
-            try { progressBar.classList.add('opacity-0') } catch (e) {}
+            window.LaunchUI.showDownloading(null, percent);
         }
-        
-        console.log('[Landing] Progress bar updated to', percent + '%')
+        window.LaunchUI.updateProgress(percent);
+        return;
     }
     
-    // Show/hide progress percentage overlay
-    if (progressOverlay) {
-        if (percent > 0) {
-            progressOverlay.style.opacity = '1'
-            progressOverlay.style.display = 'flex'
-            progressOverlay.style.visibility = 'visible'
-        } else {
-            progressOverlay.style.opacity = '0'
-            progressOverlay.style.visibility = 'hidden'
-        }
-        console.log('[Landing] Progress overlay visibility:', percent > 0 ? 'shown' : 'hidden')
-    }
+    // Fallback: mise à jour des anciens éléments
+    const statusBar = document.getElementById('launch_status_bar');
+    const statusPercent = document.getElementById('launch_status_percent');
     
-    if (progressLabel) {
-        progressLabel.textContent = percent + '%'
-        console.log('[Landing] Progress label updated to', percent + '%')
+    if (statusBar) {
+        statusBar.style.width = percent + '%';
     }
-    
-    // Update launch button state
-    if (launchBtn && percent > 0) {
-        launchBtn.classList.add('is-launching')
-        console.log('[Landing] Launch button set to launching state')
-    } else if (launchBtn && percent === 0) {
-        launchBtn.classList.remove('is-launching')
-        console.log('[Landing] Launch button launching state removed')
+    if (statusPercent) {
+        statusPercent.textContent = Math.round(percent) + '%';
     }
 }
 
@@ -559,57 +435,30 @@ async function checkUpdateStatus() {
 const _launch_button_el = document.getElementById('launch_button')
 if (_launch_button_el) _launch_button_el.addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
-    // Immediate UI feedback: show starting state right away to avoid perceived latency
+    
+    // Feedback UI immédiat avec le nouveau système
     try {
-        const launchBtn = document.getElementById('launch_button')
-        setLaunchDetails(Lang.queryJS && Lang.queryJS('landing.launch.starting') || 'Démarrage...')
-        toggleLaunchArea(true)
-        setLaunchPercentage(0)
-        if (launchBtn) {
-            try {
-                // Update existing icon/text nodes instead of replacing innerHTML
-                const launchIconEl = document.getElementById('launch_icon')
-                const launchTextEl = document.getElementById('launch_text')
-                if (launchIconEl) {
-                    launchIconEl.style.display = 'block'
-                    launchIconEl.className = 'bi bi-arrow-repeat animate-spin text-2xl transition-all duration-300'
-                }
-                if (launchTextEl) {
-                    launchTextEl.style.display = 'block'
-                    launchTextEl.textContent = Lang.queryJS && Lang.queryJS('landing.launch.starting') || 'Démarrage...'
-                }
-                launchBtn.classList.remove('bg-[#FF6A1A]')
-                launchBtn.classList.add('bg-yellow-600')
-                launchBtn.disabled = true
-                // Show stop button immediately and hide primary launch to give clear feedback
-                try {
-                    const stopBtn = document.getElementById('stop_button')
-                    if (stopBtn) {
-                        stopBtn.style.display = ''
-                        stopBtn.disabled = false
-                    }
-                    launchBtn.style.display = 'none'
-                } catch (e) { /* ignore */ }
-            } catch (e) { /* ignore UI update errors */ }
+        if (window.LaunchUI) {
+            window.LaunchUI.showDownloading('Démarrage...', 0);
         }
         
         // Notify that the instance is starting
+        const payload = { starting: true, serverId: ConfigManager.getSelectedServer() }
+        if (typeof window.onInstanceStateChanged === 'function') {
+            window.onInstanceStateChanged(payload)
+        }
         try {
-            const payload = { starting: true, serverId: ConfigManager.getSelectedServer() }
-            if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
-                window.onInstanceStateChanged(payload)
-            }
-            try {
-                const { ipcRenderer } = require('electron')
-                ipcRenderer.send('instance-state', payload)
-            } catch (e) { /* ignore if not available */ }
-        } catch (e) { /* non-critical */ }
-    } catch (e) { /* non-critical */ }
+            const { ipcRenderer } = require('electron')
+            ipcRenderer.send('instance-state', payload)
+        } catch (e) { /* ignore */ }
+    } catch (e) { console.error('[Landing] Error setting initial UI state', e) }
+    
     try {
         // Vérifier l'état des mises à jour avant de lancer
         const updateStatus = await checkUpdateStatus()
         if (updateStatus.hasUpdate || updateStatus.downloading) {
             loggerLanding.warn('Update in progress or available, preventing launch')
+            if (window.LaunchUI) window.LaunchUI.showReady();
             showLaunchFailure(
                 'Mise à jour en cours',
                 updateStatus.downloading 
@@ -676,14 +525,43 @@ if (_launch_button_el) _launch_button_el.addEventListener('click', async e => {
     }
 })
 
-// Bind stop button
+// Bind stop button - arrête TOUTES les instances
 try {
     const stopBtn = document.getElementById('stop_button')
     if (stopBtn) {
         stopBtn.addEventListener('click', async () => {
-            loggerLanding.info('Stop button clicked')
+            loggerLanding.info('Stop button clicked - stopping all instances')
+            
+            // Feedback UI immédiat
+            if (window.LaunchUI) {
+                window.LaunchUI.showStopping();
+            }
+            
             try {
-                // Attempt graceful shutdown of proc if present
+                // Arrêter toutes les instances en cours
+                const instancesToStop = [...runningInstances]
+                
+                for (const instance of instancesToStop) {
+                    try {
+                        const { ipcRenderer } = require('electron')
+                        // Send serverId and pid to main so it can attempt to kill the process if renderer can't
+                        const payload = { request: 'stop', serverId: instance.serverId, pid: instance.pid || null }
+                        console.info('[Landing] sending request-instance-action to main', payload)
+                        ipcRenderer.send('request-instance-action', payload)
+                    } catch (e) { /* ignore */ }
+                    
+                    // Notify UI
+                    const payload = { started: false, serverId: instance.serverId }
+                    if (typeof window.onInstanceStateChanged === 'function') {
+                        window.onInstanceStateChanged(payload)
+                    }
+                    try {
+                        const { ipcRenderer } = require('electron')
+                        ipcRenderer.send('instance-state', payload)
+                    } catch (e) { /* ignore */ }
+                }
+                
+                // Attempt graceful shutdown of proc if present (pour le processus local)
                 if (proc && typeof proc.kill === 'function') {
                     try {
                         proc.kill()
@@ -691,31 +569,55 @@ try {
                         loggerLanding.warn('Failed to kill process directly', e)
                         try { proc.kill('SIGKILL') } catch (e2) {}
                     }
-                } else {
-                    // If no local proc, still notify main to stop by serverId
-                    try {
-                        const { ipcRenderer } = require('electron')
-                        const payload = { request: 'stop', serverId: ConfigManager.getSelectedServer() }
-                        ipcRenderer.send('request-instance-action', payload)
-                    } catch (e) { /* ignore */ }
                 }
 
-                // Notify UI and other windows
-                const payload = { started: false, serverId: ConfigManager.getSelectedServer() }
-                if (typeof window !== 'undefined' && typeof window.onInstanceStateChanged === 'function') {
-                    window.onInstanceStateChanged(payload)
-                }
-                try {
-                    const { ipcRenderer } = require('electron')
-                    ipcRenderer.send('instance-state', payload)
-                } catch (e) { loggerLanding.debug && loggerLanding.debug('ipcRenderer not available to send instance-state stop (from stop button)', e) }
+                // Vider la liste des instances
+                runningInstances.length = 0
+                updateInstanceUI()
+
+                // Restaurer l'UI après un court délai
+                setTimeout(() => {
+                    if (window.LaunchUI) {
+                        window.LaunchUI.showReady();
+                    }
+                }, 500)
 
             } catch (e) {
                 loggerLanding.error('Error handling stop button click', e)
+                if (window.LaunchUI) {
+                    window.LaunchUI.showReady();
+                }
             }
         })
+        console.log('[Landing] Stop button event listener bound successfully')
+    } else {
+        console.warn('[Landing] Stop button not found in DOM')
     }
-} catch (e) { /* ignore binding errors */ }
+} catch (e) { console.error('[Landing] Error binding stop button:', e) }
+
+// Bind add instance button - lancer une instance supplémentaire
+try {
+    const addInstanceBtn = document.getElementById('add_instance_button')
+    if (addInstanceBtn) {
+        addInstanceBtn.addEventListener('click', async () => {
+            loggerLanding.info('Add instance button clicked')
+            
+            // Vérifier qu'on peut encore lancer une instance
+            if (getRunningInstanceCount() >= MAX_INSTANCES) {
+                loggerLanding.warn('Max instances reached')
+                return
+            }
+            
+            // Déclencher le même processus de lancement que le bouton principal
+            const launchBtn = document.getElementById('launch_button')
+            if (launchBtn) {
+                // Simuler un clic sur le bouton de lancement
+                launchBtn.click()
+            }
+        })
+        console.log('[Landing] Add instance button event listener bound successfully')
+    }
+} catch (e) { console.error('[Landing] Error binding add instance button:', e) }
 
 // launch_other_button removed — logic consolidated to primary launch flow
 
@@ -743,7 +645,14 @@ document.getElementById('avatarOverlay').onclick = async e => {
     switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
         settingsNavItemListener(document.getElementById('settingsNavAccount'), false)
     })
+            // Populate accounts list when opening settings
+            try { populateSettingsAccounts() } catch (e) { console.warn('[LANDING] populateSettingsAccounts error', e) }
 }
+
+// NOTE: The quick switch-account button is now handled by the in-page
+// account menu (landing.ejs). Do not auto-open Settings when the
+// sidebar `#switchAccountButton` is clicked to allow the inline burger
+// menu to manage account selection UX.
 
 // Bind selected account
 function updateSelectedAccount(authUser){
@@ -769,6 +678,62 @@ function updateSelectedAccount(authUser){
     if (visibleUsername) visibleUsername.innerHTML = username
 }
 updateSelectedAccount(ConfigManager.getSelectedAccount())
+
+// Populate the accounts list in settings and bind select/remove actions
+function populateSettingsAccounts() {
+    try {
+        const container = document.getElementById('settingsCurrentMicrosoftAccounts')
+        if (!container) return
+        const accounts = ConfigManager.getAuthAccounts() || {}
+        container.innerHTML = ''
+        const keys = Object.keys(accounts)
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-400">' + Lang.queryJS('settings.noAccounts') + '</div>'
+            return
+        }
+        keys.forEach(uuid => {
+            const acc = accounts[uuid]
+            const wrap = document.createElement('div')
+            wrap.className = 'flex items-center justify-between py-2'
+            wrap.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded overflow-hidden" style="background-image:url(https://mc-heads.net/avatar/${uuid}/40);background-size:cover;background-position:center"></div>
+                    <div>
+                        <div class="text-white font-medium">${acc.displayName || acc.username || uuid}</div>
+                        <div class="text-xs text-gray-400">${acc.type || ''}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-ghost select-account" data-uuid="${uuid}">${Lang.queryJS('settings.selectAccount') || 'Sélectionner'}</button>
+                    <button class="btn btn-danger remove-account" data-uuid="${uuid}">${Lang.queryJS('settings.removeAccount') || 'Supprimer'}</button>
+                </div>
+            `
+            container.appendChild(wrap)
+        })
+
+        // bind actions
+        container.querySelectorAll('.select-account').forEach(b => {
+            b.onclick = (e) => {
+                const uuid = b.getAttribute('data-uuid')
+                ConfigManager.setSelectedAccount(uuid)
+                ConfigManager.save()
+                updateSelectedAccount(ConfigManager.getSelectedAccount())
+            }
+        })
+        container.querySelectorAll('.remove-account').forEach(b => {
+            b.onclick = (e) => {
+                const uuid = b.getAttribute('data-uuid')
+                if (!confirm(Lang.queryJS('settings.removeAccountConfirm') || 'Supprimer ce compte ?')) return
+                ConfigManager.removeAuthAccount(uuid)
+                ConfigManager.save()
+                populateSettingsAccounts()
+                updateSelectedAccount(ConfigManager.getSelectedAccount())
+            }
+        })
+    } catch (e) {
+        console.warn('[LANDING] populateSettingsAccounts failed', e)
+    }
+}
 
 /**
  * Update the visual selection in the sidebar
@@ -3110,7 +3075,7 @@ function populateFallbackSidebar(instances, selectedServerId) {
                     title="${instanceName}">
                 <div class="flex items-center gap-3">
                     <!-- Instance Icon -->
-                    <div class="relative flex-shrink-0">
+                    <div class="flex-shrink-0">
                         <img src="${instanceIcon}" 
                              alt="${instanceName}"
                              class="w-10 h-10 rounded-lg object-cover"
@@ -3271,6 +3236,9 @@ function initNewInterface() {
         newsContainer.style.display = 'none'
     }
     
+    // Initialize instance UI state
+    updateInstanceUI()
+    
     // Setup avatar overlay click handler for new interface
     const avatarContainer = document.getElementById('avatarContainer')
     if (avatarContainer && !avatarContainer.onclick) {
@@ -3278,6 +3246,7 @@ function initNewInterface() {
             await prepareSettings()
             switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
                 settingsNavItemListener(document.getElementById('settingsNavAccount'), false)
+                try { populateSettingsAccounts() } catch (e) { console.warn('[LANDING] populateSettingsAccounts error', e) }
             })
         }
     }
@@ -3439,48 +3408,15 @@ window.testModpackCards = function() {
 function clearLaunchProgress() {
     console.log('[Landing] Clearing launch progress')
     
-    const progressBar = document.getElementById('launch_progress_bar')
-    const progressOverlay = document.getElementById('launch_progress_overlay')
-    const detailsOverlay = document.getElementById('launch_details_overlay')
-    const launchBtn = document.getElementById('launch_button')
-    const launchText = document.getElementById('launch_text')
-    const launchIcon = document.getElementById('launch_icon')
-    
-    // Hide progress elements
-    if (progressBar) {
-        progressBar.style.width = '0%'
-        progressBar.style.opacity = '0'
-        progressBar.classList.remove('active')
+    // Utiliser le nouveau LaunchUI si disponible
+    if (window.LaunchUI) {
+        window.LaunchUI.showReady();
     }
     
-    if (progressOverlay) {
-        progressOverlay.style.opacity = '0'
-        progressOverlay.style.display = 'none'
-    }
+    // Mettre à jour l'UI des instances
+    updateInstanceUI()
     
-    if (detailsOverlay) {
-        detailsOverlay.style.opacity = '0'
-        detailsOverlay.style.display = 'none'
-    }
-    
-    // Reset button state and restore normal content
-    if (launchBtn) {
-        launchBtn.classList.remove('is-loading', 'is-launching')
-        launchBtn.disabled = false
-    }
-    
-    // Show normal button content
-    if (launchText) {
-        launchText.textContent = 'Lancer'
-        launchText.style.display = 'block'
-    }
-    
-    if (launchIcon) {
-        launchIcon.className = 'bi bi-play-fill text-2xl transition-all duration-300'
-        launchIcon.style.display = 'block'
-    }
-    
-    console.log('[Landing] Launch progress cleared and normal button restored')
+    console.log('[Landing] Launch progress cleared')
 }
 
 /**

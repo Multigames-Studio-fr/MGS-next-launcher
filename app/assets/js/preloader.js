@@ -83,3 +83,7 @@ fs.remove(path.join(os.tmpdir(), ConfigManager.getTempNativeFolder()), (err) => 
         logger.info('Cleaned natives directory.')
     }
 })
+
+// Expose ConfigManager to window so renderer scripts can access it
+window.ConfigManager = ConfigManager
+logger.info('ConfigManager exposed to window')

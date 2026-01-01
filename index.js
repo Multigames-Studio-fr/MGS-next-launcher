@@ -1846,3 +1846,40 @@ ipcMain.handle('clear-app-cache', async (event) => {
         return { success: false, error: (error && error.message) || String(error) }
     }
 })
+
+// Allow renderers to request instance actions (e.g., stop by pid)
+ipcMain.on('request-instance-action', (event, payload) => {
+    try {
+        log.info('[IPC] request-instance-action received', payload && (payload.request || '<no-request>'))
+        if (!payload || typeof payload !== 'object') return
+        const { request, pid, serverId } = payload
+        if (request === 'stop') {
+            // If a pid was provided, attempt to kill it from main process
+            if (pid && Number.isFinite(pid)) {
+                try {
+                    log.info('[IPC] attempting to kill pid from main:', pid)
+                    try { process.kill(pid) } catch (e) {
+                        // On Windows process.kill may throw for permissions or already-exited
+                        log.warn('[IPC] process.kill failed in main', e && e.message)
+                    }
+                } catch (e) {
+                    log.warn('[IPC] exception when killing pid', e && e.message)
+                }
+            }
+
+            // Broadcast instance-state stopped to all windows so UIs update
+            try {
+                const stopped = { started: false, serverId: serverId || null }
+                const { BrowserWindow } = require('electron')
+                const wins = BrowserWindow.getAllWindows()
+                for (const w of wins) {
+                    try { w.webContents.send('instance-state', stopped) } catch (e) { /* ignore per-window send errors */ }
+                }
+            } catch (e) {
+                log.warn('[IPC] failed to broadcast instance-state after stop request', e && e.message)
+            }
+        }
+    } catch (e) {
+        try { log.error('[IPC] request-instance-action handler failed', e && e.message) } catch (err) {}
+    }
+})

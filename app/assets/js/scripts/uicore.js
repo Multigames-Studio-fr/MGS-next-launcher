@@ -69,7 +69,7 @@ function createUpdateNotification() {
     notifBar.style.cssText = `
         position: fixed;
         bottom: 20px;
-        right: 20px;
+        left: 20px;
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         border: 1px solid rgba(79, 157, 255, 0.3);
         border-radius: 12px;
@@ -77,8 +77,8 @@ function createUpdateNotification() {
         z-index: 9999;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         font-family: 'Inter', 'Segoe UI', sans-serif;
-        -webkit-animation: slideInRight 0.3s ease-out;
-        animation: slideInRight 0.3s ease-out;
+        -webkit-animation: slideInLeft 0.3s ease-out;
+        animation: slideInLeft 0.3s ease-out;
         max-width: 320px;
         -webkit-transform: translateZ(0);
         transform: translateZ(0);
@@ -89,21 +89,21 @@ function createUpdateNotification() {
         const style = document.createElement('style')
         style.id = 'update-notif-styles'
         style.textContent = `
-            @-webkit-keyframes slideInRight {
-                from { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+            @-webkit-keyframes slideInLeft {
+                from { -webkit-transform: translateX(-100%); transform: translateX(-100%); opacity: 0; }
                 to { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
             }
-            @keyframes slideInRight {
-                from { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+            @keyframes slideInLeft {
+                from { -webkit-transform: translateX(-100%); transform: translateX(-100%); opacity: 0; }
                 to { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
             }
-            @-webkit-keyframes slideOutRight {
+            @-webkit-keyframes slideOutLeft {
                 from { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
-                to { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+                to { -webkit-transform: translateX(-100%); transform: translateX(-100%); opacity: 0; }
             }
-            @keyframes slideOutRight {
+            @keyframes slideOutLeft {
                 from { -webkit-transform: translateX(0); transform: translateX(0); opacity: 1; }
-                to { -webkit-transform: translateX(100%); transform: translateX(100%); opacity: 0; }
+                to { -webkit-transform: translateX(-100%); transform: translateX(-100%); opacity: 0; }
             }
             @-webkit-keyframes spin {
                 from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
@@ -247,7 +247,7 @@ function showUpdateNotification(type, info) {
 function hideUpdateNotification() {
     const notifBar = document.getElementById('update-notification-bar')
     if (notifBar) {
-        notifBar.style.animation = 'slideOutRight 0.3s ease-out forwards'
+        notifBar.style.animation = 'slideOutLeft 0.3s ease-out forwards'
         setTimeout(() => {
             notifBar.remove()
         }, 300)

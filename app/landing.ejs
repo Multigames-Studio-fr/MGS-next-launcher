@@ -1,11 +1,12 @@
 <div id="landingContainer" class="" style="display: none;">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="./assets/css/output.css">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <div id="layoutRoot" class="flex min-h-screen w-full relative fit-content flex-row-reverse">
-        
+
         <style>
+            /* === VARIABLES CSS === */
             :root {
                 --primary: #451F21;
                 --secondary: #F8BA59;
@@ -13,496 +14,64 @@
                 --white: #FFFFFF;
             }
 
+            /* === COMPOSANTS UI === */
             .glass-sidebar {
-                /* Refined sidebar gray: softer gradient and subtle inner highlight */
                 background: linear-gradient(180deg, #0f1113, #151718);
-                border-right: 1px solid rgba(255,255,255,0.035);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+                border-right: 1px solid rgba(255, 255, 255, 0.035);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
             }
 
             .glass-card {
-                /* Polished non-glass card: subtle gradient, soft border and shadow */
                 background: linear-gradient(180deg, #1b1b1b, #121212);
                 border: 1px solid rgba(248, 186, 89, 0.035);
-                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
                 border-radius: 0.75rem;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
             }
 
             .glass-card:hover {
                 background: linear-gradient(180deg, #222, #141414);
                 border-color: rgba(248, 186, 89, 0.08);
                 transform: translateY(-4px);
-                box-shadow: 0 8px 22px rgba(0,0,0,0.55);
+                box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
             }
 
+            .glass-card.backdrop-blur-2xl {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            /* === ÉLÉMENTS D'INSTANCE === */
             .instance-item {
+            
                 cursor: pointer;
-                transition: all 0.2s ease;
-                position: relative;
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.005));
+                border-left: 3px solid transparent;
+                transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
             }
 
             .instance-item.selected {
-                background: linear-gradient(to right, rgba(255, 106, 26, 0.15), rgba(24, 24, 24, 0.6));
-                border-left: 3px solid #F8BA59;
-                border-color: rgba(248, 186, 89, 0.5);
+                background: linear-gradient(90deg, rgba(255, 106, 26, 0.12), rgba(24, 24, 24, 0.6));
+                border-left-color: var(--secondary);
+                box-shadow: 0 10px 30px rgba(15, 12, 10, 0.45);
             }
 
             .instance-item:hover:not(.selected) {
-                background: rgba(255, 255, 255, 0.08);
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(248, 186, 89, 0.02));
                 border-color: rgba(248, 186, 89, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
             }
 
             .instance-item:active {
                 transform: scale(0.98);
             }
 
-            .launch-btn {
-                /* Cleaner launch button base used for small buttons (retry, etc.) */
-                background: linear-gradient(135deg, #FF7A33, #F8BA59 60%);
-                transition: transform 0.18s ease, box-shadow 0.18s ease;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-                border: 1px solid rgba(255,255,255,0.03);
+            .instance-item .bi-check-circle-fill {
+                color: var(--secondary);
             }
 
-            .launch-btn::before {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 0;
-                height: 0;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.08);
-                transform: translate(-50%, -50%);
-                transition: width 0.45s, height 0.45s;
-            }
-
-            .launch-btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 26px rgba(0,0,0,0.5);
-            }
-
-            .launch-btn:active { transform: translateY(0); }
-
-            .launch-btn:active::before { width: 220px; height: 220px; }
-
-            /* Main large launch button tweaks (apply to both ID and class) */
-            #launch_button, .launch-button {
-                border-radius: 1rem;
-                border: 1px solid rgba(248,186,89,0.12) !important;
-                box-shadow: 0 10px 30px rgba(15,12,10,0.5);
-                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-            }
-
-            #launch_button:hover, .launch-button:hover { transform: translateY(-4px); box-shadow: 0 18px 42px rgba(15,12,10,0.6); }
-
-            #stop_button, .stop-button { border-radius: 1rem; border: 1px solid rgba(255,100,100,0.09) !important; }
-
-            /* === ANIMATIONS AVEC VENDOR PREFIXES === */
-            @-webkit-keyframes spin {
-                from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
-                to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
-            }
-            @-moz-keyframes spin {
-                from { -moz-transform: rotate(0deg); transform: rotate(0deg); }
-                to { -moz-transform: rotate(360deg); transform: rotate(360deg); }
-            }
-            @-o-keyframes spin {
-                from { -o-transform: rotate(0deg); transform: rotate(0deg); }
-                to { -o-transform: rotate(360deg); transform: rotate(360deg); }
-            }
-            @keyframes spin {
-                from { -webkit-transform: rotate(0deg); -moz-transform: rotate(0deg); -o-transform: rotate(0deg); transform: rotate(0deg); }
-                to { -webkit-transform: rotate(360deg); -moz-transform: rotate(360deg); -o-transform: rotate(360deg); transform: rotate(360deg); }
-            }
-
-            .animate-spin {
-                -webkit-animation: spin 1s linear infinite;
-                -moz-animation: spin 1s linear infinite;
-                -o-animation: spin 1s linear infinite;
-                animation: spin 1s linear infinite;
-            }
-
-            @-webkit-keyframes fadeIn {
-                from { opacity: 0; -webkit-transform: translateY(10px); transform: translateY(10px); }
-                to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
-            }
-            @-moz-keyframes fadeIn {
-                from { opacity: 0; -moz-transform: translateY(10px); transform: translateY(10px); }
-                to { opacity: 1; -moz-transform: translateY(0); transform: translateY(0); }
-            }
-            @-o-keyframes fadeIn {
-                from { opacity: 0; -o-transform: translateY(10px); transform: translateY(10px); }
-                to { opacity: 1; -o-transform: translateY(0); transform: translateY(0); }
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; -webkit-transform: translateY(10px); -moz-transform: translateY(10px); -o-transform: translateY(10px); transform: translateY(10px); }
-                to { opacity: 1; -webkit-transform: translateY(0); -moz-transform: translateY(0); -o-transform: translateY(0); transform: translateY(0); }
-            }
-
-            .fade-in {
-                -webkit-animation: fadeIn 0.5s ease-out forwards;
-                -moz-animation: fadeIn 0.5s ease-out forwards;
-                -o-animation: fadeIn 0.5s ease-out forwards;
-                animation: fadeIn 0.5s ease-out forwards;
-            }
-
-            @-webkit-keyframes slideUp {
-                from { opacity: 0; -webkit-transform: translateY(20px); transform: translateY(20px); }
-                to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
-            }
-            @-moz-keyframes slideUp {
-                from { opacity: 0; -moz-transform: translateY(20px); transform: translateY(20px); }
-                to { opacity: 1; -moz-transform: translateY(0); transform: translateY(0); }
-            }
-            @-o-keyframes slideUp {
-                from { opacity: 0; -o-transform: translateY(20px); transform: translateY(20px); }
-                to { opacity: 1; -o-transform: translateY(0); transform: translateY(0); }
-            }
-            @keyframes slideUp {
-                from { opacity: 0; -webkit-transform: translateY(20px); -moz-transform: translateY(20px); -o-transform: translateY(20px); transform: translateY(20px); }
-                to { opacity: 1; -webkit-transform: translateY(0); -moz-transform: translateY(0); -o-transform: translateY(0); transform: translateY(0); }
-            }
-
-            .slide-up-anim {
-                -webkit-animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                -moz-animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                -o-animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-
-            .progress-bar-container {
-                /* Solid subtle background for progress areas */
-                background: rgba(255, 255, 255, 0.03);
-            }
-
-            .progress-bar-fill {
-                background: linear-gradient(90deg, #FF6A1A, #F8BA59, #FF6A1A);
-                background-size: 200% 100%;
-                transition: width 0.3s ease-out;
-            }
-
-            @-webkit-keyframes shimmer {
-                0% { background-position: 200% 0; }
-                100% { background-position: -200% 0; }
-            }
-            @-moz-keyframes shimmer {
-                0% { background-position: 200% 0; }
-                100% { background-position: -200% 0; }
-            }
-            @-o-keyframes shimmer {
-                0% { background-position: 200% 0; }
-                100% { background-position: -200% 0; }
-            }
-            @keyframes shimmer {
-                0% { background-position: 200% 0; }
-                100% { background-position: -200% 0; }
-            }
-
-            @-webkit-keyframes shimmer-slow {
-                0% { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
-                100% { -webkit-transform: translateX(100%); transform: translateX(100%); }
-            }
-            @-moz-keyframes shimmer-slow {
-                0% { -moz-transform: translateX(-100%); transform: translateX(-100%); }
-                100% { -moz-transform: translateX(100%); transform: translateX(100%); }
-            }
-            @-o-keyframes shimmer-slow {
-                0% { -o-transform: translateX(-100%); transform: translateX(-100%); }
-                100% { -o-transform: translateX(100%); transform: translateX(100%); }
-            }
-            @keyframes shimmer-slow {
-                0% { -webkit-transform: translateX(-100%); -moz-transform: translateX(-100%); -o-transform: translateX(-100%); transform: translateX(-100%); }
-                100% { -webkit-transform: translateX(100%); -moz-transform: translateX(100%); -o-transform: translateX(100%); transform: translateX(100%); }
-            }
-
-            .animate-shimmer-slow {
-                -webkit-animation: shimmer-slow 8s linear infinite;
-                -moz-animation: shimmer-slow 8s linear infinite;
-                -o-animation: shimmer-slow 8s linear infinite;
-                animation: shimmer-slow 8s linear infinite;
-            }
-
-            @-webkit-keyframes gradient {
-                0%, 100% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-            }
-            @-moz-keyframes gradient {
-                0%, 100% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-            }
-            @-o-keyframes gradient {
-                0%, 100% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-            }
-            @keyframes gradient {
-                0%, 100% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-            }
-
-            .animate-gradient {
-                -webkit-animation: gradient 5s ease infinite;
-                -moz-animation: gradient 5s ease infinite;
-                -o-animation: gradient 5s ease infinite;
-                animation: gradient 5s ease infinite;
-            }
-
-            @-webkit-keyframes ping-slow {
-                0% { -webkit-transform: scale(1); transform: scale(1); opacity: 0.8; }
-                50% { -webkit-transform: scale(1.05); transform: scale(1.05); opacity: 0.4; }
-                100% { -webkit-transform: scale(1.1); transform: scale(1.1); opacity: 0; }
-            }
-            @-moz-keyframes ping-slow {
-                0% { -moz-transform: scale(1); transform: scale(1); opacity: 0.8; }
-                50% { -moz-transform: scale(1.05); transform: scale(1.05); opacity: 0.4; }
-                100% { -moz-transform: scale(1.1); transform: scale(1.1); opacity: 0; }
-            }
-            @-o-keyframes ping-slow {
-                0% { -o-transform: scale(1); transform: scale(1); opacity: 0.8; }
-                50% { -o-transform: scale(1.05); transform: scale(1.05); opacity: 0.4; }
-                100% { -o-transform: scale(1.1); transform: scale(1.1); opacity: 0; }
-            }
-            @keyframes ping-slow {
-                0% { -webkit-transform: scale(1); -moz-transform: scale(1); -o-transform: scale(1); transform: scale(1); opacity: 0.8; }
-                50% { -webkit-transform: scale(1.05); -moz-transform: scale(1.05); -o-transform: scale(1.05); transform: scale(1.05); opacity: 0.4; }
-                100% { -webkit-transform: scale(1.1); -moz-transform: scale(1.1); -o-transform: scale(1.1); transform: scale(1.1); opacity: 0; }
-            }
-
-            .animate-ping-slow {
-                -webkit-animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                -moz-animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                -o-animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-            }
-
-            @-webkit-keyframes slide {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-            @-moz-keyframes slide {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-            @-o-keyframes slide {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-            @keyframes slide {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-
-            .animate-slide {
-                -webkit-animation: slide 1s linear infinite;
-                -moz-animation: slide 1s linear infinite;
-                -o-animation: slide 1s linear infinite;
-                animation: slide 1s linear infinite;
-            }
-
-            .progress-bar-fill::after {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
-                background-size: 200% 100%;
-                -webkit-animation: shimmer 2s linear infinite;
-                -moz-animation: shimmer 2s linear infinite;
-                -o-animation: shimmer 2s linear infinite;
-                animation: shimmer 2s linear infinite;
-            }
-
-            /* Simplified card shadow (no glass inset highlight) */
-            .glass-card {
-                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-            }
-
-            /* Override any Tailwind backdrop-blur utility applied alongside cards in this file */
-            .glass-card.backdrop-blur-2xl {
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-            }
-
-            /* Slightly nicer avatar container */
-            #avatarContainer {
-                background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(248,186,89,0.03));
-                border: 1px solid rgba(255,255,255,0.03);
-            }
-
-            @-webkit-keyframes glowPulse {
-                0%, 100% { 
-                    -webkit-box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                    box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                }
-                50% { 
-                    -webkit-box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                    box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                }
-            }
-            @-moz-keyframes glowPulse {
-                0%, 100% { 
-                    -moz-box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                    box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                }
-                50% { 
-                    -moz-box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                    box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                }
-            }
-            @-o-keyframes glowPulse {
-                0%, 100% { 
-                    box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                }
-                50% { 
-                    box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                }
-            }
-            @keyframes glowPulse {
-                0%, 100% { 
-                    -webkit-box-shadow: 0 0 20px rgba(248, 186, 89, 0.4);
-                    -moz-box-shadow: 0 0 20px rgba(248, 186, 89, 0.4);
-                    box-shadow: 0 0 20px rgba(248, 186, 89, 0.4); 
-                }
-                50% { 
-                    -webkit-box-shadow: 0 0 40px rgba(248, 186, 89, 0.7);
-                    -moz-box-shadow: 0 0 40px rgba(248, 186, 89, 0.7);
-                    box-shadow: 0 0 40px rgba(248, 186, 89, 0.7); 
-                }
-            }
-
-            .glow-pulse {
-                -webkit-animation: glowPulse 2s ease-in-out infinite;
-                -moz-animation: glowPulse 2s ease-in-out infinite;
-                -o-animation: glowPulse 2s ease-in-out infinite;
-                animation: glowPulse 2s ease-in-out infinite;
-            }
-
-            .news-hero-button {
-                -webkit-transition: -webkit-transform 0.3s ease;
-                -moz-transition: -moz-transform 0.3s ease;
-                -o-transition: -o-transform 0.3s ease;
-                transition: transform 0.3s ease;
-            }
-
-            .news-hero-button:hover {
-                -webkit-transform: translateX(-50%) translateY(-5px) !important;
-                -moz-transform: translateX(-50%) translateY(-5px) !important;
-                -o-transform: translateX(-50%) translateY(-5px) !important;
-                transform: translateX(-50%) translateY(-5px) !important;
-            }
-
-            .social-link {
-                color: #ffffff;
-                -webkit-transition: all 0.2s ease;
-                -moz-transition: all 0.2s ease;
-                -o-transition: all 0.2s ease;
-                transition: all 0.2s ease;
-                display: inline-block;
-            }
-
-            .social-link:hover {
-                -webkit-transform: translateY(-2px);
-                -moz-transform: translateY(-2px);
-                -o-transform: translateY(-2px);
-                transform: translateY(-2px);
-            }
-
-            .social-discord:hover { color: #5865F2; }
-            .social-tiktok:hover { color: #000000; }
-            .social-youtube:hover { color: #FF0000; }
-            .social-x:hover { color: #1DA1F2; }
-
-            /* Instance fade animations avec vendor prefixes */
-            @-webkit-keyframes instanceFadeOut {
-                0% { opacity: 1; -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-                100% { opacity: 0; -webkit-transform: translateY(-12px) scale(0.985); transform: translateY(-12px) scale(0.985); }
-            }
-            @-moz-keyframes instanceFadeOut {
-                0% { opacity: 1; -moz-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-                100% { opacity: 0; -moz-transform: translateY(-12px) scale(0.985); transform: translateY(-12px) scale(0.985); }
-            }
-            @-o-keyframes instanceFadeOut {
-                0% { opacity: 1; -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-                100% { opacity: 0; -o-transform: translateY(-12px) scale(0.985); transform: translateY(-12px) scale(0.985); }
-            }
-            @keyframes instanceFadeOut {
-                0% { opacity: 1; -webkit-transform: translateY(0) scale(1); -moz-transform: translateY(0) scale(1); -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-                100% { opacity: 0; -webkit-transform: translateY(-12px) scale(0.985); -moz-transform: translateY(-12px) scale(0.985); -o-transform: translateY(-12px) scale(0.985); transform: translateY(-12px) scale(0.985); }
-            }
-
-            @-webkit-keyframes instanceFadeIn {
-                0% { opacity: 0; -webkit-transform: translateY(12px) scale(0.985); transform: translateY(12px) scale(0.985); }
-                100% { opacity: 1; -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-            }
-            @-moz-keyframes instanceFadeIn {
-                0% { opacity: 0; -moz-transform: translateY(12px) scale(0.985); transform: translateY(12px) scale(0.985); }
-                100% { opacity: 1; -moz-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-            }
-            @-o-keyframes instanceFadeIn {
-                0% { opacity: 0; -o-transform: translateY(12px) scale(0.985); transform: translateY(12px) scale(0.985); }
-                100% { opacity: 1; -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-            }
-            @keyframes instanceFadeIn {
-                0% { opacity: 0; -webkit-transform: translateY(12px) scale(0.985); -moz-transform: translateY(12px) scale(0.985); -o-transform: translateY(12px) scale(0.985); transform: translateY(12px) scale(0.985); }
-                100% { opacity: 1; -webkit-transform: translateY(0) scale(1); -moz-transform: translateY(0) scale(1); -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); }
-            }
-
-            .instance-fade-out {
-                -webkit-animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                -moz-animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                -o-animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            }
-
-            .instance-fade-in {
-                -webkit-animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                -moz-animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                -o-animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            }
-
-            /* Text layer pour smooth content swap */
-            .text-layer {
-                display: inline-block;
-                vertical-align: middle;
-                -webkit-will-change: transform, opacity;
-                will-change: transform, opacity;
-            }
-
-            /* Sidebar position helpers
-               - `.sidebar-left` and `.sidebar-right` are applied to the document body
-                 by the small script below. The layout root (`#layoutRoot`) toggles
-                 `flex-row-reverse` to move the sidebar visually. */
-            .sidebar-left #layoutRoot { }
-            .sidebar-right #layoutRoot { }
-
-            /* When sidebar is on the left, show the selection border on the right
-               so visual selection still reads naturally. */
-            .sidebar-left .instance-item.selected {
-                border-left: none;
-                border-right: 3px solid var(--secondary);
-            }
-
-            .sidebar-left .instance-item:hover:not(.selected) {
-                border-left: none;
-                border-right-color: rgba(248,186,89,0.3);
-            }
-
-            /* Ensure default right-side visuals remain when sidebar on right */
-            .sidebar-right .instance-item.selected {
-                border-left-color: var(--secondary);
-                border-right: none;
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-                * {
-                    animation: none !important;
-                    transition: none !important;
-                }
-            }
-
-            /* Reusable button styles */
+            /* === BOUTONS === */
             .btn {
                 display: inline-flex;
                 align-items: center;
@@ -513,266 +82,614 @@
                 font-weight: 700;
                 cursor: pointer;
                 transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
-                border: 1px solid rgba(255,255,255,0.04);
-                background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+                border: 1px solid rgba(255, 255, 255, 0.04);
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
                 color: #fff;
             }
 
-            .btn:active { transform: translateY(0); }
+            .btn:active {
+                transform: translateY(0);
+            }
 
-            .btn:hover { transform: translateY(-3px); }
+            .btn:hover {
+                transform: translateY(-3px);
+            }
+
+            .btn:focus {
+                outline: none;
+                box-shadow: 0 0 0 4px rgba(248, 186, 89, 0.12), 0 6px 18px rgba(0, 0, 0, 0.45);
+            }
 
             .btn-ghost {
                 background: transparent;
-                border-color: rgba(255,255,255,0.06);
+                border-color: rgba(255, 255, 255, 0.06);
                 box-shadow: none;
                 padding: 0.625rem 0.9rem;
             }
 
-            .btn-icon { padding: 0.5rem; border-radius: 0.75rem; }
+            .btn-icon {
+                padding: 0.5rem;
+                border-radius: 0.75rem;
+            }
 
+            .btn-lg {
+                padding: 0.9rem 1.25rem;
+                border-radius: 1rem;
+                font-size: 1.05rem;
+            }
+
+            /* === VARIANTS DE BOUTONS === */
             .btn-primary {
                 background: linear-gradient(90deg, #FF6A1A, #F8BA59 60%);
-                box-shadow: 0 8px 24px rgba(15,12,10,0.45);
-                border-color: rgba(248,186,89,0.12);
+                box-shadow: 0 8px 24px rgba(15, 12, 10, 0.45);
+                border-color: rgba(248, 186, 89, 0.12);
             }
 
             .btn-danger {
-                background: linear-gradient(90deg,#e74c3c,#c0392b);
-                box-shadow: 0 8px 24px rgba(200,50,50,0.25);
-                border-color: rgba(255,80,80,0.12);
+                background: linear-gradient(90deg, #e74c3c, #c0392b);
+                box-shadow: 0 8px 24px rgba(200, 50, 50, 0.25);
+                border-color: rgba(255, 80, 80, 0.12);
             }
 
-            .btn-lg { padding: 0.9rem 1.25rem; border-radius: 1rem; font-size: 1.05rem; }
-
-            /* Color variants */
             .btn-accent {
-                background: linear-gradient(90deg, rgba(248,186,89,0.95), rgba(255,138,66,0.95));
-                border-color: rgba(248,186,89,0.14);
-                box-shadow: 0 10px 26px rgba(248,186,89,0.08);
+                background: linear-gradient(90deg, rgba(248, 186, 89, 0.95), rgba(255, 138, 66, 0.95));
+                border-color: rgba(248, 186, 89, 0.14);
+                box-shadow: 0 10px 26px rgba(248, 186, 89, 0.08);
             }
 
             .btn-success {
-                background: linear-gradient(90deg,#34d399,#10b981);
-                border-color: rgba(16,185,129,0.12);
-                box-shadow: 0 10px 26px rgba(16,185,129,0.06);
+                background: linear-gradient(90deg, #34d399, #10b981);
+                border-color: rgba(16, 185, 129, 0.12);
+                box-shadow: 0 10px 26px rgba(16, 185, 129, 0.06);
             }
 
             .btn-info {
-                background: linear-gradient(90deg,#60a5fa,#3b82f6);
-                border-color: rgba(59,130,246,0.12);
-                box-shadow: 0 10px 26px rgba(59,130,246,0.06);
+                background: linear-gradient(90deg, #60a5fa, #3b82f6);
+                border-color: rgba(59, 130, 246, 0.12);
+                box-shadow: 0 10px 26px rgba(59, 130, 246, 0.06);
             }
 
             .btn-warning {
-                background: linear-gradient(90deg,#f59e0b,#f97316);
-                border-color: rgba(245,158,11,0.12);
-                box-shadow: 0 10px 26px rgba(245,158,11,0.06);
+                background: linear-gradient(90deg, #f59e0b, #f97316);
+                border-color: rgba(245, 158, 11, 0.12);
+                box-shadow: 0 10px 26px rgba(245, 158, 11, 0.06);
             }
 
-            /* Instance item specific color tweaks */
-            .instance-item {
-                background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-                border-left: 3px solid transparent;
-                transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+            /* === BOUTONS OUTLINE === */
+            .btn-outline-primary {
+                background: transparent;
+                color: #FF6A1A;
+                border: 1px solid rgba(255, 106, 26, 0.18);
             }
 
-            .instance-item:hover:not(.selected) {
-                background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(248,186,89,0.02));
+            .btn-outline-info {
+                background: transparent;
+                color: #3b82f6;
+                border: 1px solid rgba(59, 130, 246, 0.14);
+            }
+
+            .btn-outline-success {
+                background: transparent;
+                color: #10b981;
+                border: 1px solid rgba(16, 185, 129, 0.12);
+            }
+
+            /* === BOUTONS DE LANCEMENT === */
+            .launch-btn {
+                background: linear-gradient(135deg, #FF7A33, #F8BA59 60%);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+                border: 1px solid rgba(255, 255, 255, 0.03);
+            }
+
+            .launch-btn::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.08);
+                transform: translate(-50%, -50%);
+                transition: width 0.45s, height 0.45s;
+            }
+
+            .launch-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+            }
+
+            .launch-btn:active {
+                transform: translateY(0);
+            }
+
+            .launch-btn:active::before {
+                width: 220px;
+                height: 220px;
+            }
+
+            #launch_button,
+            .launch-button {
+                border-radius: 1rem;
+                border: 1px solid rgba(248, 186, 89, 0.12) !important;
+                box-shadow: 0 10px 30px rgba(15, 12, 10, 0.5);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+            }
+
+            #launch_button:hover,
+            .launch-button:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 18px 42px rgba(15, 12, 10, 0.6);
+            }
+
+            #stop_button,
+            .stop-button {
+                border-radius: 1rem;
+                border: 1px solid rgba(255, 100, 100, 0.09) !important;
+            }
+
+            /* === ÉLÉMENTS SPÉCIAUX === */
+            button,
+            input[type="button"],
+            input[type="submit"] {
+                color: #fff;
+
+                border: 1px solid rgba(255, 255, 255, 0.04);
+            }
+
+            button:focus,
+            input[type="button"]:focus,
+            input[type="submit"]:focus,
+            a:focus {
+                outline: none;
+                box-shadow: 0 0 0 4px rgba(248, 186, 89, 0.12), 0 6px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            #avatarContainer {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(248, 186, 89, 0.03));
+
+            }
+            /* Wrapper and menu pour la sélection rapide de compte */
+            .account-switch-wrapper {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                /* Ensure the profile switch sits above instance elements */
+                z-index: 2000;
+                cursor: pointer;
+                user-select: none;
+                outline: none;
+            }
+
+            .account-menu {
+                position: absolute;
+                top: calc(100% + 0.5rem);
+                right: 0;
+                min-width: 220px;
+                max-width: 320px;
+                max-height: 260px;
+                overflow-y: auto;
+                /* Put the menu well above other UI layers (instances, sidebars) */
+                z-index: 3000;
+                padding: 0.25rem;
+                border-radius: 0.5rem;
+                background: rgb(20, 20, 20);
+                border: 1px solid rgba(255,255,255,0.04);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+                display: none;
+            }
+
+            .account-menu.visible { display: block; }
+
+            .account-menu-item {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+                padding: 0.45rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+            }
+
+            .account-menu-item:hover {
+                background: rgba(255,255,255,0.02);
+            }
+
+            .account-menu .no-accounts {
+                padding: 0.6rem;
+                color: #bfc7ce;
+                text-align: center;
+                font-size: 0.95rem;
+            }
+
+            /* === ANIMATIONS ET KEYFRAMES === */
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .animate-spin {
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .fade-in {
+                animation: fadeIn 0.5s ease-out forwards;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .slide-up-anim {
+                animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            /* === BARRES DE PROGRESSION === */
+            .progress-bar-container {
+                background: rgba(255, 255, 255, 0.03);
+            }
+
+            .progress-bar-fill {
+                background: linear-gradient(90deg, #FF6A1A, #F8BA59, #FF6A1A);
+                background-size: 200% 100%;
+                transition: width 0.3s ease-out;
+            }
+
+            @keyframes shimmer {
+                0% {
+                    background-position: 200% 0;
+                }
+
+                100% {
+                    background-position: -200% 0;
+                }
+            }
+
+            @keyframes shimmer-slow {
+                0% {
+                    transform: translateX(-100%);
+                }
+
+                100% {
+                    transform: translateX(100%);
+                }
+            }
+
+            .animate-shimmer-slow {
+                animation: shimmer-slow 8s linear infinite;
+            }
+
+            @keyframes gradient {
+
+                0%,
+                100% {
+                    background-position: 0% 50%;
+                }
+
+                50% {
+                    background-position: 100% 50%;
+                }
+            }
+
+            .animate-gradient {
+                animation: gradient 5s ease infinite;
+            }
+
+            @keyframes ping-slow {
+                0% {
+                    transform: scale(1);
+                    opacity: 0.8;
+                }
+
+                50% {
+                    transform: scale(1.05);
+                    opacity: 0.4;
+                }
+
+                100% {
+                    transform: scale(1.1);
+                    opacity: 0;
+                }
+            }
+
+            .animate-ping-slow {
+                animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            }
+
+            @keyframes slide {
+                0% {
+                    background-position: 0 0;
+                }
+
+                100% {
+                    background-position: 40px 0;
+                }
+            }
+
+            .animate-slide {
+                animation: slide 1s linear infinite;
+            }
+
+            .progress-bar-fill::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+                background-size: 200% 100%;
+                animation: shimmer 2s linear infinite;
+            }
+
+
+
+            @keyframes glowPulse {
+
+                0%,
+                100% {
+                    box-shadow: 0 0 20px rgba(248, 186, 89, 0.4);
+                }
+
+                50% {
+                    box-shadow: 0 0 40px rgba(248, 186, 89, 0.7);
+                }
+            }
+
+            .glow-pulse {
+                animation: glowPulse 2s ease-in-out infinite;
+            }
+
+            .news-hero-button {
+                transition: transform 0.3s ease;
+            }
+
+            .news-hero-button:hover {
+                transform: translateX(-50%) translateY(-5px) !important;
+            }
+
+            .social-link {
+                color: #ffffff;
+                transition: all 0.2s ease;
+                display: inline-block;
+            }
+
+            .social-link:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 18px rgba(0,0,0,0.45);
             }
 
-            .instance-item.selected {
-                background: linear-gradient(90deg, rgba(255,106,26,0.12), rgba(24,24,24,0.6));
+            .social-discord:hover {
+                color: #5865F2;
+            }
+
+            .social-tiktok:hover {
+                color: #000000;
+            }
+
+            .social-youtube:hover {
+                color: #FF0000;
+            }
+
+            .social-x:hover {
+                color: #1DA1F2;
+            }
+
+            @keyframes instanceFadeOut {
+                0% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: translateY(-12px) scale(0.985);
+                }
+            }
+
+            @keyframes instanceFadeIn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(12px) scale(0.985);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            .instance-fade-out {
+                animation: instanceFadeOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+
+            .instance-fade-in {
+                animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+
+            /* === UTILITAIRES === */
+            .text-layer {
+                display: inline-block;
+                vertical-align: middle;
+                will-change: transform, opacity;
+            }
+
+            /* === SIDEBAR POSITIONING === */
+            .sidebar-left #layoutRoot {}
+
+            .sidebar-right #layoutRoot {}
+
+            .sidebar-left .instance-item.selected {
+                border-left: none;
+                border-right: 3px solid var(--secondary);
+            }
+
+            .sidebar-left .instance-item:hover:not(.selected) {
+                border-left: none;
+                border-right-color: rgba(248, 186, 89, 0.3);
+            }
+
+            .sidebar-right .instance-item.selected {
                 border-left-color: var(--secondary);
-                box-shadow: 0 10px 30px rgba(15,12,10,0.45);
+                border-right: none;
             }
 
-            .instance-item .bi-check-circle-fill { color: var(--secondary); }
-
-            /* Small colored badges for instance types (optional) */
-            .instance-badge {
-                width: 10px; height: 10px; border-radius: 999px; display:inline-block; margin-left:6px;
-            }
-            .instance-badge.pvp { background: linear-gradient(90deg,#ef4444,#f97316); }
-            .instance-badge.rp  { background: linear-gradient(90deg,#22c55e,#10b981); }
-            .instance-badge.mod { background: linear-gradient(90deg,#3b82f6,#6366f1); }
-
-            /* Global link and button color rules */
+            /* === STYLES DE LIENS === */
             a {
                 color: var(--secondary);
                 text-decoration: none;
                 transition: color 0.18s ease, transform 0.12s ease;
             }
 
-            a:hover, a:focus {
+            a:hover,
+            a:focus {
                 color: #FF6A1A;
                 text-decoration: underline;
                 transform: translateY(-1px);
             }
 
-            /* Ensure anchor elements can use .btn utilities */
-            a.btn { display: inline-flex; }
-
-            /* Make native buttons more colorful by default */
-            button, input[type="button"], input[type="submit"] {
-                color: #fff;
-                background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-                border: 1px solid rgba(255,255,255,0.04);
+            a.btn {
+                display: inline-flex;
             }
 
-            button:focus, input[type="button"]:focus, input[type="submit"]:focus, a:focus {
-                outline: none;
-                box-shadow: 0 0 0 4px rgba(248,186,89,0.12), 0 6px 18px rgba(0,0,0,0.45);
-            }
-
-            /* Outline variants for bordered buttons */
-            .btn-outline-primary {
-                background: transparent;
-                color: #FF6A1A;
-                border: 1px solid rgba(255,106,26,0.18);
-            }
-
-            .btn-outline-info {
-                background: transparent;
-                color: #3b82f6;
-                border: 1px solid rgba(59,130,246,0.14);
-            }
-
-            .btn-outline-success {
-                background: transparent;
-                color: #10b981;
-                border: 1px solid rgba(16,185,129,0.12);
-            }
-
-            /* Small decorative accent for links inside cards */
             .link-accent::after {
                 content: '';
                 display: inline-block;
                 width: 8px;
                 height: 2px;
-                background: linear-gradient(90deg,#FF6A1A,#F8BA59);
+                background: linear-gradient(90deg, #FF6A1A, #F8BA59);
                 margin-left: 8px;
                 vertical-align: middle;
                 border-radius: 2px;
             }
 
-            /* ===== Launch animations avec vendor prefixes complets ===== */
-            @-webkit-keyframes launchPulse {
-                0% { -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -webkit-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
-                50% { -webkit-transform: translateY(-3px) scale(1.02); transform: translateY(-3px) scale(1.02); -webkit-box-shadow: 0 18px 36px rgba(15,12,10,0.45); box-shadow: 0 18px 36px rgba(15,12,10,0.45); }
-                100% { -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -webkit-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+            /* === BADGES D'INSTANCE === */
+            .instance-badge {
+                width: 10px;
+                height: 10px;
+                border-radius: 999px;
+                display: inline-block;
+                margin-left: 6px;
             }
-            @-moz-keyframes launchPulse {
-                0% { -moz-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -moz-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
-                50% { -moz-transform: translateY(-3px) scale(1.02); transform: translateY(-3px) scale(1.02); -moz-box-shadow: 0 18px 36px rgba(15,12,10,0.45); box-shadow: 0 18px 36px rgba(15,12,10,0.45); }
-                100% { -moz-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -moz-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+
+            .instance-badge.pvp {
+                background: linear-gradient(90deg, #ef4444, #f97316);
             }
-            @-o-keyframes launchPulse {
-                0% { -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
-                50% { -o-transform: translateY(-3px) scale(1.02); transform: translateY(-3px) scale(1.02); box-shadow: 0 18px 36px rgba(15,12,10,0.45); }
-                100% { -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+
+            .instance-badge.rp {
+                background: linear-gradient(90deg, #22c55e, #10b981);
             }
+
+            .instance-badge.mod {
+                background: linear-gradient(90deg, #3b82f6, #6366f1);
+            }
+
+            /* === ACCESSIBILITÉ === */
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
+
+            /* === ANIMATIONS DE LANCEMENT === */
             @keyframes launchPulse {
-                0% { -webkit-transform: translateY(0) scale(1); -moz-transform: translateY(0) scale(1); -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -webkit-box-shadow: 0 10px 24px rgba(15,12,10,0.35); -moz-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
-                50% { -webkit-transform: translateY(-3px) scale(1.02); -moz-transform: translateY(-3px) scale(1.02); -o-transform: translateY(-3px) scale(1.02); transform: translateY(-3px) scale(1.02); -webkit-box-shadow: 0 18px 36px rgba(15,12,10,0.45); -moz-box-shadow: 0 18px 36px rgba(15,12,10,0.45); box-shadow: 0 18px 36px rgba(15,12,10,0.45); }
-                100% { -webkit-transform: translateY(0) scale(1); -moz-transform: translateY(0) scale(1); -o-transform: translateY(0) scale(1); transform: translateY(0) scale(1); -webkit-box-shadow: 0 10px 24px rgba(15,12,10,0.35); -moz-box-shadow: 0 10px 24px rgba(15,12,10,0.35); box-shadow: 0 10px 24px rgba(15,12,10,0.35); }
+                0% {
+                    transform: translateY(0) scale(1);
+                    box-shadow: 0 10px 24px rgba(15, 12, 10, 0.35);
+                }
+
+                50% {
+                    transform: translateY(-3px) scale(1.02);
+                    box-shadow: 0 18px 36px rgba(15, 12, 10, 0.45);
+                }
+
+                100% {
+                    transform: translateY(0) scale(1);
+                    box-shadow: 0 10px 24px rgba(15, 12, 10, 0.35);
+                }
             }
 
-            @-webkit-keyframes shineSlide {
-                0% { -webkit-transform: translateX(-120%); transform: translateX(-120%); }
-                100% { -webkit-transform: translateX(120%); transform: translateX(120%); }
-            }
-            @-moz-keyframes shineSlide {
-                0% { -moz-transform: translateX(-120%); transform: translateX(-120%); }
-                100% { -moz-transform: translateX(120%); transform: translateX(120%); }
-            }
-            @-o-keyframes shineSlide {
-                0% { -o-transform: translateX(-120%); transform: translateX(-120%); }
-                100% { -o-transform: translateX(120%); transform: translateX(120%); }
-            }
             @keyframes shineSlide {
-                0% { -webkit-transform: translateX(-120%); -moz-transform: translateX(-120%); -o-transform: translateX(-120%); transform: translateX(-120%); }
-                100% { -webkit-transform: translateX(120%); -moz-transform: translateX(120%); -o-transform: translateX(120%); transform: translateX(120%); }
+                0% {
+                    transform: translateX(-120%);
+                }
+
+                100% {
+                    transform: translateX(120%);
+                }
             }
 
-            @-webkit-keyframes progressStripe {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-            @-moz-keyframes progressStripe {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
-            @-o-keyframes progressStripe {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
-            }
             @keyframes progressStripe {
-                0% { background-position: 0 0; }
-                100% { background-position: 40px 0; }
+                0% {
+                    background-position: 0 0;
+                }
+
+                100% {
+                    background-position: 40px 0;
+                }
             }
 
-            /* Button pulse + shine — avec vendor prefixes complets */
-            #launch_button.is-launching, .launch-button.is-launching {
-                -webkit-animation: launchPulse 1.2s ease-in-out infinite !important;
-                -moz-animation: launchPulse 1.2s ease-in-out infinite !important;
-                -o-animation: launchPulse 1.2s ease-in-out infinite !important;
+            #launch_button.is-launching,
+            .launch-button.is-launching {
                 animation: launchPulse 1.2s ease-in-out infinite !important;
             }
 
-            /* Subtle moving shine across the button */
-            #launch_button.is-launching::after, .launch-button.is-launching::after {
+            #launch_button.is-launching::after,
+            .launch-button.is-launching::after {
                 content: '' !important;
                 position: absolute !important;
                 inset: 0 !important;
-                background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%) !important;
-                -webkit-transform: translateX(-120%) !important;
-                -moz-transform: translateX(-120%) !important;
-                -o-transform: translateX(-120%) !important;
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0) 100%) !important;
                 transform: translateX(-120%) !important;
                 mix-blend-mode: overlay !important;
                 pointer-events: none !important;
-                -webkit-animation: shineSlide 1.0s linear infinite !important;
-                -moz-animation: shineSlide 1.0s linear infinite !important;
-                -o-animation: shineSlide 1.0s linear infinite !important;
                 animation: shineSlide 1.0s linear infinite !important;
                 border-radius: inherit !important;
             }
 
-            /* Progress bar shimmer for the launch progress fill */
-            #launch_progress_bar, .launch-progress-bar {
+            #launch_progress_bar,
+            .launch-progress-bar {
                 background-size: 200% 100% !important;
-                background-image: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 100%) !important;
-                -webkit-animation: progressStripe 1s linear infinite !important;
-                -moz-animation: progressStripe 1s linear infinite !important;
-                -o-animation: progressStripe 1s linear infinite !important;
+                background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.06) 100%) !important;
                 animation: progressStripe 1s linear infinite !important;
             }
 
-            /* When progress is active, give a glow to the progress container */
-            #launch_progress_bar.active, .launch-progress-bar.active {
-                -webkit-box-shadow: 0 6px 18px rgba(248,186,89,0.12) !important;
-                -moz-box-shadow: 0 6px 18px rgba(248,186,89,0.12) !important;
-                box-shadow: 0 6px 18px rgba(248,186,89,0.12) !important;
+            #launch_progress_bar.active,
+            .launch-progress-bar.active {
+                box-shadow: 0 6px 18px rgba(248, 186, 89, 0.12) !important;
             }
 
-            /* Launch button progress background animations */
             #launch_progress_bg {
-                background: linear-gradient(90deg, rgba(255,106,26,0.3) 0%, rgba(248,186,89,0.4) 50%, rgba(255,106,26,0.3) 100%) !important;
+                background: linear-gradient(90deg, rgba(255, 106, 26, 0.3) 0%, rgba(248, 186, 89, 0.4) 50%, rgba(255, 106, 26, 0.3) 100%) !important;
                 background-size: 200% 100% !important;
-                -webkit-animation: progressStripe 2s linear infinite !important;
-                -moz-animation: progressStripe 2s linear infinite !important;
-                -o-animation: progressStripe 2s linear infinite !important;
                 animation: progressStripe 2s linear infinite !important;
             }
 
-            /* Launch button states */
             #launch_button.is-loading #launch_icon {
-                -webkit-animation: spin 1s linear infinite !important;
-                -moz-animation: spin 1s linear infinite !important;
-                -o-animation: spin 1s linear infinite !important;
                 animation: spin 1s linear infinite !important;
             }
 
@@ -784,7 +701,6 @@
                 opacity: 0 !important;
             }
 
-            /* Styles pour les nouveaux overlays */
             #launch_details_overlay {
                 pointer-events: none;
                 backdrop-filter: blur(2px);
@@ -794,25 +710,123 @@
                 pointer-events: none;
             }
 
-            /* Animation de la barre de progression intégrée */
-            #launch_progress_bar.active {
-                background-image: 
-                    linear-gradient(90deg, #FF6A1A, #F8BA59),
-                    linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%) !important;
-                background-size: 100% 100%, 200% 100% !important;
-                animation: progressStripe 1.5s linear infinite !important;
+            /* === ÉTATS DU BOUTON LAUNCH === */
+            #launch_button.is-loading .relative.z-10,
+            #launch_button.is-launching .relative.z-10 {
+                opacity: 0 !important;
+                visibility: hidden !important;
             }
 
-            /* Position main content centered vertically on the left */
+            #launch_button.is-loading #launch_details_overlay,
+            #launch_button.is-launching #launch_details_overlay {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            #launch_button.is-loading #launch_progress_overlay,
+            #launch_button.is-launching #launch_progress_overlay {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            #launch_button.is-loading #launch_progress_bar,
+            #launch_button.is-launching #launch_progress_bar {
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+            }
+
+            /* === BOUTON STOP === */
+            #stop_button {
+                background: linear-gradient(90deg, #e74c3c, #c0392b) !important;
+                border: 1px solid rgba(255, 100, 100, 0.2) !important;
+                box-shadow: 0 8px 24px rgba(200, 50, 50, 0.35) !important;
+            }
+
+            #stop_button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 30px rgba(200, 50, 50, 0.45) !important;
+            }
+
+            /* Contrôle explicite de l'affichage des boutons */
+            #launch_button.btn-hidden {
+                display: none !important;
+            }
+
+            /* Contrôles quand instances actives */
+            #running_controls {
+                display: none;
+            }
+
+            #running_controls.visible {
+                display: flex !important;
+            }
+
+            #add_instance_button:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+
+            #add_instance_button:disabled:hover {
+                transform: none !important;
+                box-shadow: none !important;
+            }
+
+            #instance_counter.visible {
+                display: block !important;
+            }
+
+            /* === LAUNCH DETAILS === */
+            #launch_details {
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+
+            #launch_details.show {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
+            }
+
+            /* === BARRE DE PROGRESSION VISIBLE === */
+            #launch_progress_bar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                background: linear-gradient(90deg, #FF6A1A, #F8BA59) !important;
+                border-radius: inherit;
+                z-index: 5;
+            }
+
+            /* === POSITIONNEMENT === */
             .main-left-center {
                 position: absolute;
                 left: 3.5rem;
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 20;
-                
                 width: auto;
             }
+
+            /* Positionner les stats en haut à gauche de la page */
+            .stats-top-left {
+                position: absolute;
+                top: 1.75rem;
+                /* proche du bord supérieur */
+                left: 2rem;
+                /* proche du bord gauche */
+
+                display: flex;
+                gap: 1rem;
+                align-items: flex-start;
+                padding: 0.25rem;
+                border-radius: 0.75rem;
+                background: rgba(6, 6, 6, 0.28);
+                backdrop-filter: blur(6px);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+            }
+
+
 
             @media (max-width: 900px) {
                 .main-left-center {
@@ -823,21 +837,18 @@
                     top: auto;
                 }
             }
-
-        </style>
         </style>
 
-        <!-- Sidebar gauche -->
+        <!-- === SIDEBAR === -->
         <aside class="w-64 sticky top-0 h-screen">
             <div class="glass-sidebar h-full flex flex-col py-6 px-4">
-                
 
 
                 <!-- Info joueur -->
                 <div class="mb-6 mt-6">
                     <div class="glass-card rounded-lg  p-3">
                         <div class="flex items-center gap-3">
-                            
+
                             <div class="flex-1 min-w-0">
                                 <div id="username" class="text-white font-semibold text-sm truncate">Chargement...</div>
                                 <div class="flex items-center gap-1.5 mt-1">
@@ -845,8 +856,14 @@
                                     <span class="text-gray-400 text-xs">En ligne</span>
                                 </div>
                             </div>
-                            <div id="avatarContainer" class="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0">
-                                <!-- Avatar généré dynamiquement -->
+                            <div class="account-switch-wrapper">
+                                <div id="avatarContainer"
+                                    class="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0">
+                                    <!-- Avatar généré dynamiquement -->
+                                </div>
+                       
+
+                                <div id="account_menu" class="account-menu" role="menu" aria-hidden="true"></div>
                             </div>
                         </div>
                     </div>
@@ -864,12 +881,12 @@
                 </div>
 
                 <!-- Boutons d'action du bas -->
-                    <div class="mt-6 space-y-3">
+                <div class="mt-6 space-y-3">
                     <button id="settingsMediaButton" class="btn btn-ghost w-full justify-start">
                         <i class="bi bi-gear-fill text-lg"></i>
                         <span class="text-sm font-medium">Paramètres</span>
                     </button>
-                    
+
                     <!-- <button id="openNewsButton" class="btn btn-ghost w-full justify-start">
                         <i class="bi bi-newspaper text-lg"></i>
                         <span class="text-sm font-medium">Actualités</span>
@@ -884,332 +901,227 @@
                 <!-- Réseaux sociaux -->
                 <div class="mt-6 pt-4 border-t border-white/10">
                     <div class="flex justify-around">
-                        <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord" class="social-link social-discord" aria-label="Discord">
+                        <a href="https://discord.multigames-studio.fr/" target="_blank" title="Discord"
+                            class="social-link social-discord" aria-label="Discord">
                             <i class="bi bi-discord text-xl"></i>
                         </a>
-                        <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok" class="social-link social-tiktok" aria-label="TikTok">
+                        <a href="https://www.tiktok.com/@multigames0studio" target="_blank" title="TikTok"
+                            class="social-link social-tiktok" aria-label="TikTok">
                             <i class="bi bi-tiktok text-xl"></i>
                         </a>
-                        <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube" class="social-link social-youtube" aria-label="YouTube">
+                        <a href="https://www.youtube.com/@Multigames-Studio" target="_blank" title="YouTube"
+                            class="social-link social-youtube" aria-label="YouTube">
                             <i class="bi bi-youtube text-xl"></i>
                         </a>
-                        <a href="https://x.com/MultigamesStd" target="_blank" title="X" class="social-link social-x" aria-label="X">
+                        <a href="https://x.com/MultigamesStd" target="_blank" title="X" class="social-link social-x"
+                            aria-label="X">
                             <i class="bi bi-twitter text-xl"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </aside>
-        <!-- Contenu principal -->
+
+        <!-- === CONTENU PRINCIPAL === -->
         <main class="flex-1 flex flex-col h-screen max-h-screen overflow-hidden bg-transparent relative">
-            
-            <!-- Hero Section avec design gaming premium -->
-            <div class="flex-1 relative group overflow-hidden">
-              
-
-                <!-- Particle effect decorations -->
-                <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-[#F8BA59] rounded-full opacity-60 animate-ping"></div>
-                    <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40 animate-pulse" style="animation-delay: 0.5s;"></div>
-                    <div class="absolute bottom-1/3 left-1/2 w-2 h-2 bg-[#FF6A1A] rounded-full opacity-50 animate-ping" style="animation-delay: 1s;"></div>
-                </div>
-
-                <!-- Hero background image (Tailwind utilities) -->
-                <div class="absolute inset-0 bg-cover bg-center brightness-[0.45] contrast-[1.05] pointer-events-none" style="background-image: url('./assets/images/backgrounds/hero-landing.svg');" aria-hidden="true"></div>
-
-                <!-- Content Container -->
-                <div class="relative z-10 h-full flex flex-col justify-between p-10">
-
-                    <!-- Inline mini-pub Hardcore (Tailwind utilities, positioned inside content) -->
-
-                   <!--  <div id="hardcorePromo" class="absolute right-5 bottom-5 z-50 w-100 max-w-full" aria-live="polite">
-                        <div class="glass-card hc-card relative overflow-hidden bg-cover bg-center" role="region" aria-label="Publicité Hardcore" style="background-image: url('https://play-lh.googleusercontent.com/VEKyd3t2TLsW16ga3CxvZoO4tv_PY3ALETf-s7o_iZEqqoh831Yn7PMpKaisr4_WtuY=w526-h296');">
-                            <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/50 pointer-events-none"></div>
-                            <img src="https://media.forgecdn.net/avatars/thumbnails/479/106/256/256/637776002185322260.png" alt="Hardcore" class="hc-thumb relative m-3 w-13 h-13 rounded-md object-cover" onerror="this.style.display='none'">
-                            <div class="relative flex-1 min-w-0 p-3 pr-4">
-                                <div class="text-white font-bold text-sm">Multigames — Hardcore</div>
-                                <div class="text-white/80 text-xs mt-1">Survival intense • Permadeath • Events hebdos</div>
-                                <div class="mt-3 flex gap-2">
-                                    <button id="hcJoinBtn" class="btn btn-primary btn-sm">Rejoindre</button>
-                                    <button id="hcMoreBtn" class="btn btn-ghost btn-sm">Détails</button>
-                                </div>
+            <!-- Statistiques du serveur -->
+            <div class="stats-top-left">
+                <div class="flex gap-4">
+                    <div id="playerCountCard"
+                        class="glass-card px-4 py-3 rounded-xl border border-[#F8BA59]/20 hover:border-[#F8BA59]/50 transition-all duration-300 group cursor-pointer"
+                        style="display: none;">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6A1A]/20 to-[#F8BA59]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="bi bi-people-fill text-[#F8BA59] text-lg"></i>
                             </div>
-                          
+                            <div>
+                                <div id="playerCount" class="text-white font-bold text-lg">-</div>
+                                <div class="text-gray-400 text-xs uppercase tracking-wider">Joueurs</div>
+                            </div>
                         </div>
                     </div>
 
-                    
-                    <div id="ytPromo" class="absolute right-5 bottom-28 z-50 w-80 max-w-full" aria-live="polite">
-                        <div class="glass-card relative overflow-hidden p-3">
-                            <div class="flex items-start gap-3">
-                                <img src="./assets/images/icons/yt-short.svg" alt="YouTube Short" class="w-12 h-12 rounded-md object-cover">
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-white font-bold text-sm">Dernier Short</div>
-                                    <div class="text-white/80 text-xs mt-1">Notre dernière vidéo courte — regardez maintenant</div>
-                                    <div class="mt-3 flex gap-2">
-                                        <button id="ytViewBtn" class="btn btn-primary btn-sm" aria-haspopup="dialog" aria-controls="ytModal">Voir le Short</button>
-                                        <a href="https://multigames-studio.fr/embed.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Ouvrir embed</a>
-                                    </div>
-                                </div>
+                    <div id="serverStatusCard"
+                        class="glass-card px-4 py-3 rounded-xl border transition-all duration-300 group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-400/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div id="serverStatusDot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                            </div>
+                            <div>
+                                <div id="serverStatusText" class="text-white font-bold text-lg">-</div>
+                                <div class="text-gray-400 text-xs uppercase tracking-wider">Statut</div>
                             </div>
                         </div>
-                    </div>-->
+                    </div>
+                </div>
+            </div>
+            <!-- Hero Section avec design gaming premium -->
+            <div class="flex-1 relative group overflow-hidden">
 
-                    <script>
-                        (function(){
-                            var ytBtn = document.getElementById('ytViewBtn');
-                            var container = document.querySelector('.relative.z-10') || document.body;
-                            if(!ytBtn) return;
 
-                            function buildModal(){
-                                if(document.getElementById('ytModal')) return document.getElementById('ytModal');
+                <!-- Hero background image -->
+                <div class="absolute inset-0 bg-cover bg-center brightness-[0.45] contrast-[1.05] pointer-events-none"
+                    style="background-image: url('./assets/images/backgrounds/hero-landing.svg');" aria-hidden="true">
+                </div>
 
-                                var overlay = document.createElement('div');
-                                overlay.id = 'ytModal';
-                                overlay.className = 'fixed inset-0 z-60 flex items-center justify-center bg-black/70';
-                                overlay.setAttribute('role','dialog');
-                                overlay.setAttribute('aria-modal','true');
-
-                                var wrapper = document.createElement('div');
-                                wrapper.className = 'relative w-[min(900px,95%)] max-w-[900px] p-4';
-
-                                var closeBtn = document.createElement('button');
-                                closeBtn.id = 'ytModalClose';
-                                closeBtn.className = 'absolute top-3 right-3 btn btn-ghost btn-icon';
-                                closeBtn.setAttribute('aria-label','Fermer');
-                                closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
-
-                                var playerWrap = document.createElement('div');
-                                playerWrap.className = 'aspect-video rounded-lg overflow-hidden glass-card';
-
-                                var iframe = document.createElement('iframe');
-                                // Use the provided embed page and request autoplay — user click should allow autoplay
-                                iframe.src = 'https://multigames-studio.fr/embed.html?autoplay=1';
-                                iframe.frameBorder = '0';
-                                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                                iframe.setAttribute('allowfullscreen','');
-                                iframe.style.width = '100%';
-                                iframe.style.height = '100%';
-                                iframe.style.border = '0';
-
-                                playerWrap.appendChild(iframe);
-                                wrapper.appendChild(closeBtn);
-                                wrapper.appendChild(playerWrap);
-                                overlay.appendChild(wrapper);
-
-                                container.appendChild(overlay);
-
-                                // Fade in
-                                overlay.style.opacity = '0';
-                                overlay.style.transition = 'opacity 160ms ease';
-                                setTimeout(function(){ overlay.style.opacity = '1'; }, 10);
-
-                                // Handlers
-                                closeBtn.addEventListener('click', closeModal);
-                                overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
-                                window.addEventListener('keydown', escHandler);
-                                // Focus
-                                closeBtn.focus();
-
-                                return overlay;
-                            }
-
-                            function escHandler(e){ if(e.key === 'Escape') closeModal(); }
-
-                            function closeModal(){
-                                var overlay = document.getElementById('ytModal');
-                                if(!overlay) return;
-                                // stop playback by blanking iframe src before removal
-                                var ifr = overlay.querySelector('iframe'); if(ifr) try{ ifr.src = 'about:blank'; }catch(e){}
-                                overlay.style.opacity = '0';
-                                window.removeEventListener('keydown', escHandler);
-                                setTimeout(function(){ overlay.remove(); }, 180);
-                            }
-
-                            ytBtn.addEventListener('click', function(){
-                                if(document.getElementById('ytModal')){
-                                    closeModal();
-                                } else {
-                                    buildModal();
-                                }
-                            });
-                        })();
-                    </script>
-
-                    <script>
-                        (function(){
-                            var promo = document.getElementById('hardcorePromo');
-                            var join = document.getElementById('hcJoinBtn');
-                            var more = document.getElementById('hcMoreBtn');
-                            var close = document.getElementById('hcCloseBtn');
-
-                            function showToast(text){
-                                var t = document.createElement('div');
-                                t.className = 'absolute right-5 z-50 bg-black/70 text-white px-3 py-2 rounded-md text-sm backdrop-blur';
-                                t.textContent = text;
-                                t.style.bottom = '5.5rem';
-                                var container = document.querySelector('.relative.z-10');
-                                (container || document.body).appendChild(t);
-                                setTimeout(function(){ t.style.opacity=1; }, 10);
-                                setTimeout(function(){ t.style.opacity=0; setTimeout(function(){ t.remove(); },300); }, 2500);
-                            }
-
-                            if(join){
-                                join.addEventListener('click', function(){
-                                    try{ navigator.clipboard.writeText('hc.multigames-studio.fr'); showToast('IP copiée: hc.multigames-studio.fr'); }
-                                    catch(e){ showToast('IP: hc.multigames-studio.fr'); }
-                                });
-                            }
-                            if(more){
-                                more.addEventListener('click', function(){
-                                    var details = document.getElementById('hcDetailsInline');
-                                    if(!details){
-                                        details = document.createElement('div');
-                                        details.id = 'hcDetailsInline';
-                                        details.className = 'glass-card p-4 mt-3 relative';
-                                        details.style.maxWidth = '360px';
-                                        details.innerHTML = '<div class="text-white font-bold">Hardcore — Détails</div><div class="text-gray-300 text-sm mt-2">Permadeath activé. Events hebdomadaires, classement, récompenses. IP: <strong>hc.multigames-studio.fr</strong></div>';
-                                        promo.parentNode.appendChild(details);
-                                    } else {
-                                        details.scrollIntoView({behavior:'smooth', block:'nearest'});
-                                    }
-                                });
-                            }
-                            if(close){ close.addEventListener('click', function(){ promo.style.display='none'; }); }
-                        })();
-                    </script>
-                    
+                <!-- Content Container -->
+                <div class="relative z-10 h-full flex flex-col justify-between p-10">
                     <!-- Main Content Section -->
                     <div class="space-y-8 pb-8 main-left-center">
+
                         <!-- Status Badge Premium -->
-                        <div id="statusBadge" class="status-badge inline-flex items-center gap-3 glass-card px-5 py-2.5 rounded-full w-fit border border-gray-500/30 shadow-lg" style="display: none;">
+                        <div id="statusBadge"
+                            class="status-badge inline-flex items-center gap-3 glass-card px-5 py-2.5 rounded-full w-fit border border-gray-500/30 shadow-lg"
+                            style="display: none;">
                             <div class="relative">
-                                <div id="statusBadgeDot" class="status-badge-dot w-2.5 h-2.5 rounded-full bg-gray-400"></div>
-                                <div id="statusBadgePing" class="status-badge-ping absolute inset-0 w-2.5 h-2.5 rounded-full bg-gray-400" style="display: none;"></div>
+                                <div id="statusBadgeDot" class="status-badge-dot w-2.5 h-2.5 rounded-full bg-gray-400">
+                                </div>
+                                <div id="statusBadgePing"
+                                    class="status-badge-ping absolute inset-0 w-2.5 h-2.5 rounded-full bg-gray-400"
+                                    style="display: none;"></div>
                             </div>
-                            <span id="statusBadgeText" class="status-badge-text text-gray-400 text-xs font-bold uppercase tracking-widest">Vérification...</span>
-                            <div id="latencyDivider" class="latency-divider w-px h-4 bg-white/20" style="display: none;"></div>
-                            <span id="latencyText" class="latency-text text-white/60 text-xs font-medium" style="display: none;"></span>
+                            <span id="statusBadgeText"
+                                class="status-badge-text text-gray-400 text-xs font-bold uppercase tracking-widest">Vérification...</span>
+                            <div id="latencyDivider" class="latency-divider w-px h-4 bg-white/20"
+                                style="display: none;"></div>
+                            <span id="latencyText" class="latency-text text-white/60 text-xs font-medium"
+                                style="display: none;"></span>
                         </div>
 
-                        <!-- Title avec effet 3D -->
+                        <!-- Titre principal avec effet 3D -->
                         <div class="space-y-4">
-                            <h1 class="text-7xl font-mojang text-white mb-2 server-title tracking-tighter leading-none relative">
+                            <h1
+                                class="text-7xl font-mojang text-white mb-2 server-title tracking-tighter leading-none relative">
                                 MultiGames Studio
                             </h1>
-                            
+
                             <!-- Subtitle stylé -->
-                            <p class="text-xl text-gray-300 server-desc font-light tracking-wide max-w-3xl leading-relaxed relative">
+                            <p
+                                class="text-xl text-gray-300 server-desc font-light tracking-wide max-w-3xl leading-relaxed relative">
                                 <span class="text-layer current">
-                                    Plongez dans une aventure épique où chaque instant compte. 
-                                    <span class="text-[#F8BA59] font-semibold">Rejoignez des milliers de joueurs</span> 
+                                    Plongez dans une aventure épique où chaque instant compte.
+                                    <span class="text-[#F8BA59] font-semibold">Rejoignez des milliers de joueurs</span>
                                     et forgez votre légende.
                                 </span>
                             </p>
                         </div>
-                        
-                        <!-- Version & Technical Info Cards -->
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <!-- Removed Version & Loader cards (user requested cleaner layout) -->
 
-                            <!-- Launch area (minimal, no icon/card) -->
-                            <div class="w-full max-w-sm flex flex-col items-stretch">
-                               
-
-                                <div class="mt-4">
-                                    <button id="launch_button" class="launch-button relative w-full h-14 btn btn-primary launch-btn flex items-center justify-center gap-3 text-lg font-black overflow-hidden">
-                                        <!-- Background de base -->
-                                        <div id="launch_progress_bg" class="absolute inset-0 bg-gradient-to-r from-[#FF6A1A]/20 to-[#F8BA59]/20 opacity-0 transition-opacity duration-500"></div>
-                                        
-                                        <!-- Barre de progression intégrée dans le bouton -->
-                                        <div id="launch_progress_bar" class="absolute inset-0 bg-gradient-to-r from-[#FF6A1A] to-[#F8BA59] transition-all duration-300 opacity-0 rounded-lg" style="width: 0%;"></div>
-                                        
-                                        <!-- Contenu du bouton -->
-                                        <div class="relative z-10 flex items-center gap-3">
-                                            <i id="launch_icon" class="bi bi-play-fill text-2xl transition-all duration-300"></i>
-                                            <span id="launch_text" class="transition-all duration-300">Lancer</span>
-                                        </div>
-                                        
-                                        <!-- Texte de progression affiché sur la barre -->
-                                        <div id="launch_details_overlay" class="absolute inset-0 flex items-center justify-center z-20 opacity-0 transition-opacity duration-300">
-                                            <span id="launch_details_text" class="text-white text-sm font-bold drop-shadow-lg">Préparation...</span>
-                                        </div>
-                                        
-                                        <!-- Pourcentage affiché dans le coin -->
-                                        <div id="launch_progress_overlay" class="absolute top-2 right-3 z-20 opacity-0 transition-opacity duration-300">
-                                            <span id="launch_progress_label" class="text-white text-xs font-bold drop-shadow-lg">0%</span>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <div class="mt-3">
-                                    <button id="stop_button" style="display:none;" class="stop-button w-full h-14 btn btn-danger launch-btn flex items-center justify-center gap-3 text-lg font-black">
-                                        <i class="bi bi-stop-fill text-2xl"></i>
-                                        <span>Arrêter</span>
-                                    </button>
-                                </div>
-
-                                
+                        <!-- Zone de lancement -->
+                        <div class="w-full max-w-sm flex flex-col items-stretch">
+                            <!-- Bouton de sélection de serveur -->
+                            <div class="mb-3" id="server_selection_container" style="display: none;">
+                                <button id="server_selection_button"
+                                    class="w-full h-12 btn btn-ghost flex items-center justify-start gap-3 text-sm font-medium border border-white/10 hover:border-[#F8BA59]/30">
+                                    <i class="bi bi-server text-[#F8BA59] text-lg"></i>
+                                    <span>Chargement...</span>
+                                </button>
                             </div>
 
-                            <div id="modsCard" class="glass-card px-5 py-3 rounded-xl border border-white/10 hover:border-[#F8BA59]/40 transition-all duration-300 hover:scale-105 cursor-pointer group" style="display: none;">
+                            <!-- ===== ZONE DE LANCEMENT REFAITE ===== -->
+                            <div id="launch_area" class="mt-4 space-y-3">
+
+                                <!-- Statut de téléchargement -->
+                                <div id="launch_status" class="hidden">
+                                    <div class="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span id="launch_status_text"
+                                                class="text-white/90 text-sm font-medium">Préparation...</span>
+                                            <span id="launch_status_percent"
+                                                class="text-[#F8BA59] text-sm font-bold">0%</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <div id="launch_status_bar"
+                                                class="h-full bg-gradient-to-r from-[#FF6A1A] to-[#F8BA59] rounded-full transition-all duration-300 ease-out"
+                                                style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Compteur d'instances actives -->
+                                <div id="instance_counter" class="hidden">
+                                    <div class="flex items-center gap-2 text-white/70 text-sm mb-2">
+                                        <i class="bi bi-layers text-[#F8BA59]"></i>
+                                        <span id="instance_counter_text">1/3 instance active</span>
+                                    </div>
+                                </div>
+
+                                <!-- Bouton LANCER (quand aucune instance) -->
+                                <button id="launch_button"
+                                    class="group relative w-full h-14 rounded-xl font-bold text-lg text-white overflow-hidden transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-[#FF6A1A] to-[#F8BA59] shadow-lg shadow-orange-500/25">
+                                    <!-- Effet de brillance au hover -->
+                                    <div
+                                        class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                                    </div>
+
+                                    <!-- Contenu du bouton -->
+                                    <div id="launch_button_content"
+                                        class="relative z-10 flex items-center justify-center gap-3">
+                                        <i id="launch_button_icon" class="bi bi-play-fill text-2xl"></i>
+                                        <span id="launch_button_text">Lancer</span>
+                                    </div>
+                                </button>
+
+                                <!-- Conteneur STOP + PLAY (quand instance active) -->
+                                <div id="running_controls" class="gap-2">
+                                    <!-- Bouton ARRÊTER -->
+                                    <button id="stop_button"
+                                        class="group relative flex-1 h-14 rounded-xl font-bold text-lg text-white overflow-hidden transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98] bg-gradient-to-r from-red-600 to-red-500 shadow-lg shadow-red-500/25">
+                                        <!-- Effet de brillance au hover -->
+                                        <div
+                                            class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                                        </div>
+
+                                        <!-- Contenu du bouton -->
+                                        <div id="stop_button_content"
+                                            class="relative z-10 flex items-center justify-center gap-3">
+                                            <i id="stop_button_icon" class="bi bi-stop-fill text-2xl"></i>
+                                            <span id="stop_button_text">Arrêter</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- Bouton PLAY (lancer une instance supplémentaire, max 3) -->
+                                    <button id="add_instance_button"
+                                        class="group relative w-14 h-14 rounded-xl font-bold text-lg text-white overflow-hidden transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-r from-[#FF6A1A] to-[#F8BA59] shadow-lg shadow-orange-500/25"
+                                        title="Lancer une instance supplémentaire (max 3)">
+                                        <!-- Effet de brillance au hover -->
+                                        <div
+                                            class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                                        </div>
+
+                                        <!-- Contenu du bouton -->
+                                        <div class="relative z-10 flex items-center justify-center">
+                                            <i class="bi bi-plus-lg text-2xl"></i>
+                                        </div>
+                                    </button>
+                                </div>
+
+                            </div>
+                            <!-- ===== FIN ZONE DE LANCEMENT ===== -->
+
+                            <!-- Carte des mods (optionnelle) -->
+                            <div id="modsCard"
+                                class="glass-card px-5 py-3 rounded-xl border border-white/10 hover:border-[#F8BA59]/40 transition-all duration-300 hover:scale-105 cursor-pointer group mt-4"
+                                style="display: none;">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
                                         <i class="bi bi-puzzle text-blue-400 text-lg"></i>
                                     </div>
                                     <div>
-                                        <div class="text-gray-400 text-[10px] uppercase tracking-wider font-semibold">Mods</div>
+                                        <div class="text-gray-400 text-[10px] uppercase tracking-wider font-semibold">
+                                            Mods</div>
                                         <div id="modsCount" class="text-white font-bold text-base">-</div>
                                     </div>
                                 </div>
                             </div>
-
-                            
-                        </div>
-                    </div>
-
-                    <!-- Top Section avec stats -->
-                    <div class="flex justify-between items-start">
-                        <!-- Server Stats Cards -->
-                        <div class="flex gap-4">
-                            <div id="playerCountCard" class="glass-card px-4 py-3 rounded-xl border border-[#F8BA59]/20 hover:border-[#F8BA59]/50 transition-all duration-300 group cursor-pointer" style="display: none;">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6A1A]/20 to-[#F8BA59]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <i class="bi bi-people-fill text-[#F8BA59] text-lg"></i>
-                                    </div>
-                                    <div>
-                                        <div id="playerCount" class="text-white font-bold text-lg">-</div>
-                                        <div class="text-gray-400 text-xs uppercase tracking-wider">Joueurs</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="serverStatusCard" class="glass-card px-4 py-3 rounded-xl border transition-all duration-300 group cursor-pointer">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-400/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <div id="serverStatusDot" class="w-3 h-3 rounded-full bg-gray-400"></div>
-                                    </div>
-                                    <div>
-                                        <div id="serverStatusText" class="text-white font-bold text-lg">-</div>
-                                        <div class="text-gray-400 text-xs uppercase tracking-wider">Statut</div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
 
                     </div>
-
-                    
-
                 </div>
-            </div>
-
         </main>
-
-            <!-- moved: promo will be rendered inside content container as inline element -->
-
-      
     </div>
 
     <!-- Éléments cachés pour compatibilité JS -->
@@ -1218,87 +1130,93 @@
             <span id="user_text"><%- lang('landing.usernamePlaceholder') %></span>
             <button id="avatarOverlay"><%- lang('landing.usernameEditButton') %></button>
         </div>
-        <div id="launch_content">
-            <button id="server_selection_button"><%- lang('landing.launchButtonPlaceholder') %></button>
-        </div>
-        <div id="launch_details">
-            <span id="launch_details_text">Préparation du lancement...</span>
-        </div>
-        <div id="launch_progress">
-            <div id="launch_progress_bar" class="launch-progress-bar" style="width: 0%;"></div>
-            <span id="launch_progress_label">0%</span>
-        </div>
-        <div id="mojangStatusContainer">
-            <span id="mojang_status_icon">&#8226;</span>
-            <div id="mojangStatusTooltip">
-                <div id="mojangStatusTooltipTitle"><%- lang('landing.mojangStatusTooltipTitle') %></div>
-                <div id="mojangStatusEssentialContainer"></div>
-                <div id="mojangStatusNEContainer">
-                    <div class="mojangStatusNEBar"></div>
-                    <div id="mojangStatusNETitle"><%- lang('landing.mojangStatusNETitle') %></div>
-                    <div class="mojangStatusNEBar"></div>
-                </div>
-                <div id="mojangStatusNonEssentialContainer"></div>
-            </div>
-        </div>
+
     </div>
 
     <!-- Modal hors ligne -->
     <div id="offlineModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden">
-            <div class="glass-card rounded-xl p-8 max-w-md text-center">
+        <div class="glass-card rounded-xl p-8 max-w-md text-center">
             <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                 <i class="bi bi-wifi-off text-red-400 text-3xl"></i>
             </div>
             <h2 class="text-white text-2xl font-bold mb-3">Connexion requise</h2>
-            <p class="text-gray-300 mb-6">Vous êtes hors-ligne. Veuillez vous connecter à Internet pour utiliser le launcher.</p>
+            <p class="text-gray-300 mb-6">Vous êtes hors-ligne. Veuillez vous connecter à Internet pour utiliser le
+                launcher.</p>
             <button id="retryOfflineButton" class="btn btn-primary">
                 Réessayer
             </button>
         </div>
     </div>
 
-        <!-- Scripts -->
-        <script>
-        (function(){
-            function applySide(side){
+    <!-- Scripts d'initialisation globaux -->
+    <script>
+        // Fonctions globales pour éviter les erreurs ReferenceError
+        window.refreshServerStatus = function () {
+            console.log('[LANDING] refreshServerStatus called - placeholder function');
+            return Promise.resolve();
+        };
+
+        window.updateServerStatus = function () {
+            console.log('[LANDING] updateServerStatus called - placeholder function');
+        };
+
+        window.showServerStatus = function () {
+            console.log('[LANDING] showServerStatus called - placeholder function');
+        };
+
+        // Fonction pour vérifier si un élément existe avant de l'utiliser
+        window.safeSetElement = function (elementId, content, property = 'innerHTML') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element[property] = content;
+            } else {
+                console.warn(`[LANDING] Element ${elementId} not found`);
+            }
+        };
+    </script>
+
+    <!-- Script de gestion de la sidebar -->
+    <script>
+        (function () {
+            function applySide(side) {
                 var root = document.getElementById('layoutRoot');
                 var body = document.body;
                 var btn = document.getElementById('toggleSidebarSideButton');
-                if(!root) return;
-                if(side === 'left'){
+                if (!root) return;
+                if (side === 'left') {
                     root.classList.remove('flex-row-reverse');
                     body.classList.add('sidebar-left');
                     body.classList.remove('sidebar-right');
-                    if(btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset-reverse text-lg"></i><span class="text-sm font-medium">Barre: Gauche</span>';
-                    if(btn) btn.setAttribute('data-side','left');
+                    if (btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset-reverse text-lg"></i><span class="text-sm font-medium">Barre: Gauche</span>';
+                    if (btn) btn.setAttribute('data-side', 'left');
                 } else {
                     root.classList.add('flex-row-reverse');
                     body.classList.add('sidebar-right');
                     body.classList.remove('sidebar-left');
-                    if(btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset text-lg"></i><span class="text-sm font-medium">Barre: Droite</span>';
-                    if(btn) btn.setAttribute('data-side','right');
+                    if (btn) btn.innerHTML = '<i class="bi bi-layout-sidebar-inset text-lg"></i><span class="text-sm font-medium">Barre: Droite</span>';
+                    if (btn) btn.setAttribute('data-side', 'right');
                 }
-                try{ localStorage.setItem('sidebarSide', side); }catch(e){}
-                try{
-                    if(typeof window.forceValidateSelectedAccount === 'function'){
+                try { localStorage.setItem('sidebarSide', side); } catch (e) { }
+                try {
+                    if (typeof window.forceValidateSelectedAccount === 'function') {
                         // Trigger a validation after user changes sidebar side (non-intrusive)
                         window.forceValidateSelectedAccount()
                     }
-                }catch(e){}
+                } catch (e) { }
             }
 
-            function toggleSide(){
+            function toggleSide() {
                 var cur = 'right';
-                try{ cur = localStorage.getItem('sidebarSide') || 'right'; }catch(e){}
+                try { cur = localStorage.getItem('sidebarSide') || 'right'; } catch (e) { }
                 var next = cur === 'right' ? 'left' : 'right';
                 applySide(next);
             }
 
             // Use event delegation so the handler survives DOM replacements.
-            document.addEventListener('click', function(e){
-                if(!e || !e.target) return;
+            document.addEventListener('click', function (e) {
+                if (!e || !e.target) return;
                 var btn = e.target.closest && e.target.closest('#toggleSidebarSideButton');
-                if(btn){
+                if (btn) {
                     e.preventDefault();
                     toggleSide();
                 }
@@ -1306,32 +1224,32 @@
 
             // Apply saved state on window load and re-apply shortly after to
             // handle other scripts that may modify the sidebar DOM.
-            window.addEventListener('load', function(){
+            window.addEventListener('load', function () {
                 var saved = 'right';
-                try{ saved = localStorage.getItem('sidebarSide') || 'right'; }catch(e){}
+                try { saved = localStorage.getItem('sidebarSide') || 'right'; } catch (e) { }
                 applySide(saved);
-                setTimeout(function(){
-                    try{ applySide(localStorage.getItem('sidebarSide') || saved); }catch(e){}
+                setTimeout(function () {
+                    try { applySide(localStorage.getItem('sidebarSide') || saved); } catch (e) { }
                 }, 80);
             });
 
             // Observe DOM mutations to handle cases where other scripts replace
             // the sidebar content (which may recreate the toggle button). When
             // the toggle appears, reapply the saved side and update the button.
-            try{
-                var _sidebarObserver = new MutationObserver(function(mutations){
+            try {
+                var _sidebarObserver = new MutationObserver(function (mutations) {
                     console.debug('[LANDING] Sidebar MutationObserver triggered', mutations && mutations.length)
                     var btn = document.getElementById('toggleSidebarSideButton');
                     // If the button doesn't exist, try to locate a replacement by heuristics
-                    if(!btn){
-                        try{
+                    if (!btn) {
+                        try {
                             var candidates = Array.from(document.querySelectorAll('button, a'))
-                            for(var i=0;i<candidates.length;i++){
+                            for (var i = 0; i < candidates.length; i++) {
                                 var c = candidates[i]
-                                var txt = (c.textContent||'').trim()
+                                var txt = (c.textContent || '').trim()
                                 var hasIcon = false
-                                try{ hasIcon = c.querySelector && (c.querySelector('.bi-layout-sidebar-inset') || c.querySelector('.bi-layout-sidebar-inset-reverse')) }catch(e){}
-                                if(txt.indexOf('Barre:') !== -1 || hasIcon){
+                                try { hasIcon = c.querySelector && (c.querySelector('.bi-layout-sidebar-inset') || c.querySelector('.bi-layout-sidebar-inset-reverse')) } catch (e) { }
+                                if (txt.indexOf('Barre:') !== -1 || hasIcon) {
                                     c.id = c.id || 'toggleSidebarSideButton'
                                     c.setAttribute('aria-label', c.getAttribute('aria-label') || 'Position de la barre')
                                     btn = c
@@ -1339,23 +1257,453 @@
                                     break
                                 }
                             }
-                        }catch(e){ console.warn('[LANDING] Heuristic search failed', e) }
+                        } catch (e) { console.warn('[LANDING] Heuristic search failed', e) }
                     }
 
-                    if(btn){
-                        try{
+                    if (btn) {
+                        try {
                             var saved = localStorage.getItem('sidebarSide') || 'right';
                             applySide(saved);
-                        }catch(e){ console.warn('[LANDING] applySide failed in observer', e) }
+                        } catch (e) { console.warn('[LANDING] applySide failed in observer', e) }
                     }
                 });
                 _sidebarObserver.observe(document.body, { childList: true, subtree: true });
-            }catch(e){
+            } catch (e) {
                 console.warn('[LANDING] Sidebar MutationObserver failed', e);
             }
         })();
-        </script>
-        <script src="./assets/js/scripts/landing-inline.js"></script>
-        <script src="./assets/js/scripts/landing.js"></script>
-        <script src="./assets/js/scripts/news.js"></script>
+    </script>
+
+    <!-- Script de gestion des boutons de lancement -->
+    <script>
+        (function () {
+            'use strict';
+
+            // ===== GESTIONNAIRE UI DES BOUTONS =====
+            const LaunchUI = {
+                // Éléments DOM
+                elements: {
+                    launchBtn: null,
+                    stopBtn: null,
+                    statusContainer: null,
+                    statusText: null,
+                    statusPercent: null,
+                    statusBar: null,
+                    launchIcon: null,
+                    launchText: null,
+                    stopIcon: null,
+                    stopText: null
+                },
+
+                // États
+                state: {
+                    isLaunching: false,
+                    isRunning: false,
+                    progress: 0
+                },
+
+                // Initialisation
+                init: function () {
+                    this.elements.launchBtn = document.getElementById('launch_button');
+                    this.elements.stopBtn = document.getElementById('stop_button');
+                    this.elements.statusContainer = document.getElementById('launch_status');
+                    this.elements.statusText = document.getElementById('launch_status_text');
+                    this.elements.statusPercent = document.getElementById('launch_status_percent');
+                    this.elements.statusBar = document.getElementById('launch_status_bar');
+                    this.elements.launchIcon = document.getElementById('launch_button_icon');
+                    this.elements.launchText = document.getElementById('launch_button_text');
+                    this.elements.stopIcon = document.getElementById('stop_button_icon');
+                    this.elements.stopText = document.getElementById('stop_button_text');
+
+                    console.log('[LaunchUI] Initialized', this.elements);
+                },
+
+                // Afficher état: Prêt à lancer
+                showReady: function () {
+                    console.log('[LaunchUI] showReady');
+                    this.state.isLaunching = false;
+                    this.state.isRunning = false;
+
+                    // Afficher bouton Lancer
+                    if (this.elements.launchBtn) {
+                        this.elements.launchBtn.classList.remove('hidden', 'btn-hidden');
+                        this.elements.launchBtn.disabled = false;
+                    }
+                    if (this.elements.launchIcon) {
+                        this.elements.launchIcon.className = 'bi bi-play-fill text-2xl';
+                    }
+                    if (this.elements.launchText) {
+                        this.elements.launchText.textContent = 'Lancer';
+                    }
+
+                    // Cacher bouton Stop
+                    if (this.elements.stopBtn) {
+                        this.elements.stopBtn.classList.add('hidden');
+                        this.elements.stopBtn.classList.remove('btn-visible');
+                    }
+
+                    // Cacher statut
+                    if (this.elements.statusContainer) {
+                        this.elements.statusContainer.classList.add('hidden');
+                    }
+                },
+
+                // Afficher état: Téléchargement/Préparation
+                showDownloading: function (text, percent) {
+                    console.log('[LaunchUI] showDownloading', text, percent);
+                    this.state.isLaunching = true;
+                    this.state.progress = percent || 0;
+
+                    // Bouton Lancer en état chargement
+                    if (this.elements.launchBtn) {
+                        this.elements.launchBtn.classList.remove('hidden');
+                        this.elements.launchBtn.disabled = true;
+                    }
+                    if (this.elements.launchIcon) {
+                        this.elements.launchIcon.className = 'bi bi-arrow-repeat text-2xl animate-spin';
+                    }
+                    if (this.elements.launchText) {
+                        this.elements.launchText.textContent = 'Chargement...';
+                    }
+
+                    // Afficher statut
+                    if (this.elements.statusContainer) {
+                        this.elements.statusContainer.classList.remove('hidden');
+                    }
+                    if (this.elements.statusText) {
+                        this.elements.statusText.textContent = text || 'Préparation...';
+                    }
+                    if (this.elements.statusPercent) {
+                        this.elements.statusPercent.textContent = Math.round(percent || 0) + '%';
+                    }
+                    if (this.elements.statusBar) {
+                        this.elements.statusBar.style.width = (percent || 0) + '%';
+                    }
+
+                    // Cacher bouton Stop pendant le téléchargement
+                    if (this.elements.stopBtn) {
+                        this.elements.stopBtn.classList.add('hidden');
+                        this.elements.stopBtn.classList.remove('btn-visible');
+                    }
+                },
+
+                // Afficher état: Jeu en cours
+                showRunning: function () {
+                    console.log('[LaunchUI] showRunning - SHOWING STOP BUTTON');
+                    this.state.isLaunching = false;
+                    this.state.isRunning = true;
+
+                    // CACHER le bouton Lancer
+                    if (this.elements.launchBtn) {
+                        this.elements.launchBtn.classList.add('hidden', 'btn-hidden');
+                    }
+
+                    // AFFICHER le bouton Stop avec classe explicite
+                    if (this.elements.stopBtn) {
+                        this.elements.stopBtn.classList.remove('hidden');
+                        this.elements.stopBtn.classList.add('btn-visible');
+                        this.elements.stopBtn.disabled = false;
+                        console.log('[LaunchUI] Stop button classList:', this.elements.stopBtn.classList.toString());
+                    }
+                    if (this.elements.stopIcon) {
+                        this.elements.stopIcon.className = 'bi bi-stop-fill text-2xl';
+                    }
+                    if (this.elements.stopText) {
+                        this.elements.stopText.textContent = 'Arrêter le jeu';
+                    }
+
+                    // Cacher statut
+                    if (this.elements.statusContainer) {
+                        this.elements.statusContainer.classList.add('hidden');
+                    }
+                },
+
+                // Afficher état: Arrêt en cours
+                showStopping: function () {
+                    console.log('[LaunchUI] showStopping');
+
+                    if (this.elements.stopBtn) {
+                        this.elements.stopBtn.disabled = true;
+                    }
+                    if (this.elements.stopIcon) {
+                        this.elements.stopIcon.className = 'bi bi-hourglass-split text-2xl animate-spin';
+                    }
+                    if (this.elements.stopText) {
+                        this.elements.stopText.textContent = 'Arrêt en cours...';
+                    }
+                },
+
+                // Mettre à jour la progression
+                updateProgress: function (percent, text) {
+                    if (this.elements.statusPercent) {
+                        this.elements.statusPercent.textContent = Math.round(percent) + '%';
+                    }
+                    if (this.elements.statusBar) {
+                        this.elements.statusBar.style.width = percent + '%';
+                    }
+                    if (text && this.elements.statusText) {
+                        this.elements.statusText.textContent = text;
+                    }
+                }
+            };
+
+            // Exposer globalement
+            window.LaunchUI = LaunchUI;
+
+            // Initialiser quand le DOM est prêt
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    LaunchUI.init();
+                });
+            } else {
+                LaunchUI.init();
+            }
+
+            // Réinitialiser après un court délai (au cas où le DOM change)
+            setTimeout(function () {
+                LaunchUI.init();
+            }, 500);
+        })();
+    </script>
+
+    <script src="./assets/js/scripts/landing-inline.js"></script>
+    <script src="./assets/js/scripts/landing.js"></script>
+    <script src="./assets/js/scripts/news.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            const btn = document.getElementById('switchAccountButton');
+            const menu = document.getElementById('account_menu');
+            const wrapper = document.querySelector('.account-switch-wrapper');
+
+            function closeMenu() {
+                if (!menu) return;
+                menu.classList.remove('visible');
+                menu.setAttribute('aria-hidden', 'true');
+                menu.style.display = 'none';
+            }
+
+            function openMenu() {
+                renderMenu();
+                if (!menu) return;
+                menu.classList.add('visible');
+                menu.setAttribute('aria-hidden', 'false');
+                menu.style.display = 'block';
+            }
+
+            function toggleMenu() {
+                if (!menu) return;
+                if (menu.classList.contains('visible')) closeMenu(); else openMenu();
+            }
+
+            function renderMenu() {
+                if (!menu) return;
+                menu.innerHTML = '';
+                let accountsRaw = null;
+                try {
+                    if (window.ConfigManager && typeof window.ConfigManager.getAuthAccounts === 'function') {
+                        accountsRaw = window.ConfigManager.getAuthAccounts();
+                    } else {
+                        console.warn('[ACCOUNT MENU] ConfigManager.getAuthAccounts not available');
+                    }
+                } catch (e) {
+                    console.error('[ACCOUNT MENU] ERREUR lors de la lecture des comptes:', e);
+                    accountsRaw = null;
+                }
+
+                console.log('[ACCOUNT MENU] ===== DIAGNOSTIC =====');
+                console.log('[ACCOUNT MENU] accountsRaw type:', typeof accountsRaw);
+                console.log('[ACCOUNT MENU] accountsRaw value:', accountsRaw);
+                console.log('[ACCOUNT MENU] Is Array?', Array.isArray(accountsRaw));
+                console.log('[ACCOUNT MENU] Keys:', accountsRaw && typeof accountsRaw === 'object' ? Object.keys(accountsRaw) : 'N/A');
+
+                // Normaliser en tableau: ConfigManager peut renvoyer un tableau ou un objet map
+                let accounts = [];
+                if (Array.isArray(accountsRaw)) {
+                    console.log('[ACCOUNT MENU] Format: ARRAY');
+                    accounts = accountsRaw;
+                } else if (accountsRaw && typeof accountsRaw === 'object') {
+                    console.log('[ACCOUNT MENU] Format: OBJECT → converting to array');
+                    accounts = Object.values(accountsRaw);
+                } else {
+                    console.log('[ACCOUNT MENU] Format: UNKNOWN/NULL');
+                    accounts = [];
+                }
+
+                console.log('[ACCOUNT MENU] Comptes après normalisation:', accounts.length, 'items');
+                console.log('[ACCOUNT MENU] Contenu des comptes:', accounts);
+
+                // Filter to only show standard launcher account types (avoid showing other clients)
+                const allowedTypes = ['microsoft', 'mojang'];
+                const filtered = (accounts || []).filter(a => {
+                    const isValid = a && (a.type || '').toLowerCase();
+                    const isAllowed = allowedTypes.indexOf(isValid) !== -1;
+                    if (!isValid) console.log('[ACCOUNT MENU] Compte sans type:', a);
+                    if (!isAllowed) console.log('[ACCOUNT MENU] Type non autorisé:', a.type);
+                    return isAllowed;
+                });
+
+                console.log('[ACCOUNT MENU] Comptes après filtrage:', filtered.length, 'items');
+                console.log('[ACCOUNT MENU] Comptes filtrés:', filtered);
+
+                // If no accounts found yet, try a few short retries because
+                // `ConfigManager` may be merged asynchronously from sql storage.
+                // Increased to 20 retries @ 100ms = 2 second window for async load
+                menu._retryCount = menu._retryCount || 0;
+                if ((!filtered || filtered.length === 0) && menu._retryCount < 20) {
+                    console.debug('[ACCOUNT MENU] Aucun compte trouvé, retry', menu._retryCount, 'of 20');
+                    menu._retryCount++;
+                    setTimeout(renderMenu, 100);
+                    // show temporary message while waiting
+                    menu.innerHTML = '<div class="no-accounts">Chargement des comptes... (' + menu._retryCount + '/20)</div>';
+                    return;
+                }
+
+                if (!filtered || filtered.length === 0) {
+                    console.error('[ACCOUNT MENU] ❌ AUCUN COMPTE TROUVÉ APRÈS 20 RETRIES');
+                    menu.innerHTML = '<div class="no-accounts">Aucun compte trouvé<br><button id="refreshAccountsBtn" class="btn btn-ghost btn-icon" title="Recharger" style="margin-top:8px;padding:4px;font-size:0.9rem"><i class="bi bi-arrow-clockwise text-sm"></i> Recharger</button></div>';
+                    const refreshBtn = menu.querySelector('#refreshAccountsBtn');
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            menu._retryCount = 0;
+                            renderMenu();
+                        });
+                    }
+                    return;
+                }
+
+                console.log('[ACCOUNT MENU] ✅ Affichage de', filtered.length, 'compte(s)');
+
+                const selectedUuid = (window.ConfigManager && typeof window.ConfigManager.getSelectedAccount === 'function') ? window.ConfigManager.getSelectedAccount() : null;
+
+                filtered.forEach(function (acc) {
+                    const uuid = acc && (acc.uuid || acc.id || acc.clientId || '') || '';
+                    const item = document.createElement('div');
+                    item.className = 'account-menu-item';
+                    item.tabIndex = 0;
+                    const avatarHtml = (acc && acc.avatar) ? '<img src="' + (acc.avatar || '') + '" alt="" style="width:100%;height:100%;object-fit:cover">' : '<i class="bi bi-person-fill text-lg"></i>';
+                    const displayName = acc && (acc.displayName || acc.username || acc.name || 'Compte');
+                    const meta = acc && (acc.type || '');
+                    const isSelected = selectedUuid && selectedUuid === uuid;
+
+                    item.innerHTML = '<div style="width:36px;height:36px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center">' + avatarHtml + '</div>' +
+                        '<div style="flex:1;min-width:0;margin-left:6px"><div style="color:#fff;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + displayName + '</div><div style="color:#9aa6b2;font-size:0.78rem">' + meta + '</div></div>' +
+                        '<div style="margin-left:6px">' + (isSelected ? '<i class="bi bi-check-circle-fill text-yellow-400" title="Sélectionné"></i>' : '<button class="btn btn-ghost btn-icon select-account" title="Sélectionner"><i class="bi bi-check-lg"></i></button>') + '</div>';
+
+                    const selectBtn = item.querySelector('.select-account');
+                    if (selectBtn) {
+                        selectBtn.addEventListener('click', function (ev) {
+                            ev.stopPropagation();
+                            try {
+                                if (window.ConfigManager && typeof window.ConfigManager.setSelectedAccount === 'function') {
+                                    window.ConfigManager.setSelectedAccount(uuid);
+                                    if (typeof window.ConfigManager.save === 'function') window.ConfigManager.save();
+                                }
+                                if (typeof window.updateSelectedAccount === 'function') window.updateSelectedAccount(acc);
+                            } catch (e) {
+                                console.warn('[ACCOUNT MENU] select error', e);
+                            }
+                            closeMenu();
+                        });
+                    }
+
+                    item.addEventListener('click', function () { if (selectBtn) selectBtn.click(); });
+                    menu.appendChild(item);
+                });
+            }
+
+            // Close when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!menu) return;
+                if (e.target.closest && (e.target.closest('#account_menu') || e.target.closest('#switchAccountButton'))) return;
+                if (menu.classList.contains('visible')) closeMenu();
+            });
+
+            // Attendre que ConfigManager soit disponible (peut prendre 1-2 secondes)
+            function waitForConfigManager(maxWait = 20) {
+                return new Promise(function(resolve) {
+                    if (window.ConfigManager && typeof window.ConfigManager.getAuthAccounts === 'function') {
+                        console.log('[ACCOUNT MENU] ✅ ConfigManager déjà disponible');
+                        resolve(true);
+                        return;
+                    }
+                    
+                    let attempts = 0;
+                    const interval = setInterval(function() {
+                        attempts++;
+                        if (window.ConfigManager && typeof window.ConfigManager.getAuthAccounts === 'function') {
+                            console.log('[ACCOUNT MENU] ✅ ConfigManager disponible après', attempts * 100, 'ms');
+                            clearInterval(interval);
+                            resolve(true);
+                        } else if (attempts >= maxWait) {
+                            console.error('[ACCOUNT MENU] ❌ Timeout: ConfigManager non disponible après', maxWait * 100, 'ms');
+                            clearInterval(interval);
+                            resolve(false);
+                        }
+                    }, 100);
+                });
+            }
+
+            // Wrapper pour ouvrir le menu avec vérification ConfigManager
+            async function safeOpenMenu() {
+                if (!menu) return;
+                menu.classList.add('visible');
+                menu.setAttribute('aria-hidden', 'false');
+                menu.style.display = 'block';
+                menu.innerHTML = '<div class="no-accounts">Chargement des comptes...</div>';
+                
+                const isReady = await waitForConfigManager(50); // 50 * 100ms = 5 secondes max
+                
+                if (isReady) {
+                    renderMenu();
+                } else {
+                    menu.innerHTML = '<div class="no-accounts">Erreur: impossible de charger les comptes<br><button id="refreshAccountsBtn" class="btn btn-ghost btn-icon" title="Recharger" style="margin-top:8px;padding:4px;font-size:0.9rem"><i class="bi bi-arrow-clockwise text-sm"></i> Recharger</button></div>';
+                    const refreshBtn = menu.querySelector('#refreshAccountsBtn');
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            closeMenu();
+                            safeOpenMenu();
+                        });
+                    }
+                }
+            }
+
+            if (btn) btn.addEventListener('click', function (e) { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                if (menu && menu.classList.contains('visible')) {
+                    closeMenu();
+                } else {
+                    safeOpenMenu();
+                }
+            });
+
+            // Make the whole wrapper toggle the account menu
+            if (wrapper) {
+                // ensure keyboard accessibility
+                try { wrapper.setAttribute('tabindex', '0'); } catch (e) { }
+                wrapper.addEventListener('click', function (e) {
+                    // if the click target is the menu itself or a control inside it, ignore
+                    if (e.target && e.target.closest && e.target.closest('#account_menu')) return;
+                    // if the click target is the settings/other buttons inside, allow their handlers
+                    if (e.target && e.target.closest && e.target.closest('#switchAccountButton')) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (menu && menu.classList.contains('visible')) closeMenu(); else safeOpenMenu();
+                });
+                wrapper.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (menu && menu.classList.contains('visible')) closeMenu(); else safeOpenMenu();
+                    }
+                });
+            }
+
+            // Expose helpers
+            window.openAccountMenu = safeOpenMenu;
+            window.closeAccountMenu = closeMenu;
+        })();
+    </script>
 </div>

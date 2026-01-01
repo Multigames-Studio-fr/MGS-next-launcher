@@ -69,6 +69,31 @@
 
   </aside>
   <main id="settingsContainerRight" class="flex-1 p-6 glass-main-content overflow-auto max-h-screen">
+      <style>
+        /* Affiche les comptes en deux colonnes sur écrans larges, 1 colonne sur mobile */
+        #settingsCurrentMicrosoftAccounts {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+          #settingsCurrentMicrosoftAccounts {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Ensure each account card stretches to fill the grid cell */
+        .settingsAuthAccount {
+          width: 100%;
+        }
+        /* Selected account visual: yellow border + subtle glow */
+        .settingsAuthAccount.selected-account {
+          border: 1px solid #F8BA59;
+          box-shadow: 0 6px 18px rgba(248,186,89,0.12);
+        }
+      </style>
+
       <div id="settingsTabAccount" class="settingsTab">
         <div class="mb-6">
           <h2 class="text-xl text-white mb-2 font-[Mojang]"><%- lang('settings.tabAccountHeaderText') %></h2>

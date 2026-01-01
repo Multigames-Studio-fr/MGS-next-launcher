@@ -147,14 +147,12 @@ async function populateSidebarInstances() {
                         </div>
 
                     <!-- Right: larger image -->
-                        <div class="relative flex-shrink-0 ml-auto">
+                        <div class=" flex-shrink-0 ml-auto">
                             <img src="${iconUrl}"
                                  alt="${serverName}"
                                  class="w-12 h-12 rounded-lg object-cover"
                                  onerror="this.src='assets/images/SealCircle.png'" />
-                            ${isSelected ? `
-                            <div class="absolute -top-1 -right-1 w-3 h-3 bg-[#F8BA59] rounded-full border-2 border-[#181818]"></div>
-                            ` : ''}
+                            
                         </div>
                     </div>
                 </button>
@@ -841,6 +839,13 @@ function setSelectedAccount(uuid) {
     ConfigManager.save()
     updateSelectedAccount(authAcc)
     validateSelectedAccount()
+    try {
+        if (typeof window.refreshAuthAccountSelected === 'function' && authAcc && authAcc.uuid) {
+            window.refreshAuthAccountSelected(authAcc.uuid)
+        }
+    } catch (e) {
+        console.warn('Failed to call refreshAuthAccountSelected after setSelectedAccount', e)
+    }
     try {
         if (typeof scheduleValidationBasedOnExpiry === 'function') scheduleValidationBasedOnExpiry()
     } catch (e) {

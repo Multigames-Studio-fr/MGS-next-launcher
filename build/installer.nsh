@@ -53,4 +53,10 @@ Function .onInstSuccess
     ; Do NOT launch the application or open any folders after installation.
     ; The launcher will be started manually by the user from Start menu or desktop shortcut.
     ; This avoids opening unexpected folders or windows after update completion.
+    ; Launch the launcher executable after installation so updates triggered
+    ; from the running launcher will return the user to the application.
+    ; If you prefer NOT to auto-run after install, remove or comment the block below.
+    ; Only attempt to run when the executable exists in the install dir.
+    IfFileExists "$INSTDIR\\MultiGames Studio Launcher.exe" 0 +2
+    ExecShell "open" "$INSTDIR\\MultiGames Studio Launcher.exe" "" "$INSTDIR"
 FunctionEnd

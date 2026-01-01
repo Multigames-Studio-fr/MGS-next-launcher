@@ -684,7 +684,8 @@ function populateAuthAccounts() {
   if (authKeys.length === 0) {
     return;
   }
-  const selectedUUID = ConfigManager.getSelectedAccount().uuid;
+  const selectedAcc = ConfigManager.getSelectedAccount();
+  const selectedUUID = selectedAcc ? selectedAcc.uuid : null;
 
   let microsoftAuthAccountStr = "";
   let mojangAuthAccountStr = "";
