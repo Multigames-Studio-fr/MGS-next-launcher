@@ -58,5 +58,5 @@ Function .onInstSuccess
     ; If you prefer NOT to auto-run after install, remove or comment the block below.
     ; Only attempt to run when the executable exists in the install dir.
     IfFileExists "$INSTDIR\\MultiGames Studio Launcher.exe" 0 +2
-    ExecShell "open" "$INSTDIR\\MultiGames Studio Launcher.exe" "" "$INSTDIR"
+    ExecShell "open" "$INSTDIR\\MultiGames Studio Launcher.exe"
 FunctionEnd
