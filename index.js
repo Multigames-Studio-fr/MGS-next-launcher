@@ -894,35 +894,102 @@ let msftAuthWindow
 let msftAuthSuccess
 let msftAuthViewSuccess
 let msftAuthViewOnClose
+let msftAuthTimeout = null
+const MSFT_AUTH_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes timeout for auth flow
+
+/**
+ * Clean up Microsoft auth window and state
+ */
+function cleanupMsftAuthWindow() {
+    if (msftAuthTimeout) {
+        clearTimeout(msftAuthTimeout)
+        msftAuthTimeout = null
+    }
+    if (msftAuthWindow && !msftAuthWindow.isDestroyed()) {
+        try {
+            msftAuthWindow.close()
+        } catch (e) {
+            try { log.debug('Error closing msft auth window:', e && e.message) } catch (le) {}
+        }
+    }
+    msftAuthWindow = null
+}
+
 ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
     if (msftAuthWindow) {
-        ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, MSFT_ERROR.ALREADY_OPEN, msftAuthViewOnClose)
-        return
+        // Try to focus existing window instead of erroring
+        try {
+            if (!msftAuthWindow.isDestroyed()) {
+                msftAuthWindow.focus()
+            } else {
+                msftAuthWindow = null
+            }
+        } catch (e) {
+            msftAuthWindow = null
+        }
+        
+        if (msftAuthWindow) {
+            ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, MSFT_ERROR.ALREADY_OPEN, msftAuthViewOnClose)
+            return
+        }
     }
+    
     msftAuthSuccess = false
     msftAuthViewSuccess = arguments_[0]
     msftAuthViewOnClose = arguments_[1]
-    msftAuthWindow = new BrowserWindow({
-        title: LangLoader.queryJS('index.microsoftLoginTitle'),
-        backgroundColor: '#222222',
-        width: 520,
-        height: 600,
-        frame: true,
-        icon: getPlatformIcon('multigames-logo')
-    })
+    
+    try {
+        msftAuthWindow = new BrowserWindow({
+            title: LangLoader.queryJS('index.microsoftLoginTitle'),
+            backgroundColor: '#222222',
+            width: 520,
+            height: 600,
+            frame: true,
+            icon: getPlatformIcon('multigames-logo')
+        })
+    } catch (err) {
+        log.error('Failed to create Microsoft auth window:', err && err.message)
+        ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, 'WINDOW_CREATE_FAILED', msftAuthViewOnClose)
+        return
+    }
+    
+    // Set timeout to auto-close stale auth windows
+    msftAuthTimeout = setTimeout(() => {
+        log.warn('Microsoft auth timed out after', MSFT_AUTH_TIMEOUT_MS / 1000, 'seconds')
+        cleanupMsftAuthWindow()
+        try {
+            ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, 'AUTH_TIMEOUT', msftAuthViewOnClose)
+        } catch (e) { /* ignore */ }
+    }, MSFT_AUTH_TIMEOUT_MS)
 
     msftAuthWindow.on('closed', () => {
+        if (msftAuthTimeout) {
+            clearTimeout(msftAuthTimeout)
+            msftAuthTimeout = null
+        }
         msftAuthWindow = undefined
     })
 
     msftAuthWindow.on('close', () => {
+        if (msftAuthTimeout) {
+            clearTimeout(msftAuthTimeout)
+            msftAuthTimeout = null
+        }
         if(!msftAuthSuccess) {
-            ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, MSFT_ERROR.NOT_FINISHED, msftAuthViewOnClose)
+            try {
+                ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, MSFT_ERROR.NOT_FINISHED, msftAuthViewOnClose)
+            } catch (e) { /* ignore if reply fails */ }
         }
     })
 
     msftAuthWindow.webContents.on('did-navigate', (_, uri) => {
         if (uri.startsWith(REDIRECT_URI_PREFIX)) {
+            // Clear timeout on successful redirect
+            if (msftAuthTimeout) {
+                clearTimeout(msftAuthTimeout)
+                msftAuthTimeout = null
+            }
+            
             let queries = uri.substring(REDIRECT_URI_PREFIX.length).split('#', 1).toString().split('&')
             let queryMap = {}
 
@@ -931,16 +998,39 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
                 queryMap[name] = decodeURI(value)
             })
 
-            ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.SUCCESS, queryMap, msftAuthViewSuccess)
+            try {
+                ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.SUCCESS, queryMap, msftAuthViewSuccess)
+            } catch (e) {
+                log.error('Failed to reply with auth success:', e && e.message)
+            }
 
             msftAuthSuccess = true
-            msftAuthWindow.close()
+            try {
+                msftAuthWindow.close()
+            } catch (e) { /* ignore */ }
             msftAuthWindow = null
+        }
+    })
+    
+    // Handle navigation errors (network issues, etc.)
+    msftAuthWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        log.error('Microsoft auth navigation failed:', errorCode, errorDescription)
+        // Don't auto-close on minor errors, but log them
+        if (errorCode === -3) {
+            // User cancelled navigation - ignore
+            return
         }
     })
 
     msftAuthWindow.removeMenu()
-    msftAuthWindow.loadURL(`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?prompt=select_account&client_id=${AZURE_CLIENT_ID}&response_type=code&scope=XboxLive.signin%20offline_access&redirect_uri=https://login.microsoftonline.com/common/oauth2/nativeclient`)
+    
+    try {
+        msftAuthWindow.loadURL(`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?prompt=select_account&client_id=${AZURE_CLIENT_ID}&response_type=code&scope=XboxLive.signin%20offline_access&redirect_uri=https://login.microsoftonline.com/common/oauth2/nativeclient`)
+    } catch (err) {
+        log.error('Failed to load Microsoft auth URL:', err && err.message)
+        cleanupMsftAuthWindow()
+        ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.ERROR, 'URL_LOAD_FAILED', msftAuthViewOnClose)
+    }
 })
 
 // Microsoft Auth Logout

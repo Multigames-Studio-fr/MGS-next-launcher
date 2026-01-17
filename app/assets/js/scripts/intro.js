@@ -8,6 +8,51 @@
     // Default volume (0.0 - 1.0). User requested 15%.
     var defaultVolume = 0.10;
 
+    // Inject video source dynamically using Node.js fs to load the local file
+    (function injectVideoSource() {
+        if (!video) return;
+        try {
+            var fs = require('fs');
+            var path = require('path');
+            var remote = require('@electron/remote');
+            
+            // Clear existing sources
+            while (video.firstChild) {
+                video.removeChild(video.firstChild);
+            }
+            
+            // Get the app path and construct the video file path
+            var appPath = remote.app.getAppPath();
+            var videoPath = path.join(appPath, 'app', 'assets', 'videos', 'MultigamesStudio16-6-25.mp4');
+            
+            console.log('[Intro] Looking for video at:', videoPath);
+            
+            if (fs.existsSync(videoPath)) {
+                // Read the file and create a base64 data URL
+                var videoData = fs.readFileSync(videoPath);
+                var base64 = videoData.toString('base64');
+                var dataUrl = 'data:video/mp4;base64,' + base64;
+                
+                var source = document.createElement('source');
+                source.src = dataUrl;
+                source.type = 'video/mp4';
+                video.appendChild(source);
+                
+                console.log('[Intro] Video loaded from local file as data URL');
+            } else {
+                console.warn('[Intro] Local video not found at:', videoPath);
+            }
+            
+            // Add fallback text
+            video.appendChild(document.createTextNode('Votre navigateur ne supporte pas la vidéo.'));
+            
+            // Reload video to apply new source
+            video.load();
+        } catch (e) {
+            console.error('[Intro] Failed to inject local video source:', e);
+        }
+    })();
+
     function showMain(){
         try{ if(overlay) overlay.style.display = 'none'; }catch(e){}
         try{ if(main) main.style.display = 'block'; }catch(e){}

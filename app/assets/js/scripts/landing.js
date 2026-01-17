@@ -33,6 +33,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
+// AuthManager is declared globally in uibinder.js which loads before landing.js
 // ModDeduplicator (anti-cheat) removed — keep module out
 
 // DOM sanitization to avoid injecting untrusted HTML into the renderer
@@ -2229,9 +2230,42 @@ async function dlAsync(login = true) {
             const sa = ConfigManager.getSelectedAccount()
             authUser = createOfflineAuth(sa)
         } else {
-            // Refresh token before launching to prevent authentication errors
-            await validateSelectedAccount()
+            // CRITICAL: Force refresh tokens before launching to prevent "Invalid session" errors
+            // This ensures we always have a fresh MC access token for Minecraft servers
+            setLaunchDetails('Validation du compte...')
+            updateLaunchButton('Validation du compte...', 2)
+            
+            try {
+                const refreshSuccess = await AuthManager.forceRefreshBeforeLaunch()
+                if (!refreshSuccess) {
+                    loggerLaunchSuite.error('Failed to refresh tokens before launch')
+                    showLaunchFailure(
+                        'Session expirée',
+                        'Impossible de valider votre session. Veuillez vous reconnecter à votre compte Microsoft.'
+                    )
+                    return
+                }
+                loggerLaunchSuite.info('Token refresh successful before launch')
+            } catch (refreshErr) {
+                loggerLaunchSuite.error('Token refresh threw error:', refreshErr)
+                showLaunchFailure(
+                    'Erreur d\'authentification',
+                    'Une erreur est survenue lors de la validation de votre compte. Veuillez vous reconnecter.'
+                )
+                return
+            }
+            
             authUser = ConfigManager.getSelectedAccount()
+            
+            // Final validation: ensure we have a valid access token
+            if (!authUser || !authUser.accessToken) {
+                loggerLaunchSuite.error('No valid access token after refresh')
+                showLaunchFailure(
+                    'Session invalide',
+                    'Votre session est invalide. Veuillez vous reconnecter à votre compte Microsoft.'
+                )
+                return
+            }
         }
                 loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
         

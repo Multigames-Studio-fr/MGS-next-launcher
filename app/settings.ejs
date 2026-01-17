@@ -340,35 +340,45 @@
               </div>
               <div class="text-sm text-gray-400 mt-1"><%- lang('settings.memoryDesc') %></div>
 
-              <!-- Body: ranges (semantic inputs for accessibility) -->
-              <div class="mt-3 flex-1">
-                <!-- Double-range visual: two overlapping range inputs with a highlighted fill between thumbs -->
-                <div class="mt-2">
-                  <div class="mb-2 flex items-center justify-between">
-                    <label for="settingsMinRAMRange" class="text-white font-medium"><%- lang('settings.minRAM') %></label>
-                    <label for="settingsMaxRAMRange" class="text-white font-medium"><%- lang('settings.maxRAM') %></label>
-                  </div>
-                  <div class="relative w-full range-double-container h-8">
-                    <!-- Hidden native inputs for accessibility and persistence -->
-                    <input id="settingsMaxRAMRange" class="sr-only" style="position:absolute;opacity:0;pointer-events:none;" cValue="MaxRAM" serverDependent type="range" min="3" max="8" step="0.5" value="3" aria-label="Max RAM (GB)">
-                    <input id="settingsMinRAMRange" class="sr-only" style="position:absolute;opacity:0;pointer-events:none;" cValue="MinRAM" serverDependent type="range" min="3" max="8" step="0.5" value="3" aria-label="Min RAM (GB)">
+              <!-- Body: simplified RAM slider -->
+              <div class="mt-4 flex-1">
+                <!-- Hidden native inputs for accessibility and persistence -->
+                <input id="settingsMaxRAMRange" class="sr-only" style="position:absolute;opacity:0;pointer-events:none;" cValue="MaxRAM" serverDependent type="range" min="3" max="16" step="0.5" value="3" aria-label="Max RAM (GB)">
+                <input id="settingsMinRAMRange" class="sr-only" style="position:absolute;opacity:0;pointer-events:none;" cValue="MinRAM" serverDependent type="range" min="3" max="16" step="0.5" value="3" aria-label="Min RAM (GB)">
 
-                    <!-- Custom visual track + thumbs -->
-                    <div class="double-range-track absolute inset-0 flex items-center">
-                      <div class="double-range-track-bg absolute left-0 right-0 h-2 rounded bg-[rgba(255,255,255,0.06)]"></div>
-                      <div id="settingsRangeFill" class="range-fill pointer-events-none absolute h-2 rounded"></div>
-                      <button id="settingsMinThumb" class="double-range-thumb min-thumb" aria-label="Min RAM thumb" type="button"></button>
-                      <button id="settingsMaxThumb" class="double-range-thumb max-thumb" aria-label="Max RAM thumb" type="button"></button>
-                    </div>
+                <!-- Labels above slider -->
+                <div class="flex justify-between mb-3">
+                  <div class="text-sm">
+                    <span class="text-gray-400">Min:</span>
+                    <span id="settingsMinRAMLabel" class="text-white font-semibold ml-1">3G</span>
                   </div>
-                  <div class="mt-2 flex items-center justify-between">
-                    <span id="settingsMinRAMLabel" class="text-white font-medium">3G</span>
-                    <span id="settingsMaxRAMLabel" class="text-white font-medium">3G</span>
+                  <div class="text-sm">
+                    <span class="text-gray-400">Max:</span>
+                    <span id="settingsMaxRAMLabel" class="text-white font-semibold ml-1">3G</span>
                   </div>
                 </div>
-              </div>
 
-             
+                <!-- Slider track -->
+                <div class="relative w-full h-6 ram-slider-container">
+                  <!-- Track background -->
+                  <div class="ram-track"></div>
+                  <!-- Active fill between thumbs -->
+                  <div id="settingsRangeFill" class="ram-fill"></div>
+                  <!-- Min thumb -->
+                  <button id="settingsMinThumb" class="ram-thumb" aria-label="Min RAM" type="button"></button>
+                  <!-- Max thumb -->
+                  <button id="settingsMaxThumb" class="ram-thumb" aria-label="Max RAM" type="button"></button>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex justify-between text-xs text-gray-500 mt-2 px-1">
+                  <span>3G</span>
+                  <span>6G</span>
+                  <span>9G</span>
+                  <span>12G</span>
+                  <span>16G</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -661,25 +671,100 @@
   /* Headings accent (gold/orange) */
   .settings-accent-gold { color: #f59e0b; }
 
-  /* Double-range slider styling (simplified) */
-  .range-input { -webkit-appearance: none; appearance: none; background: transparent; height: 2rem; }
-  .range-input:focus { outline: none; }
-  .range-input::-webkit-slider-runnable-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; }
-  .range-input::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.3); background: #ffffff; margin-top: -4px; }
-  .range-input::-moz-range-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; }
-  .range-input::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.3); background: #ffffff; }
-  .range-fill { background: #2563eb; border-radius: 999px; }
-  /* Ensure double-range inputs stack sensibly and allow the active thumb to be grabbed */
-  .range-double-container input.double-range { z-index: 1; }
-  .range-double-container input.double-range.min-range { z-index: 12; }
-  .range-double-container input.double-range.max-range { z-index: 8; }
-  .range-double-container input.double-range:active { z-index: 20; }
+  /* Simplified RAM slider */
+  .ram-slider-container { 
+    position: relative; 
+  }
+  .ram-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+  }
+  .ram-fill {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #FF6A1A, #F8BA59);
+  }
+  .ram-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #FF6A1A;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    cursor: grab;
+    z-index: 10;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .ram-thumb:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 3px 12px rgba(255,106,26,0.4);
+    border-color: #F8BA59;
+  }
+  .ram-thumb:active, .ram-thumb.dragging {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.25);
+    border-color: #F8BA59;
+  }
 
-  /* Custom track + thumbs */
-  .double-range-track { position: relative; }
-  .double-range-track .double-range-track-bg { position: absolute; left:0; right:0; height:6px; top:50%; transform:translateY(-50%); border-radius:999px; }
-  .double-range-thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:16px; height:16px; border-radius:50%; background:#ffffff; border:2px solid rgba(0,0,0,0.25); box-shadow:0 0 0 4px rgba(0,0,0,0.04); cursor:grab; }
-  .double-range-thumb:active { cursor:grabbing; }
-  .double-range-thumb.min-thumb { z-index: 12; }
-  .double-range-thumb.max-thumb { z-index: 8; }
+  /* Settings tab transition animations */
+  .settingsTab {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .settingsTab.hidden {
+    opacity: 0;
+    display: none !important;
+  }
+  .settingsTab.tab-entering {
+    animation: settingsTabFadeIn 0.2s ease-out forwards;
+  }
+  @keyframes settingsTabFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .settingsTab.tab-exit {
+    animation: settingsTabFadeOut 0.15s ease-in forwards;
+  }
+  @keyframes settingsTabFadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  /* Nav item hover animation */
+  .settingsNavItem {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* Force animations even with reduced motion preference */
+  #settingsContainer,
+  #settingsContainer *,
+  #settingsContainer *::before,
+  #settingsContainer *::after {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.15s !important;
+  }
 </style>

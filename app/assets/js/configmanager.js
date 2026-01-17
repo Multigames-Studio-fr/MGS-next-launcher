@@ -164,24 +164,84 @@ const DEFAULT_CONFIG = {
 };
 
 let config = null;
+let saveInProgress = false;
+let pendingSave = false;
 
 // Persistance Utility Functions
 
 /**
  * Save the current configuration to a file.
+ * Uses a lock mechanism to prevent concurrent saves and ensure data integrity.
  */
 exports.save = function () {
+  // If a save is already in progress, mark that we need another save after it completes
+  if (saveInProgress) {
+    pendingSave = true;
+    return;
+  }
+  
+  saveInProgress = true;
+  
   try {
     // Persist authenticationDatabase to sqlite for robustness
     try {
       if (SqlStorage && typeof SqlStorage.setAuthAccounts === 'function') {
-        SqlStorage.setAuthAccounts(config.authenticationDatabase || {})
+        const accounts = config.authenticationDatabase || {};
+        const accountCount = Object.keys(accounts).length;
+        
+        // Only persist if we have accounts or if we're explicitly clearing
+        if (accountCount > 0 || SqlStorage.getAccountCount && SqlStorage.getAccountCount() > 0) {
+          SqlStorage.setAuthAccounts(accounts);
+          logger.debug('Persisted', accountCount, 'auth accounts to sqlite');
+        }
       }
     } catch (e) {
-      logger.warn('Failed to persist authenticationDatabase to sqlite', e && e.message)
+      logger.warn('Failed to persist authenticationDatabase to sqlite', e && e.message);
     }
-  } catch (e) {}
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 4), "UTF-8");
+    
+    // Write config to file with atomic write pattern
+    const tempPath = configPath + '.tmp';
+    const configJson = JSON.stringify(config, null, 4);
+    
+    try {
+      fs.writeFileSync(tempPath, configJson, "UTF-8");
+      // Rename for atomic update
+      fs.renameSync(tempPath, configPath);
+    } catch (atomicErr) {
+      // Fallback to direct write if rename fails
+      logger.debug('Atomic write failed, using direct write:', atomicErr && atomicErr.message);
+      fs.writeFileSync(configPath, configJson, "UTF-8");
+    }
+    
+  } catch (err) {
+    logger.error('Failed to save config:', err && err.message);
+  } finally {
+    saveInProgress = false;
+    
+    // If another save was requested during this save, do it now
+    if (pendingSave) {
+      pendingSave = false;
+      setImmediate(() => exports.save());
+    }
+  }
+};
+
+/**
+ * Force an immediate save, bypassing any debouncing
+ */
+exports.forceSave = function() {
+  pendingSave = false;
+  saveInProgress = false;
+  exports.save();
+  
+  // Also force SQL persistence
+  try {
+    if (SqlStorage && typeof SqlStorage.forcePersist === 'function') {
+      SqlStorage.forcePersist();
+    }
+  } catch (e) {
+    logger.debug('forcePersist not available');
+  }
 };
 
 /**
@@ -453,6 +513,7 @@ exports.addMojangAuthAccount = function (
 
 /**
  * Update the tokens of an authenticated microsoft account.
+ * Includes validation to prevent corrupting account data with invalid values.
  *
  * @param {string} uuid The uuid of the authenticated account.
  * @param {string} accessToken The new Access Token.
@@ -471,16 +532,50 @@ exports.updateMicrosoftAuthAccount = function (
   msExpires,
   mcExpires
 ) {
-  config.authenticationDatabase[uuid].accessToken = accessToken;
-  config.authenticationDatabase[uuid].expiresAt = mcExpires;
-  config.authenticationDatabase[uuid].microsoft.access_token = msAccessToken;
-  config.authenticationDatabase[uuid].microsoft.refresh_token = msRefreshToken;
-  config.authenticationDatabase[uuid].microsoft.expires_at = msExpires;
-  return config.authenticationDatabase[uuid];
+  // Validate inputs to prevent corrupting account data
+  if (!uuid || !config.authenticationDatabase[uuid]) {
+    logger.warn('Cannot update non-existent account:', uuid);
+    return null;
+  }
+  
+  const account = config.authenticationDatabase[uuid];
+  
+  // Only update fields if they have valid values
+  if (accessToken && typeof accessToken === 'string' && accessToken.trim()) {
+    account.accessToken = accessToken;
+  }
+  
+  if (mcExpires && typeof mcExpires === 'number' && mcExpires > Date.now()) {
+    account.expiresAt = mcExpires;
+  }
+  
+  // Ensure microsoft object exists
+  if (!account.microsoft) {
+    account.microsoft = {};
+  }
+  
+  if (msAccessToken && typeof msAccessToken === 'string' && msAccessToken.trim()) {
+    account.microsoft.access_token = msAccessToken;
+  }
+  
+  // Always preserve refresh token if new one is provided
+  if (msRefreshToken && typeof msRefreshToken === 'string' && msRefreshToken.trim()) {
+    account.microsoft.refresh_token = msRefreshToken;
+  }
+  
+  if (msExpires && typeof msExpires === 'number' && msExpires > Date.now()) {
+    account.microsoft.expires_at = msExpires;
+  }
+  
+  // Add last updated timestamp
+  account.lastUpdated = Date.now();
+  
+  return account;
 };
 
 /**
  * Adds an authenticated microsoft account to the database to be stored.
+ * Validates all required fields before storing.
  *
  * @param {string} uuid The uuid of the authenticated account.
  * @param {string} accessToken The accessToken of the authenticated account.
@@ -490,7 +585,7 @@ exports.updateMicrosoftAuthAccount = function (
  * @param {string} msRefreshToken The microsoft refresh token
  * @param {date} msExpires The date when the microsoft access token expires
  *
- * @returns {Object} The authenticated account object created by this action.
+ * @returns {Object} The authenticated account object created by this action, or null if validation fails.
  */
 exports.addMicrosoftAuthAccount = function (
   uuid,
@@ -501,21 +596,48 @@ exports.addMicrosoftAuthAccount = function (
   msRefreshToken,
   msExpires
 ) {
-  config.selectedAccount = uuid;
-  config.authenticationDatabase[uuid] = {
+  // Validate required fields
+  if (!uuid || typeof uuid !== 'string' || !uuid.trim()) {
+    logger.error('Cannot add Microsoft account: invalid UUID');
+    return null;
+  }
+  
+  if (!accessToken || typeof accessToken !== 'string' || !accessToken.trim()) {
+    logger.error('Cannot add Microsoft account: invalid access token');
+    return null;
+  }
+  
+  if (!msRefreshToken || typeof msRefreshToken !== 'string' || !msRefreshToken.trim()) {
+    logger.error('Cannot add Microsoft account: invalid refresh token');
+    return null;
+  }
+  
+  const trimmedUuid = uuid.trim();
+  const trimmedName = (name || 'Unknown Player').trim();
+  
+  // Create account object with all required fields
+  const accountData = {
     type: "microsoft",
-    accessToken,
-    username: name.trim(),
-    uuid: uuid.trim(),
-    displayName: name.trim(),
-    expiresAt: mcExpires,
+    accessToken: accessToken,
+    username: trimmedName,
+    uuid: trimmedUuid,
+    displayName: trimmedName,
+    expiresAt: mcExpires || (Date.now() + 86400000), // Default 24h if not provided
+    createdAt: Date.now(),
+    lastUpdated: Date.now(),
     microsoft: {
-      access_token: msAccessToken,
+      access_token: msAccessToken || accessToken,
       refresh_token: msRefreshToken,
-      expires_at: msExpires,
+      expires_at: msExpires || (Date.now() + 3600000), // Default 1h if not provided
     },
   };
-  return config.authenticationDatabase[uuid];
+  
+  config.selectedAccount = trimmedUuid;
+  config.authenticationDatabase[trimmedUuid] = accountData;
+  
+  logger.info('Added Microsoft account:', trimmedName, '(' + trimmedUuid + ')');
+  
+  return accountData;
 };
 
 /**
@@ -528,20 +650,74 @@ exports.addMicrosoftAuthAccount = function (
  * @returns {boolean} True if the account was removed, false if it never existed.
  */
 exports.removeAuthAccount = function (uuid) {
+  if (!uuid) {
+    logger.warn('Cannot remove account: no UUID provided');
+    return false;
+  }
+  
   if (config.authenticationDatabase[uuid] != null) {
+    const accountName = config.authenticationDatabase[uuid].displayName || uuid;
+    
+    // Remove from memory
     delete config.authenticationDatabase[uuid];
+    
+    // Also remove from SQL storage directly for immediate effect
+    try {
+      if (SqlStorage && typeof SqlStorage.removeAuthAccount === 'function') {
+        SqlStorage.removeAuthAccount(uuid);
+      }
+    } catch (e) {
+      logger.debug('SqlStorage.removeAuthAccount not available');
+    }
+    
+    // Select a new account if needed
     if (config.selectedAccount === uuid) {
       const keys = Object.keys(config.authenticationDatabase);
       if (keys.length > 0) {
-        config.selectedAccount = keys[0];
+        // Select the most recently updated account
+        let newestKey = keys[0];
+        let newestTime = 0;
+        for (const key of keys) {
+          const acc = config.authenticationDatabase[key];
+          if (acc.lastUpdated && acc.lastUpdated > newestTime) {
+            newestTime = acc.lastUpdated;
+            newestKey = key;
+          }
+        }
+        config.selectedAccount = newestKey;
+        logger.info('Selected new account after removal:', config.authenticationDatabase[newestKey]?.displayName);
       } else {
         config.selectedAccount = null;
         config.clientToken = null;
+        logger.info('No accounts remaining after removal');
       }
     }
+    
+    logger.info('Removed account:', accountName);
     return true;
   }
+  
+  logger.debug('Account not found for removal:', uuid);
   return false;
+};
+
+/**
+ * Check if an account exists in the database
+ * 
+ * @param {string} uuid The uuid to check
+ * @returns {boolean} True if the account exists
+ */
+exports.hasAuthAccount = function(uuid) {
+  return uuid && config.authenticationDatabase[uuid] != null;
+};
+
+/**
+ * Get the count of authenticated accounts
+ * 
+ * @returns {number} The number of accounts
+ */
+exports.getAuthAccountCount = function() {
+  return Object.keys(config.authenticationDatabase || {}).length;
 };
 
 /**

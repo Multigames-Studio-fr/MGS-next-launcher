@@ -347,41 +347,35 @@ function settingsNavItemListener(ele, fade = false) {
   document.getElementById(selectedSettingsTab).onscroll =
     settingsTabScrollListener;
 
-  if (fade) {
-    $(`#${prevTab}`).fadeOut(250, () => {
-      $(`#${selectedSettingsTab}`).fadeIn({
-        duration: 250,
-        start: () => {
-          settingsTabScrollListener({
-            target: document.getElementById(selectedSettingsTab),
-          });
-        },
-        complete: () => {
-          try {
-            const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
-            window.dispatchEvent(ev);
-          } catch (e) { /* ignore if CustomEvent unsupported */ }
-        }
-      });
+  // Animated transition between tabs
+  const prevTabEl = document.getElementById(prevTab);
+  const newTabEl = document.getElementById(selectedSettingsTab);
+  
+  // Add exit animation to previous tab
+  prevTabEl.classList.add('tab-exit');
+  
+  setTimeout(() => {
+    prevTabEl.classList.remove('tab-exit');
+    prevTabEl.classList.add('hidden');
+    
+    // Show new tab with entry animation
+    newTabEl.classList.remove('hidden');
+    newTabEl.classList.add('tab-entering');
+    
+    // Remove animation class after it completes
+    setTimeout(() => {
+      newTabEl.classList.remove('tab-entering');
+    }, 200);
+    
+    settingsTabScrollListener({
+      target: newTabEl,
     });
-  } else {
-    $(`#${prevTab}`).hide(0, () => {
-      $(`#${selectedSettingsTab}`).show({
-        duration: 0,
-        start: () => {
-          settingsTabScrollListener({
-            target: document.getElementById(selectedSettingsTab),
-          });
-        },
-        complete: () => {
-          try {
-            const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
-            window.dispatchEvent(ev);
-          } catch (e) { /* ignore if CustomEvent unsupported */ }
-        }
-      });
-    });
-  }
+    
+    try {
+      const ev = new CustomEvent('settings-tab-activated', { detail: { tabId: selectedSettingsTab } });
+      window.dispatchEvent(ev);
+    } catch (e) { /* ignore if CustomEvent unsupported */ }
+  }, 150);
 }
 
 const settingsNavDone = document.getElementById("settingsNavDone");
@@ -1637,15 +1631,15 @@ function bindDoubleRangeControls() {
   const maxInput = getSettingsMaxRAMRange();
   const minThumb = document.getElementById('settingsMinThumb');
   const maxThumb = document.getElementById('settingsMaxThumb');
-  const track = document.querySelector('.double-range-track');
+  const container = document.querySelector('.ram-slider-container');
   const fillEl = document.getElementById('settingsRangeFill');
   const minLabel = getSettingsMinRAMLabel();
   const maxLabel = getSettingsMaxRAMLabel();
-  if (!minInput || !maxInput || !minThumb || !maxThumb || !track || !fillEl) return;
+  if (!minInput || !maxInput || !minThumb || !maxThumb || !container || !fillEl) return;
 
-  const minAttr = Number(minInput.getAttribute('min') || 0);
-  const maxAttr = Number(minInput.getAttribute('max') || 100);
-  const step = Number(minInput.getAttribute('step') || 1);
+  const minAttr = Number(minInput.getAttribute('min') || 3);
+  const maxAttr = Number(minInput.getAttribute('max') || 16);
+  const step = Number(minInput.getAttribute('step') || 0.5);
 
   function valueToPercent(v) {
     return ((v - minAttr) / (maxAttr - minAttr)) * 100;
@@ -1683,7 +1677,7 @@ function bindDoubleRangeControls() {
   let active = null;
   function onPointerMove(e) {
     if (!active) return;
-    const rect = track.getBoundingClientRect();
+    const rect = container.getBoundingClientRect();
     let p = ((e.clientX - rect.left) / rect.width) * 100;
     p = Math.max(0, Math.min(100, p));
     const v = percentToValue(p);

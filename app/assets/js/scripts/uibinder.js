@@ -679,72 +679,127 @@ function mergeModConfiguration(o, n, nReq = false) {
 // Cache pour éviter les validations trop fréquentes
 let lastValidationTime = 0
 const VALIDATION_COOLDOWN = 30000 // 30 secondes
+let validationInProgress = false
 
 /**
  * Validate the currently selected account.
+ * Returns true if account is valid, false otherwise.
  * @param {boolean} force If true, bypass cooldown and force validation.
+ * @returns {Promise<boolean>} Whether the account is valid
  */
 async function validateSelectedAccount(force = false) {
     const now = Date.now()
 
+    // Prevent concurrent validations
+    if (validationInProgress && !force) {
+        console.debug('[UIBINDER] Validation already in progress, skipping')
+        return true // Assume valid while checking
+    }
+
     // Éviter les validations trop fréquentes sauf si forcé
     if (!force && (now - lastValidationTime < VALIDATION_COOLDOWN)) {
         console.debug('[UIBINDER] Validation skipped (cooldown active)')
-        return
+        return true
     }
 
     const selectedAcc = ConfigManager.getSelectedAccount()
-    if (selectedAcc != null) {
-        lastValidationTime = now
-        console.debug('[UIBINDER] Starting account validation for', selectedAcc.displayName)
+    if (selectedAcc == null) {
+        console.warn('[UIBINDER] No account selected, redirecting to login')
+        // No account selected, show login
+        switchView(getCurrentView(), VIEWS.loginOptions)
+        return false
+    }
+    
+    // Validate account data integrity before attempting validation
+    if (!selectedAcc.uuid || !selectedAcc.type) {
+        console.error('[UIBINDER] Selected account has corrupted data')
+        // Remove corrupted account
+        try {
+            ConfigManager.removeAuthAccount(selectedAcc.uuid || 'unknown')
+            ConfigManager.save()
+        } catch (e) { /* ignore */ }
+        switchView(getCurrentView(), VIEWS.loginOptions)
+        return false
+    }
+    
+    validationInProgress = true
+    lastValidationTime = now
+    console.debug('[UIBINDER] Starting account validation for', selectedAcc.displayName)
 
-        const val = await AuthManager.validateSelected()
-        if (!val) {
-            console.warn('[UIBINDER] Account validation failed for', selectedAcc.displayName)
+    let val = false
+    try {
+        val = await AuthManager.validateSelected()
+    } catch (validationError) {
+        console.error('[UIBINDER] Account validation threw error:', validationError)
+        val = false
+    } finally {
+        validationInProgress = false
+    }
+    
+    if (!val) {
+        console.warn('[UIBINDER] Account validation failed for', selectedAcc.displayName)
 
-            // Donner une chance de reconnecter avant de supprimer le compte
-            const accLen = Object.keys(ConfigManager.getAuthAccounts()).length
+        // Donner une chance de reconnecter avant de supprimer le compte
+        const allAccounts = ConfigManager.getAuthAccounts() || {}
+        const accLen = Object.keys(allAccounts).length
 
-            // Pour les comptes Microsoft, proposer une reconnexion au lieu de supprimer immédiatement
-            if (selectedAcc.type === 'microsoft') {
-                setOverlayContent(
-                    Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
-                    `Votre session Microsoft a expiré. Veuillez vous reconnecter pour continuer.`,
-                    'Se reconnecter',
-                    accLen > 1 ? Lang.queryJS('uibinder.validateAccount.selectAnotherAccountButton') : 'Annuler'
-                )
-                setOverlayHandler(() => {
-                    // Close overlay then redirect to Microsoft login
-                    try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in overlayHandler', e) }
+        // Pour les comptes Microsoft, proposer une reconnexion au lieu de supprimer immédiatement
+        if (selectedAcc.type === 'microsoft') {
+            // Check if this is likely a temporary failure (network issue)
+            const isLikelyTemporary = !navigator.onLine
+            
+            const message = isLikelyTemporary 
+                ? 'Impossible de valider votre compte car vous êtes hors-ligne. Connectez-vous à Internet pour continuer.'
+                : 'Votre session Microsoft a expiré. Veuillez vous reconnecter pour continuer.'
+            
+            const buttonText = isLikelyTemporary ? 'Réessayer' : 'Se reconnecter'
+            
+            setOverlayContent(
+                Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
+                message,
+                buttonText,
+                accLen > 1 ? Lang.queryJS('uibinder.validateAccount.selectAnotherAccountButton') : 'Annuler'
+            )
+            setOverlayHandler(() => {
+                try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in overlayHandler', e) }
+                
+                if (isLikelyTemporary) {
+                    // Retry validation after a delay
+                    setTimeout(() => {
+                        validateSelectedAccount(true)
+                    }, 2000)
+                } else {
+                    // Redirect to Microsoft login
                     loginOptionsViewOnLoginSuccess = getCurrentView()
                     loginOptionsViewOnLoginCancel = VIEWS.loginOptions
                     switchView(getCurrentView(), VIEWS.loginOptions, 500, 500)
-                })
-                setDismissHandler(() => {
-                    try {
-                        if (accLen > 1) {
-                            // Sélectionner un autre compte s'il y en a
-                            const accounts = ConfigManager.getAuthAccounts()
-                            const accountKeys = Object.keys(accounts).filter(key => key !== selectedAcc.uuid)
-                            if (accountKeys.length > 0) {
-                                ConfigManager.setSelectedAccount(accountKeys[0])
-                                ConfigManager.save()
-                            }
+                }
+            })
+            setDismissHandler(() => {
+                try {
+                    if (accLen > 1) {
+                        // Sélectionner un autre compte s'il y en a
+                        const accountKeys = Object.keys(allAccounts).filter(key => key !== selectedAcc.uuid)
+                        if (accountKeys.length > 0) {
+                            ConfigManager.setSelectedAccount(accountKeys[0])
+                            ConfigManager.save()
+                            // Revalidate with new account
+                            setTimeout(() => validateSelectedAccount(true), 500)
                         }
-                    } catch (e) {
-                        console.warn('dismiss handler failed', e)
                     }
-                    // Always close the overlay after dismiss action
-                    try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in dismissHandler', e) }
-                })
-                toggleOverlay(true)
-                return
-            } else {
-                // Pour les comptes Mojang, garder l'ancien comportement
-                ConfigManager.removeAuthAccount(selectedAcc.uuid)
-                ConfigManager.save()
-            }
-
+                } catch (e) {
+                    console.warn('dismiss handler failed', e)
+                }
+                // Always close the overlay after dismiss action
+                try { toggleOverlay(false) } catch (e) { console.warn('toggleOverlay failed in dismissHandler', e) }
+            })
+            toggleOverlay(true)
+            return false
+        } else {
+            // Pour les comptes Mojang, garder l'ancien comportement
+            ConfigManager.removeAuthAccount(selectedAcc.uuid)
+            ConfigManager.save()
+            
             setOverlayContent(
                 Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
                 accLen > 0
@@ -811,12 +866,11 @@ async function validateSelectedAccount(force = false) {
                 }
             })
             toggleOverlay(true, accLen > 0)
-        } else {
-            return true
+            return false
         }
-    } else {
-        return true
     }
+    
+    return true
 }
 
 // Expose a helper to force validation from other scripts (bypasses cooldown)

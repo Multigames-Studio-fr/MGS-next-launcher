@@ -196,8 +196,50 @@ function calculateExpiryDate(nowMs, epiresInS) {
 }
 
 /**
+ * Non-transient error codes that should NOT be retried.
+ * These represent permanent failures (invalid credentials, account issues, etc.)
+ */
+const NON_TRANSIENT_ERROR_CODES = new Set([
+    'INVALID_GRANT',
+    'INVALID_CLIENT',
+    'UNAUTHORIZED_CLIENT',
+    'ACCESS_DENIED',
+    'EXPIRED_TOKEN',
+    'INVALID_SCOPE',
+    'NO_MINECRAFT_PROFILE',
+    'MISSING_ENTITLEMENT',
+    'MISSING_ACCOUNT',
+    'BANNED_ACCOUNT'
+])
+
+/**
+ * Check if an error is non-transient (should not be retried)
+ * @param {Error|object} err The error to check
+ * @returns {boolean} True if the error should not be retried
+ */
+function isNonTransientError(err) {
+    if (!err) return false
+    // Check microsoftErrorCode
+    if (err.microsoftErrorCode && NON_TRANSIENT_ERROR_CODES.has(String(err.microsoftErrorCode).toUpperCase())) {
+        return true
+    }
+    // Check error property (OAuth error responses)
+    if (err.error && NON_TRANSIENT_ERROR_CODES.has(String(err.error).toUpperCase())) {
+        return true
+    }
+    // Check message for common permanent failure patterns
+    const msg = (err.message || '').toLowerCase()
+    if (msg.includes('invalid_grant') || msg.includes('expired_token') || 
+        msg.includes('unauthorized_client') || msg.includes('invalid_client')) {
+        return true
+    }
+    return false
+}
+
+/**
  * Retry helper with exponential backoff for transient failures.
  * Retries only when the wrapped function throws (network/IO).
+ * Does NOT retry for non-transient errors (auth failures, invalid tokens).
  *
  * @param {function(): Promise<any>} fn Async function to call
  * @param {number} attempts Number of attempts (default 3)
@@ -210,9 +252,17 @@ async function retryAsync(fn, attempts = 3, delayMs = 1000) {
             return await fn()
         } catch (err) {
             lastErr = err
-            log.warn(`Retry ${i+1}/${attempts} failed`, err)
+            log.warn(`Retry ${i+1}/${attempts} failed`, err && err.message ? err.message : err)
+            
+            // Don't retry non-transient errors - fail immediately
+            if (isNonTransientError(err)) {
+                log.info('Non-transient error detected, skipping retries')
+                throw err
+            }
+            
             if (i < attempts - 1) {
                 const wait = delayMs * Math.pow(2, i)
+                log.debug(`Waiting ${wait}ms before retry...`)
                 await new Promise(r => setTimeout(r, wait))
             }
         }
@@ -342,23 +392,57 @@ async function validateSelectedMojangAccount(){
  */
 async function validateSelectedMicrosoftAccount(){
     const current = ConfigManager.getSelectedAccount()
+    
+    // Safety check: ensure account data is valid
+    if (!current) {
+        log.warn('No account selected for validation')
+        return false
+    }
+    
+    if (!current.microsoft) {
+        log.warn('Selected account is missing Microsoft auth data')
+        return false
+    }
+    
+    if (!current.microsoft.refresh_token) {
+        log.warn('Selected account is missing refresh token - re-login required')
+        return false
+    }
+    
     const now = new Date().getTime()
-    const mcExpiresAt = current.expiresAt
-    const mcExpired = now >= mcExpiresAt
+    const mcExpiresAt = current.expiresAt || 0
+    const msExpiresAt = current.microsoft.expires_at || 0
+    
+    // Add buffer time (5 minutes) to avoid edge cases
+    const EXPIRY_BUFFER_MS = 5 * 60 * 1000
+    const mcExpired = now >= (mcExpiresAt - EXPIRY_BUFFER_MS)
+    const msExpired = now >= (msExpiresAt - EXPIRY_BUFFER_MS)
+    
+    log.debug(`Token validation: MC expired=${mcExpired}, MS expired=${msExpired}`)
 
     if(!mcExpired) {
+        log.debug('MC token still valid, no refresh needed')
         return true
     }
 
     // MC token expired. Check MS token.
-
-    const msExpiresAt = current.microsoft.expires_at
-    const msExpired = now >= msExpiresAt
-
     if(msExpired) {
-        // MS expired, do full refresh.
+        // MS expired, do full refresh using refresh_token.
+        log.info('Both MS and MC tokens expired, performing full refresh')
         try {
-            const res = await retryAsync(() => fullMicrosoftAuthFlow(current.microsoft.refresh_token, AUTH_MODE.MS_REFRESH), 3, 1500)
+            const refreshToken = current.microsoft.refresh_token
+            if (!refreshToken || refreshToken.trim() === '') {
+                log.warn('Refresh token is empty or invalid')
+                return false
+            }
+            
+            const res = await retryAsync(() => fullMicrosoftAuthFlow(refreshToken, AUTH_MODE.MS_REFRESH), 3, 2000)
+            
+            // Validate response before updating
+            if (!res || !res.mcToken || !res.accessToken) {
+                log.warn('Invalid response from MS refresh flow')
+                return false
+            }
 
             ConfigManager.updateMicrosoftAuthAccount(
                 current.uuid,
@@ -369,24 +453,44 @@ async function validateSelectedMicrosoftAccount(){
                 calculateExpiryDate(now, res.mcToken.expires_in)
             )
             ConfigManager.save()
+            log.info('Successfully refreshed MS and MC tokens')
             return true
         } catch(err) {
-            log.warn('MS full refresh failed after retries', err)
-            // Ne pas supprimer le compte immédiatement, permettre une reconnexion manuelle
-            if (err && err.microsoftErrorCode) {
-                log.warn('Microsoft error code:', err.microsoftErrorCode)
-                // Certaines erreurs peuvent être temporaires (réseau, serveur, etc.)
-                if (err.microsoftErrorCode === 'NETWORK_ERROR' || err.microsoftErrorCode === 'UNKNOWN') {
-                    log.info('Temporary error detected, keeping account for retry')
-                    return false
-                }
+            log.warn('MS full refresh failed after retries:', err && err.message)
+            
+            // Classify the error
+            if (isNonTransientError(err)) {
+                log.warn('Non-transient error - user must re-authenticate')
+                // Don't remove account, but mark that re-login is required
+                return false
             }
+            
+            // For transient errors (network, timeout), keep account and allow retry later
+            const errorCode = err && err.microsoftErrorCode
+            if (errorCode) {
+                log.warn('Microsoft error code:', errorCode)
+            }
+            log.info('Transient error detected, keeping account for retry')
             return false
         }
     } else {
-        // Only MC expired, use existing MS token.
+        // Only MC expired, use existing MS access token.
+        log.info('MC token expired but MS token valid, refreshing MC token only')
         try {
-            const res = await retryAsync(() => fullMicrosoftAuthFlow(current.microsoft.access_token, AUTH_MODE.MC_REFRESH), 3, 1000)
+            const msAccessToken = current.microsoft.access_token
+            if (!msAccessToken || msAccessToken.trim() === '') {
+                log.warn('MS access token is empty, falling back to full refresh')
+                // Try full refresh instead
+                return await validateSelectedMicrosoftAccount_fullRefresh(current, now)
+            }
+            
+            const res = await retryAsync(() => fullMicrosoftAuthFlow(msAccessToken, AUTH_MODE.MC_REFRESH), 3, 1500)
+            
+            // Validate response
+            if (!res || !res.mcToken) {
+                log.warn('Invalid response from MC refresh flow')
+                return false
+            }
 
             ConfigManager.updateMicrosoftAuthAccount(
                 current.uuid,
@@ -397,21 +501,56 @@ async function validateSelectedMicrosoftAccount(){
                 calculateExpiryDate(now, res.mcToken.expires_in)
             )
             ConfigManager.save()
+            log.info('Successfully refreshed MC token')
             return true
         }
         catch(err) {
-            log.warn('MC refresh failed after retries', err)
-            // Ne pas supprimer le compte pour les erreurs temporaires
-            if (err && err.microsoftErrorCode) {
-                log.warn('Microsoft error code:', err.microsoftErrorCode)
-                if (err.microsoftErrorCode === 'NETWORK_ERROR' || err.microsoftErrorCode === 'UNKNOWN') {
-                    log.info('Temporary error detected, keeping account for retry')
+            log.warn('MC refresh failed after retries:', err && err.message)
+            
+            // If MC refresh fails with MS token, try full refresh as fallback
+            log.info('Attempting full refresh as fallback...')
+            try {
+                return await validateSelectedMicrosoftAccount_fullRefresh(current, now)
+            } catch (fallbackErr) {
+                log.warn('Full refresh fallback also failed:', fallbackErr && fallbackErr.message)
+                if (isNonTransientError(fallbackErr)) {
                     return false
                 }
+                log.info('Transient error detected, keeping account for retry')
+                return false
             }
-            return false
         }
     }
+}
+
+/**
+ * Helper for full refresh when MC-only refresh fails
+ */
+async function validateSelectedMicrosoftAccount_fullRefresh(current, now) {
+    const refreshToken = current.microsoft.refresh_token
+    if (!refreshToken) {
+        log.warn('No refresh token available for full refresh fallback')
+        return false
+    }
+    
+    const res = await retryAsync(() => fullMicrosoftAuthFlow(refreshToken, AUTH_MODE.MS_REFRESH), 2, 2000)
+    
+    if (!res || !res.mcToken || !res.accessToken) {
+        log.warn('Invalid response from full refresh fallback')
+        return false
+    }
+    
+    ConfigManager.updateMicrosoftAuthAccount(
+        current.uuid,
+        res.mcToken.access_token,
+        res.accessToken.access_token,
+        res.accessToken.refresh_token,
+        calculateExpiryDate(now, res.accessToken.expires_in),
+        calculateExpiryDate(now, res.mcToken.expires_in)
+    )
+    ConfigManager.save()
+    log.info('Successfully performed full refresh fallback')
+    return true
 }
 
 /**
@@ -422,11 +561,166 @@ async function validateSelectedMicrosoftAccount(){
  */
 exports.validateSelected = async function(){
     const current = ConfigManager.getSelectedAccount()
+    
+    // Safety check
+    if (!current) {
+        log.warn('No account selected for validation')
+        return false
+    }
 
     if(current.type === 'microsoft') {
         return await validateSelectedMicrosoftAccount()
     } else {
         return await validateSelectedMojangAccount()
     }
-    
 }
+
+/**
+ * Check if the selected account needs refresh (tokens near expiry).
+ * This is a lighter check than full validation.
+ * 
+ * @returns {boolean} True if tokens need refresh soon
+ */
+exports.needsRefresh = function() {
+    const current = ConfigManager.getSelectedAccount()
+    if (!current) return false
+    
+    const now = Date.now()
+    const BUFFER_MS = 10 * 60 * 1000 // 10 minutes buffer
+    
+    if (current.type === 'microsoft') {
+        const mcExpiresAt = current.expiresAt || 0
+        return now >= (mcExpiresAt - BUFFER_MS)
+    }
+    
+    return false
+}
+
+/**
+ * Get account status without attempting refresh
+ * 
+ * @returns {object} Status object with isValid, needsRefresh, and error info
+ */
+exports.getAccountStatus = function() {
+    const current = ConfigManager.getSelectedAccount()
+    
+    if (!current) {
+        return { isValid: false, needsRefresh: false, error: 'NO_ACCOUNT_SELECTED' }
+    }
+    
+    if (!current.uuid || !current.type) {
+        return { isValid: false, needsRefresh: false, error: 'CORRUPTED_ACCOUNT_DATA' }
+    }
+    
+    const now = Date.now()
+    
+    if (current.type === 'microsoft') {
+        if (!current.microsoft || !current.microsoft.refresh_token) {
+            return { isValid: false, needsRefresh: false, error: 'MISSING_REFRESH_TOKEN' }
+        }
+        
+        const mcExpiresAt = current.expiresAt || 0
+        const msExpiresAt = current.microsoft.expires_at || 0
+        const BUFFER_MS = 5 * 60 * 1000
+        
+        const mcExpired = now >= (mcExpiresAt - BUFFER_MS)
+        const msExpired = now >= (msExpiresAt - BUFFER_MS)
+        
+        return {
+            isValid: !mcExpired,
+            needsRefresh: mcExpired,
+            needsFullRefresh: msExpired,
+            error: null,
+            uuid: current.uuid,
+            displayName: current.displayName
+        }
+    }
+    
+    // Mojang account - assume valid if present (legacy)
+    return {
+        isValid: true,
+        needsRefresh: false,
+        error: null,
+        uuid: current.uuid,
+        displayName: current.displayName
+    }
+}
+
+/**
+ * Force refresh the Minecraft token before launching the game.
+ * This ensures we always have a fresh, valid token for Minecraft servers.
+ * Unlike validateSelected(), this ALWAYS refreshes the MC token regardless of expiry.
+ * 
+ * @returns {Promise.<boolean>} True if refresh succeeded, false otherwise
+ */
+exports.forceRefreshBeforeLaunch = async function() {
+    const current = ConfigManager.getSelectedAccount()
+    
+    if (!current) {
+        log.warn('No account selected for pre-launch refresh')
+        return false
+    }
+    
+    if (current.type !== 'microsoft') {
+        // Mojang accounts don't need refresh - validate normally
+        return await exports.validateSelected()
+    }
+    
+    // For Microsoft accounts, always do a full refresh to ensure valid MC token
+    log.info('Force refreshing MC token before launch for account:', current.displayName)
+    
+    const now = Date.now()
+    
+    // Check if we have a valid refresh token
+    if (!current.microsoft || !current.microsoft.refresh_token) {
+        log.error('Cannot refresh: missing refresh token')
+        return false
+    }
+    
+    try {
+        // Always use the refresh token to get fresh tokens
+        const res = await retryAsync(
+            () => fullMicrosoftAuthFlow(current.microsoft.refresh_token, AUTH_MODE.MS_REFRESH), 
+            3, 
+            2000
+        )
+        
+        if (!res || !res.mcToken || !res.accessToken) {
+            log.error('Invalid response from MS refresh flow')
+            return false
+        }
+        
+        // Update account with fresh tokens
+        ConfigManager.updateMicrosoftAuthAccount(
+            current.uuid,
+            res.mcToken.access_token,
+            res.accessToken.access_token,
+            res.accessToken.refresh_token,
+            calculateExpiryDate(now, res.accessToken.expires_in),
+            calculateExpiryDate(now, res.mcToken.expires_in)
+        )
+        ConfigManager.save()
+        
+        log.info('Successfully refreshed tokens before launch')
+        return true
+        
+    } catch (err) {
+        log.error('Failed to refresh tokens before launch:', err && err.message)
+        
+        // If refresh failed, check if current token might still work
+        // (within a generous buffer)
+        const mcExpiresAt = current.expiresAt || 0
+        const tokenAgeMs = now - (current.lastUpdated || 0)
+        const TOKEN_STALE_THRESHOLD = 30 * 60 * 1000 // 30 minutes
+        
+        if (now < mcExpiresAt && tokenAgeMs < TOKEN_STALE_THRESHOLD) {
+            log.warn('Refresh failed but current token appears recent, proceeding with existing token')
+            return true
+        }
+        
+        return false
+    }
+}
+
+// Export utility function for other modules
+exports.isNonTransientError = isNonTransientError

@@ -4376,10 +4376,3 @@ input:checked + .toggleSwitchSlider:before {
   /* small shadow flourish */
   box-shadow: 0 0 0 rgba(0,0,0,0);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .server-change-anim {
-    animation: none !important;
-    transition: none !important;
-  }
-}

@@ -8,6 +8,10 @@ const loginOptionMicrosoft = document.getElementById('loginOptionMicrosoft')
 const loginOptionsCancelButton = document.getElementById('loginOptionCancelButton')
 
 let loginOptionsCancellable = false
+let loginInProgress = false
+let loginAttemptCount = 0
+const MAX_LOGIN_ATTEMPTS = 3
+const LOGIN_COOLDOWN_MS = 2000
 
 let loginOptionsViewOnLoginSuccess
 let loginOptionsViewOnLoginCancel
@@ -22,20 +26,81 @@ function loginOptionsCancelEnabled(val){
     }
 }
 
+/**
+ * Show a user-friendly error message
+ */
+function showLoginError(title, message, duration = 5000) {
+    const errorEl = $('#loginError')
+    const errorText = $('#loginErrorText')
+    const errorTitle = $('#loginErrorTitle')
+    
+    if (errorTitle && errorTitle.length) {
+        errorTitle.text(title)
+    }
+    if (errorText && errorText.length) {
+        errorText.text(message)
+    }
+    
+    errorEl.removeClass('hidden')
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            errorEl.addClass('hidden')
+        }, duration)
+    }
+}
+
+/**
+ * Reset login UI to initial state
+ */
+function resetLoginUI() {
+    loginInProgress = false
+    $('#loginStatusMicrosoft').addClass('hidden')
+    $('#loginOptionMicrosoft').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed')
+}
+
 loginOptionMicrosoft.onclick = (e) => {
+    // Prevent double-clicks and rapid retries
+    if (loginInProgress) {
+        console.log('Login already in progress, ignoring click')
+        return
+    }
+    
+    // Check cooldown
+    if (loginAttemptCount >= MAX_LOGIN_ATTEMPTS) {
+        showLoginError('Trop de tentatives', 'Veuillez patienter quelques secondes avant de réessayer.')
+        setTimeout(() => {
+            loginAttemptCount = 0
+        }, LOGIN_COOLDOWN_MS * 3)
+        return
+    }
+    
+    loginInProgress = true
+    loginAttemptCount++
+    
     // Afficher le statut de connexion
     $('#loginStatusMicrosoft').removeClass('hidden')
     $('#loginOptionMicrosoft').prop('disabled', true).addClass('opacity-50 cursor-not-allowed')
     
     // Lancer la connexion Microsoft sans changer de vue
-    ipcRenderer.send(
-        MSFT_OPCODE.OPEN_LOGIN,
-        loginOptionsViewOnLoginSuccess,
-        loginOptionsViewOnLoginCancel
-    )
+    try {
+        ipcRenderer.send(
+            MSFT_OPCODE.OPEN_LOGIN,
+            loginOptionsViewOnLoginSuccess,
+            loginOptionsViewOnLoginCancel
+        )
+    } catch (err) {
+        console.error('Failed to send login request:', err)
+        resetLoginUI()
+        showLoginError('Erreur de connexion', 'Impossible de démarrer le processus de connexion. Veuillez réessayer.')
+    }
 }
 
 loginOptionsCancelButton.onclick = (e) => {
+    // Reset state on cancel
+    resetLoginUI()
+    loginAttemptCount = 0
+    
     switchView(getCurrentView(), loginOptionsViewOnCancel, 500, 500, () => {
         // No cleanup needed for Microsoft.
         if(loginOptionsViewCancelHandler != null){
@@ -48,8 +113,7 @@ loginOptionsCancelButton.onclick = (e) => {
 // Gérer les réponses de l'authentification Microsoft
 ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
     // Masquer le statut de connexion et réactiver le bouton
-    $('#loginStatusMicrosoft').addClass('hidden')
-    $('#loginOptionMicrosoft').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed')
+    resetLoginUI()
 
     if (arguments_[0] === MSFT_REPLY_TYPE.ERROR) {
         const viewOnClose = arguments_[2]
@@ -58,17 +122,19 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
         if (errorType === MSFT_ERROR.NOT_FINISHED) {
             // L'utilisateur a annulé - rester sur la page loginOptions
             console.log('Connexion Microsoft annulée par l\'utilisateur')
+            loginAttemptCount = 0 // Reset attempt count on user cancel
+            return
+        }
+        
+        if (errorType === MSFT_ERROR.ALREADY_OPEN) {
+            console.log('Une fenêtre de connexion Microsoft est déjà ouverte')
+            showLoginError('Connexion en cours', 'Une fenêtre de connexion est déjà ouverte. Veuillez la fermer et réessayer.')
             return
         }
         
         // Erreur inattendue - afficher un message d'erreur
-        $('#loginError').removeClass('hidden')
-        $('#loginErrorText').text('Une erreur inattendue s\'est produite lors de la connexion Microsoft')
-        
-        // Masquer l'erreur après 5 secondes
-        setTimeout(() => {
-            $('#loginError').addClass('hidden')
-        }, 5000)
+        console.error('Microsoft auth error:', errorType)
+        showLoginError('Erreur de connexion', 'Une erreur inattendue s\'est produite lors de la connexion Microsoft. Veuillez réessayer.')
         
     } else if (arguments_[0] === MSFT_REPLY_TYPE.SUCCESS) {
         const queryMap = arguments_[1]
@@ -79,19 +145,29 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
             const error = queryMap.error
             const errorDesc = queryMap.error_description || 'Erreur d\'authentification Microsoft'
             
-            console.error('Erreur Microsoft Auth:', error, errorDesc)
+            console.error('Microsoft Auth Error:', error, errorDesc)
             
-            $('#loginError').removeClass('hidden')
-            $('#loginErrorText').text(errorDesc)
+            // Map common errors to user-friendly messages
+            let userMessage = errorDesc
+            if (error === 'access_denied') {
+                userMessage = 'Accès refusé. Veuillez autoriser l\'application à accéder à votre compte Microsoft.'
+            } else if (error === 'invalid_grant') {
+                userMessage = 'Session expirée. Veuillez vous reconnecter.'
+            } else if (error === 'invalid_client') {
+                userMessage = 'Erreur de configuration. Veuillez contacter le support.'
+            }
             
-            // Masquer l'erreur après 5 secondes
-            setTimeout(() => {
-                $('#loginError').addClass('hidden')
-            }, 5000)
+            showLoginError('Erreur d\'authentification', userMessage)
             
-        } else {
-            // Succès - changer de vue
+        } else if (Object.prototype.hasOwnProperty.call(queryMap, 'code')) {
+            // Succès - nous avons reçu le code d'autorisation
+            console.log('Microsoft auth successful, received auth code')
+            loginAttemptCount = 0 // Reset on success
             switchView(getCurrentView(), loginOptionsViewOnLoginSuccess, 500, 500)
+        } else {
+            // Réponse inattendue sans code ni erreur
+            console.error('Unexpected Microsoft auth response:', queryMap)
+            showLoginError('Erreur inattendue', 'La réponse de Microsoft est invalide. Veuillez réessayer.')
         }
     }
 })

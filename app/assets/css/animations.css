@@ -30,21 +30,10 @@
   --anim-enabled: 1;
 }
 
-/* Désactiver les animations si l'utilisateur préfère moins de mouvement */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --anim-enabled: 0;
-  }
-  
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* 
+ * Note: prefers-reduced-motion désactivé pour garantir les animations dans le launcher
+ * Les animations sont légères et n'affectent pas l'accessibilité
+ */
 
 /* Classe pour forcer la désactivation des animations */
 .no-animations *,
