@@ -6,6 +6,11 @@
     <div id="layoutRoot" class="flex min-h-screen w-full relative fit-content flex-row-reverse">
 
         <style>
+            /* === OVERRIDE DURÉE TRANSITIONS TAILWIND === */
+            #landingContainer {
+                --default-transition-duration: 0.3s;
+            }
+
             /* === VARIABLES CSS === */
             :root {
                 --primary: #451F21;
@@ -26,7 +31,7 @@
                 border: 1px solid rgba(248, 186, 89, 0.035);
                 border-radius: 0.75rem;
                 box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
             }
 
             .glass-card:hover {
@@ -47,7 +52,7 @@
                 cursor: pointer;
                 background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.005));
                 border-left: 3px solid transparent;
-                transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out;
             }
 
             .instance-item.selected {
@@ -81,7 +86,7 @@
                 padding: 0.6rem 1rem;
                 font-weight: 700;
                 cursor: pointer;
-                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, opacity 0.3s ease-out, background 0.3s ease-out;
                 border: 1px solid rgba(255, 255, 255, 0.04);
                 background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
                 color: #fff;
@@ -177,7 +182,7 @@
             /* === BOUTONS DE LANCEMENT === */
             .launch-btn {
                 background: linear-gradient(135deg, #FF7A33, #F8BA59 60%);
-                transition: transform 0.18s ease, box-shadow 0.18s ease;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
                 position: relative;
                 overflow: hidden;
                 box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -194,7 +199,7 @@
                 border-radius: 50%;
                 background: rgba(255, 255, 255, 0.08);
                 transform: translate(-50%, -50%);
-                transition: width 0.45s, height 0.45s;
+                transition: width 0.3s ease-out, height 0.3s ease-out;
             }
 
             .launch-btn:hover {
@@ -216,7 +221,7 @@
                 border-radius: 1rem;
                 border: 1px solid rgba(248, 186, 89, 0.12) !important;
                 box-shadow: 0 10px 30px rgba(15, 12, 10, 0.5);
-                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, opacity 0.3s ease-out;
             }
 
             #launch_button:hover,
@@ -474,7 +479,7 @@
 
             .social-link {
                 color: #ffffff;
-                transition: all 0.2s ease;
+                transition: all 0.3s ease-out;
                 display: inline-block;
             }
 
@@ -530,6 +535,37 @@
                 animation: instanceFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
             }
 
+            /* === ANIMATIONS TEXTE CHANGEMENT INSTANCE === */
+            @keyframes textFadeOut {
+                0% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+            }
+
+            @keyframes textFadeIn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .text-fade-out {
+                animation: textFadeOut 0.2s ease-out forwards !important;
+            }
+
+            .text-fade-in {
+                animation: textFadeIn 0.25s ease-out forwards !important;
+            }
+
             /* === UTILITAIRES === */
             .text-layer {
                 display: inline-block;
@@ -561,7 +597,7 @@
             a {
                 color: var(--secondary);
                 text-decoration: none;
-                transition: color 0.18s ease, transform 0.12s ease;
+                transition: color 0.3s ease-out, transform 0.3s ease-out;
             }
 
             a:hover,
@@ -748,6 +784,8 @@
             /* Contrôles quand instances actives */
             #running_controls {
                 display: none;
+                flex-direction: row;
+                gap: 0.5rem;
             }
 
             #running_controls.visible {
@@ -828,6 +866,187 @@
                     left: auto;
                     top: auto;
                 }
+            }
+
+            /* === ANIMATIONS DÉCORATIVES === */
+            @keyframes statusPulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.2); }
+            }
+
+            @keyframes titleShimmer {
+                0% { background-position: 0% center; }
+                100% { background-position: 200% center; }
+            }
+
+            @keyframes floatSoft {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-2px); }
+            }
+
+            @keyframes buttonGlow {
+                0%, 100% { box-shadow: 0 0 20px rgba(248, 186, 89, 0.3); }
+                50% { box-shadow: 0 0 35px rgba(248, 186, 89, 0.5); }
+            }
+
+            @keyframes iconPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+
+            @keyframes slideInUp {
+                0% { opacity: 0; transform: translateY(20px); }
+                100% { opacity: 1; transform: translateY(0); }
+            }
+
+            @keyframes borderGlow {
+                0%, 100% { border-color: rgba(248, 186, 89, 0.2); }
+                50% { border-color: rgba(248, 186, 89, 0.5); }
+            }
+
+            /* === TITRE AVEC SHIMMER === */
+            .server-title {
+                background: linear-gradient(90deg, #fff 0%, #F8BA59 50%, #fff 100%);
+                background-size: 200% auto;
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: titleShimmer 5s linear infinite;
+            }
+
+            /* === STATUS DOT PULSE === */
+            #serverStatusDot.online {
+                background: #22c55e;
+                animation: statusPulse 2.5s ease-in-out infinite;
+            }
+
+            /* === ANIMATIONS ZONE DE LANCEMENT === */
+            #launch_area {
+                animation: slideInUp 0.4s ease-out;
+            }
+
+            #launch_button {
+                animation: buttonGlow 3s ease-in-out infinite;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
+            }
+
+            #launch_button:hover {
+                transform: translateY(-3px) scale(1.02);
+            }
+
+            #launch_button:hover #launch_button_icon {
+                animation: iconPulse 0.6s ease-in-out;
+            }
+
+            #launch_button:active {
+                transform: translateY(0) scale(0.98);
+            }
+
+            /* Bouton Stop avec animation */
+            #stop_button {
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
+            }
+
+            #stop_button:hover {
+                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 15px 35px rgba(220, 50, 50, 0.4) !important;
+            }
+
+            #stop_button:hover #stop_button_icon {
+                animation: iconPulse 0.5s ease-in-out;
+            }
+
+            /* Bouton ajouter instance */
+            #add_instance_button {
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
+            }
+
+            #add_instance_button:hover:not(:disabled) {
+                transform: translateY(-3px) scale(1.05);
+            }
+
+            #add_instance_button:hover:not(:disabled) i {
+                animation: iconPulse 0.5s ease-in-out;
+            }
+
+            /* Carte mods avec animation */
+            #modsCard {
+                animation: borderGlow 4s ease-in-out infinite;
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out !important;
+            }
+
+            #modsCard:hover {
+                transform: translateY(-4px) scale(1.02);
+                box-shadow: 0 15px 35px rgba(59, 130, 246, 0.2);
+            }
+
+            #modsCard:hover i {
+                animation: iconPulse 0.6s ease-in-out infinite;
+            }
+
+            /* Barre de statut avec animation */
+            #launch_status {
+                animation: slideInUp 0.3s ease-out;
+            }
+
+            #launch_status_bar {
+                transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+
+            /* Compteur d'instances */
+            #instance_counter {
+                animation: slideInUp 0.3s ease-out;
+            }
+
+            #instance_counter i {
+                animation: floatSoft 2s ease-in-out infinite;
+            }
+
+            /* === HOVER FLUIDE POUR CARTES === */
+            .glass-card {
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out !important;
+            }
+            
+            .glass-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            }
+
+            /* === HOVER FLUIDE POUR INSTANCES === */
+            .instance-item {
+                transition: transform 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out !important;
+            }
+
+            .instance-item:hover:not(.selected) {
+                transform: translateX(-3px);
+            }
+
+            /* === HOVER FLUIDE POUR BOUTONS === */
+            .btn, .launch-btn, #launch_button {
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, background 0.3s ease-out !important;
+            }
+
+            /* === HOVER FLUIDE POUR LIENS SOCIAUX === */
+            .social-link {
+                transition: transform 0.3s ease-out, color 0.3s ease-out !important;
+            }
+
+            .social-link:hover {
+                transform: translateY(-3px);
+            }
+
+            /* === HOVER AVATAR === */
+            #avatarContainer {
+                transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
+            }
+
+            #avatarContainer:hover {
+                transform: scale(1.05);
+            }
+
+            /* === ICÔNE JOUEURS FLOTTANTE === */
+            .stats-top-left .bi-people-fill {
+                animation: floatSoft 3s ease-in-out infinite;
             }
         </style>
 
@@ -1319,6 +1538,7 @@
                     // Afficher bouton Lancer
                     if (this.elements.launchBtn) {
                         this.elements.launchBtn.classList.remove('hidden', 'btn-hidden');
+                        this.elements.launchBtn.style.display = '';
                         this.elements.launchBtn.disabled = false;
                     }
                     if (this.elements.launchIcon) {
@@ -1328,15 +1548,16 @@
                         this.elements.launchText.textContent = 'Lancer';
                     }
 
-                    // Cacher bouton Stop
-                    if (this.elements.stopBtn) {
-                        this.elements.stopBtn.classList.add('hidden');
-                        this.elements.stopBtn.classList.remove('btn-visible');
+                    // Cacher le conteneur running_controls
+                    const runningControls = document.getElementById('running_controls');
+                    if (runningControls) {
+                        runningControls.classList.remove('visible');
                     }
 
                     // Cacher statut
                     if (this.elements.statusContainer) {
                         this.elements.statusContainer.classList.add('hidden');
+                        this.elements.statusContainer.style.display = '';
                     }
                 },
 
@@ -1346,21 +1567,22 @@
                     this.state.isLaunching = true;
                     this.state.progress = percent || 0;
 
-                    // Bouton Lancer en état chargement
+                    // CACHER le bouton Lancer pendant le chargement
                     if (this.elements.launchBtn) {
-                        this.elements.launchBtn.classList.remove('hidden');
-                        this.elements.launchBtn.disabled = true;
-                    }
-                    if (this.elements.launchIcon) {
-                        this.elements.launchIcon.className = 'bi bi-arrow-repeat text-2xl animate-spin';
-                    }
-                    if (this.elements.launchText) {
-                        this.elements.launchText.textContent = 'Chargement...';
+                        this.elements.launchBtn.classList.add('hidden', 'btn-hidden');
+                        this.elements.launchBtn.style.display = 'none';
                     }
 
-                    // Afficher statut
+                    // Cacher running_controls
+                    const runningControls = document.getElementById('running_controls');
+                    if (runningControls) {
+                        runningControls.classList.remove('visible');
+                    }
+
+                    // Afficher statut de téléchargement
                     if (this.elements.statusContainer) {
                         this.elements.statusContainer.classList.remove('hidden');
+                        this.elements.statusContainer.style.display = 'block';
                     }
                     if (this.elements.statusText) {
                         this.elements.statusText.textContent = text || 'Préparation...';
@@ -1370,12 +1592,6 @@
                     }
                     if (this.elements.statusBar) {
                         this.elements.statusBar.style.width = (percent || 0) + '%';
-                    }
-
-                    // Cacher bouton Stop pendant le téléchargement
-                    if (this.elements.stopBtn) {
-                        this.elements.stopBtn.classList.add('hidden');
-                        this.elements.stopBtn.classList.remove('btn-visible');
                     }
                 },
 
@@ -1388,25 +1604,31 @@
                     // CACHER le bouton Lancer
                     if (this.elements.launchBtn) {
                         this.elements.launchBtn.classList.add('hidden', 'btn-hidden');
+                        this.elements.launchBtn.style.display = 'none';
                     }
 
-                    // AFFICHER le bouton Stop avec classe explicite
+                    // AFFICHER le conteneur running_controls (contient Stop + Add)
+                    const runningControls = document.getElementById('running_controls');
+                    if (runningControls) {
+                        runningControls.classList.add('visible');
+                        console.log('[LaunchUI] running_controls classList:', runningControls.classList.toString());
+                    }
+
+                    // S'assurer que le bouton Stop est actif
                     if (this.elements.stopBtn) {
-                        this.elements.stopBtn.classList.remove('hidden');
-                        this.elements.stopBtn.classList.add('btn-visible');
                         this.elements.stopBtn.disabled = false;
-                        console.log('[LaunchUI] Stop button classList:', this.elements.stopBtn.classList.toString());
                     }
                     if (this.elements.stopIcon) {
                         this.elements.stopIcon.className = 'bi bi-stop-fill text-2xl';
                     }
                     if (this.elements.stopText) {
-                        this.elements.stopText.textContent = 'Arrêter le jeu';
+                        this.elements.stopText.textContent = 'Arrêter';
                     }
 
                     // Cacher statut
                     if (this.elements.statusContainer) {
                         this.elements.statusContainer.classList.add('hidden');
+                        this.elements.statusContainer.style.display = 'none';
                     }
                 },
 
@@ -1455,6 +1677,25 @@
             setTimeout(function () {
                 LaunchUI.init();
             }, 500);
+
+            // Écouter directement les changements d'état du jeu via IPC
+            try {
+                const { ipcRenderer } = require('electron');
+                if (ipcRenderer) {
+                    ipcRenderer.on('instance-state', (_, state) => {
+                        console.log('[LaunchUI] Received instance-state via IPC:', state);
+                        if (state && state.started === true) {
+                            LaunchUI.showRunning();
+                        } else if (state && state.started === false) {
+                            LaunchUI.showReady();
+                        } else if (state && state.starting === true) {
+                            LaunchUI.showDownloading('Démarrage...', 0);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('[LaunchUI] Could not setup IPC listener:', e);
+            }
         })();
     </script>
 

@@ -86,41 +86,43 @@ const buttonAnimationTokens = new WeakMap()
  * Handles cancellation via per-element tokens and updates 'selected' class and image borders.
  */
 /**
- * Swap selection entre deux boutons de sidebar (mode instantané pour performance)
+ * Swap selection entre deux boutons de sidebar avec animations fluides
  */
 async function animateButtonSwap(prevBtn, nextBtn){
-    // Mode instantané - pas d'animations pour améliorer les performances
     try {
-        // Retirer la sélection du bouton précédent
+        // Animer la sortie du bouton précédent
         if(prevBtn){
-            prevBtn.classList.remove('selected')
+            prevBtn.classList.add('instance-fade-out')
             const img = prevBtn.querySelector('img')
             if(img){ 
+                img.style.transition = 'border-color 0.3s ease-out'
                 img.classList.remove('border-[#F8BA59]') 
                 img.classList.add('border-white/20') 
             }
-            // Nettoyage des classes d'animation existantes
-            try {
-                const labelPrev = prevBtn.querySelector('.font-semibold.text-xl.leading-tight')
-                if(labelPrev) labelPrev.classList.remove('label-slide-out','label-slide-in')
-            } catch (e) {}
-            prevBtn.classList.remove('instance-btn-exit', 'instance-btn-enter')
         }
 
-        // Appliquer la sélection au nouveau bouton immédiatement
+        // Attendre la fin de l'animation de sortie
+        await new Promise(r => setTimeout(r, 150))
+
+        // Retirer la sélection et nettoyer le bouton précédent
+        if(prevBtn){
+            prevBtn.classList.remove('selected', 'instance-fade-out')
+        }
+
+        // Appliquer la sélection au nouveau bouton avec animation d'entrée
         if(nextBtn){
-            nextBtn.classList.add('selected')
+            nextBtn.classList.add('selected', 'instance-fade-in')
             const img = nextBtn.querySelector('img')
             if(img){ 
+                img.style.transition = 'border-color 0.3s ease-out'
                 img.classList.remove('border-white/20') 
                 img.classList.add('border-[#F8BA59]') 
             }
-            // Nettoyage des classes d'animation existantes
-            try {
-                const labelNext = nextBtn.querySelector('.font-semibold.text-xl.leading-tight')
-                if(labelNext) labelNext.classList.remove('label-slide-out','label-slide-in')
-            } catch (e) {}
-            nextBtn.classList.remove('instance-btn-exit', 'instance-btn-enter')
+            
+            // Nettoyer la classe d'animation après qu'elle soit terminée
+            setTimeout(() => {
+                nextBtn.classList.remove('instance-fade-in')
+            }, 300)
         }
     } catch (e) {
         console.debug('[Landing] animateButtonSwap error', e)
@@ -128,19 +130,30 @@ async function animateButtonSwap(prevBtn, nextBtn){
 }
 
 /**
- * Fonction de changement de texte instantanée (optimisée pour performance)
+ * Fonction de changement de texte avec animation fade
  */
 function animateTextSwap(el, newHTML, opts = {}){
     if(!el) return Promise.resolve()
     
-    // Mode instantané - change directement le contenu
-    try {
-        el.innerHTML = newHTML
-    } catch (e) {
-        console.debug('[Landing] animateTextSwap error', e)
-    }
-    
-    return Promise.resolve()
+    return new Promise(resolve => {
+        // Appliquer l'animation de sortie via classe CSS
+        el.classList.add('text-fade-out')
+        
+        setTimeout(() => {
+            // Changer le contenu
+            el.innerHTML = newHTML
+            
+            // Retirer la classe de sortie et appliquer l'entrée
+            el.classList.remove('text-fade-out')
+            el.classList.add('text-fade-in')
+            
+            // Nettoyer après l'animation
+            setTimeout(() => {
+                el.classList.remove('text-fade-in')
+                resolve()
+            }, 300)
+        }, 200)
+    })
 }
 
 /**
@@ -193,7 +206,10 @@ function updateInstanceUI() {
     
     if (count > 0) {
         // Au moins une instance tourne - afficher les contrôles
-        if (launchBtn) launchBtn.classList.add('hidden')
+        if (launchBtn) {
+            launchBtn.classList.add('hidden', 'btn-hidden')
+            launchBtn.style.display = 'none'
+        }
         if (runningControls) runningControls.classList.add('visible')
         if (instanceCounter) instanceCounter.classList.add('visible')
         
@@ -219,7 +235,8 @@ function updateInstanceUI() {
     } else {
         // Aucune instance - afficher le bouton Lancer
         if (launchBtn) {
-            launchBtn.classList.remove('hidden')
+            launchBtn.classList.remove('hidden', 'btn-hidden')
+            launchBtn.style.display = ''
             launchBtn.disabled = false
         }
         if (runningControls) runningControls.classList.remove('visible')
@@ -254,9 +271,28 @@ function updateLaunchUIForServer(serverId){
             // Ajouter cette instance au tracker si pas déjà présente
             addRunningInstance(serverId, state.pid)
             
-            // Cacher le statut de téléchargement
-            if (launchStatus) {
-                launchStatus.classList.add('hidden');
+            // Afficher le bouton Stop via LaunchUI
+            if (window.LaunchUI) {
+                console.log('[Landing] Calling LaunchUI.showRunning()');
+                window.LaunchUI.showRunning();
+            } else {
+                // Fallback direct si LaunchUI n'est pas disponible
+                console.log('[Landing] LaunchUI not available, using direct DOM');
+                const launchBtn = document.getElementById('launch_button');
+                const runningControls = document.getElementById('running_controls');
+                const launchStatus = document.getElementById('launch_status');
+                
+                if (launchBtn) {
+                    launchBtn.classList.add('hidden', 'btn-hidden');
+                    launchBtn.style.display = 'none';
+                }
+                if (runningControls) {
+                    runningControls.classList.add('visible');
+                }
+                if (launchStatus) {
+                    launchStatus.classList.add('hidden');
+                    launchStatus.style.display = 'none';
+                }
             }
             
         } else if(state && state.starting){
@@ -316,7 +352,15 @@ function toggleLaunchArea(loading){
             // Mode chargement déjà géré par showDownloading
             return;
         } else {
-            window.LaunchUI.showReady();
+            // Vérifier si des instances sont en cours d'exécution
+            const runningCount = Object.values(instanceStateMap || {}).filter(s => s.started).length;
+            console.log('[Landing] toggleLaunchArea - running instances:', runningCount);
+            if (runningCount > 0) {
+                // Des instances tournent, afficher les contrôles running
+                window.LaunchUI.showRunning();
+            } else {
+                window.LaunchUI.showReady();
+            }
             return;
         }
     }
@@ -844,7 +888,7 @@ async function updateSelectedServer(serv, instant = true){
     ConfigManager.setSelectedServer(serv != null ? serv.rawServer.id : null)
     ConfigManager.save()
     
-    // Update server info in the new UI. Force instant updates for performance
+    // Update server info in the new UI with animations
     const serverTitle = document.querySelector('.server-title')
     const serverDesc = document.querySelector('.server-desc')
     const serverVersion = document.querySelector('.server-version')
@@ -852,25 +896,43 @@ async function updateSelectedServer(serv, instant = true){
     const serverStatusName = document.querySelector('.server-status-name')
     const playInstance = document.querySelector('.play-instance')
 
-    // Always use instant updates for better performance
+    // Animate the content change
     try {
         if (serv != null) {
             const titleHtml = DOMPurify.sanitize(serv.rawServer.name || '')
             const descHtml = DOMPurify.sanitize(serv.rawServer.description || '')
-            if (serverTitle) serverTitle.innerHTML = titleHtml
-            if (serverDesc) serverDesc.innerHTML = descHtml
-            if (serverVersion) serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
-            if (serverLoader) serverLoader.textContent = serv.rawServer.loader || '--'
+            
+            // Animate title and description
+            animateTextSwap(serverTitle, titleHtml)
+            animateTextSwap(serverDesc, descHtml)
+            
+            // Update other fields with simple fade
+            if (serverVersion) {
+                serverVersion.style.transition = 'opacity 0.2s ease-out'
+                serverVersion.style.opacity = '0'
+                setTimeout(() => {
+                    serverVersion.textContent = serv.rawServer.minecraftVersion || '--'
+                    serverVersion.style.opacity = '1'
+                }, 150)
+            }
+            if (serverLoader) {
+                serverLoader.style.transition = 'opacity 0.2s ease-out'
+                serverLoader.style.opacity = '0'
+                setTimeout(() => {
+                    serverLoader.textContent = serv.rawServer.loader || '--'
+                    serverLoader.style.opacity = '1'
+                }, 150)
+            }
             if (serverStatusName) serverStatusName.textContent = serv.rawServer.name
         } else {
-            if (serverTitle) serverTitle.innerHTML = 'Veuillez sélectionner une instance'
-            if (serverDesc) serverDesc.innerHTML = 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.'
+            animateTextSwap(serverTitle, 'Veuillez sélectionner une instance')
+            animateTextSwap(serverDesc, 'Aucune instance sélectionnée.<br>Choisissez une instance pour voir ses informations.')
             if (serverVersion) serverVersion.textContent = '--'
             if (serverLoader) serverLoader.textContent = '--'
             if (serverStatusName) serverStatusName.textContent = 'Multigames-Studio.fr'
         }
     } catch (e) {
-        console.debug('[Landing] instant updateSelectedServer failed', e)
+        console.debug('[Landing] animated updateSelectedServer failed', e)
     }
     
     // Update server technical info (mods count, RAM allocation)
@@ -984,9 +1046,10 @@ const refreshMojangStatuses = async function(){
     
     const mojangEssEl = document.getElementById('mojangStatusEssentialContainer')
     const mojangNonEssEl = document.getElementById('mojangStatusNonEssentialContainer')
+    const mojangStatusIcon = document.getElementById('mojang_status_icon')
     if (mojangEssEl) mojangEssEl.innerHTML = DOMPurify.sanitize(tooltipEssentialHTML)
     if (mojangNonEssEl) mojangNonEssEl.innerHTML = DOMPurify.sanitize(tooltipNonEssentialHTML)
-    document.getElementById('mojang_status_icon').style.color = MojangRestAPI.statusToHex(status)
+    if (mojangStatusIcon) mojangStatusIcon.style.color = MojangRestAPI.statusToHex(status)
 }
 
 const refreshServerStatus = async (fade = false) => {
@@ -3470,6 +3533,53 @@ window.onInstanceStateChanged = function(payload){
         instanceStateMap[serverId].pid = payload.pid || null
         instanceStateMap[serverId].starting = !!payload.starting
         instanceStateMap[serverId].timestamp = Date.now()
+
+        // === GESTION UI DIRECTE ===
+        if (payload.started === true) {
+            console.log('[Landing] Game started - showing stop button');
+            // Appel direct à LaunchUI
+            if (window.LaunchUI && typeof window.LaunchUI.showRunning === 'function') {
+                window.LaunchUI.showRunning();
+            } else {
+                // Fallback DOM direct
+                const launchBtn = document.getElementById('launch_button');
+                const runningControls = document.getElementById('running_controls');
+                const launchStatus = document.getElementById('launch_status');
+                
+                if (launchBtn) {
+                    launchBtn.classList.add('hidden', 'btn-hidden');
+                    launchBtn.style.display = 'none';
+                }
+                if (runningControls) {
+                    runningControls.classList.add('visible');
+                }
+                if (launchStatus) {
+                    launchStatus.classList.add('hidden');
+                }
+            }
+        } else if (payload.starting === true) {
+            console.log('[Landing] Game starting - showing loading');
+            if (window.LaunchUI && typeof window.LaunchUI.showDownloading === 'function') {
+                window.LaunchUI.showDownloading('Démarrage...', 0);
+            }
+        } else if (payload.started === false) {
+            console.log('[Landing] Game stopped - showing launch button');
+            if (window.LaunchUI && typeof window.LaunchUI.showReady === 'function') {
+                window.LaunchUI.showReady();
+            } else {
+                // Fallback DOM direct
+                const launchBtn = document.getElementById('launch_button');
+                const runningControls = document.getElementById('running_controls');
+                
+                if (launchBtn) {
+                    launchBtn.classList.remove('hidden', 'btn-hidden');
+                    launchBtn.style.display = '';
+                }
+                if (runningControls) {
+                    runningControls.classList.remove('visible');
+                }
+            }
+        }
 
         // Clear progress when game stops, but only if it was previously marked started
         if (payload.started === false && prevStarted === true) {
