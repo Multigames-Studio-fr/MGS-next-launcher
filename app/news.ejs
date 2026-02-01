@@ -1,516 +1,431 @@
-<!-- News partial: moved from landing.ejs -->
-<!-- Backdrop for news full-screen overlay -->
+<!-- News View: Style cohérent avec landing.ejs -->
+<section id="newsContainer" class="hidden" style="display: none;">
+    <link rel="stylesheet" href="./assets/css/output.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-<section id="newsContainer" class="mt-8 sm:mt-10 md:mt-12 min-h-screen hidden">
-    <main class="max-w-7xl mx-auto px-6">
-        <!-- Header avec titre et boutons -->
-        <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-            <!-- Icône et titre -->
-            <div class="flex items-center gap-4">
-                <div class="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30">
-                    <svg class="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">Actualités</h2>
-                    <p class="text-sm text-gray-400 mt-1">Dernières nouvelles et mises à jour</p>
-                </div>
-            </div>
-            
-            <!-- Boutons d'actions -->
-            <div class="flex items-center gap-3">
-                <button class="refresh-news group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-amber-500 hover:to-orange-600 text-white font-semibold text-sm border border-gray-700 hover:border-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg class="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Rafraîchir</span>
-                </button>
-                
-                <button id="newsCloseButton" class="hidden group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-red-500/30">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    <span>Fermer</span>
-                </button>
-            </div>
-        </header>
+    <style>
+        /* === VARIABLES CSS === */
+        :root {
+            --primary: #451F21;
+            --secondary: #F8BA59;
+            --secondary-dark: #EB843B;
+            --white: #FFFFFF;
+        }
 
-        <!-- Container principal des actualités -->
-        <div id="newsContent" class="hidden">
-            <!-- Featured News Strip (En vedette) -->
-            <section id="newsFeaturedSection" class="py-8 hidden">
-                <h3 class="text-xl font-bold text-white mb-4">En vedette</h3>
-                <div id="newsFeaturedStrip" class="flex gap-4 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory">
-                    <!-- Les articles en vedette seront injectés ici -->
-                </div>
-            </section>
+        /* === STYLES NEWS === */
+        #newsContainer {
+            background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0d0d0d 100%);
+            min-height: 100vh;
+            width: 100%;
+        }
 
-            <!-- Toutes les actualités -->
-            <section class="pb-20 pt-10">
-                <!-- Grid des actualités -->
-                <div id="newsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 w-full" aria-live="polite">
-                    <!-- Les cartes d'actualités seront injectées ici par JavaScript -->
-                </div>
-            </section>
-        </div>
+        .news-header {
+            background: linear-gradient(180deg, rgba(15, 17, 19, 0.95), rgba(21, 23, 24, 0.9));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
 
-        <!-- Template pour une carte featured (En vedette) -->
-        <template id="news-featured-template">
-            <a class="news-featured-card min-w-[260px] min-h-[160px] bg-cover bg-center rounded-2xl overflow-hidden relative shadow-lg flex-shrink-0 snap-start cursor-pointer" 
-               role="article" 
-               tabindex="0">
-                <!-- Gradient overlay -->
-                <div class="absolute inset-0 z-20" style="background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.9) 100%)"></div>
-                
-                <!-- Content -->
-                <div class="absolute inset-0 z-30 p-4 flex flex-col justify-end text-white">
-                    <span class="news-featured-category inline-block bg-white/10 text-white text-xs font-medium px-2.5 py-1 rounded-full mb-2 backdrop-blur-sm max-w-fit">Actualité</span>
-                    <h4 class="news-featured-title font-bold text-lg leading-tight drop-shadow-md line-clamp-2 bg-black/50 inline-block px-2 py-1 rounded">Titre</h4>
-                    <p class="news-featured-summary text-sm text-white/90 mt-2 line-clamp-2 bg-black/30 inline-block px-2 py-1 rounded">Résumé</p>
-                </div>
-            </a>
-        </template>
+        .news-card {
+            background: linear-gradient(180deg, #1b1b1b, #121212);
+            border: 1px solid rgba(248, 186, 89, 0.035);
+            border-radius: 1rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+            overflow: hidden;
+        }
 
-        <!-- Template pour une carte d'actualité -->
-        <template id="news-card-template">
-            <article class="news-card group relative overflow-hidden rounded-2xl cursor-pointer transform transition-all duration-300 hover:scale-[1.02] shadow-xl hover:shadow-2xl min-h-[350px] flex flex-col" 
-                     role="article" 
-                     tabindex="0">
-                <!-- Image de fond -->
-                <div class="news-image absolute inset-0 bg-cover bg-center transition-all duration-500 group-hover:scale-105"></div>
-                
-                <!-- Overlay gradient sombre -->
-                <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/90"></div>
-                
-                <!-- Badge catégorie en haut à gauche -->
-                <div class="absolute top-4 left-4 z-10">
-                    <span class="news-category-badge inline-block bg-white/90 text-gray-900 text-xs font-semibold px-3 py-1.5 rounded backdrop-blur-sm">
-                        Événements
-                    </span>
-                </div>
-                
-                <!-- Contenu de la carte -->
-                <div class="news-content relative flex-1 flex flex-col justify-end p-4 sm:p-6 text-white z-10">
-                    <div class="space-y-2 sm:space-y-3">
-                        <!-- Titre -->
-                        <h3 class="news-title-stacked font-bold text-xl sm:text-2xl lg:text-3xl leading-tight text-white line-clamp-2">
-                            <!-- Le titre sera injecté ici -->
-                        </h3>
-                        
-                        <!-- Extrait - caché sur mobile et petites cartes -->
-                        <p class="news-excerpt-stacked hidden sm:block text-sm text-gray-200 line-clamp-2 leading-relaxed">
-                            <!-- L'extrait sera injecté ici -->
-                        </p>
-                        
-                        <!-- Footer avec date, vues et bouton -->
-                        <div class="flex items-center justify-between mt-3 sm:mt-4 pt-3">
-                            <!-- Date -->
-                            <div class="news-date text-xs sm:text-sm text-gray-300 font-medium flex items-center gap-2">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <span class="news-date-day font-bold text-white">--</span>
-                                <span class="news-date-month uppercase">---</span>
-                            </div>
-                            
-                            <!-- Vues et bouton Voir -->
-                            <div class="flex items-center gap-2 sm:gap-3">
-                                <!-- Compteur de vues -->
-                                <div class="news-views flex items-center gap-1 sm:gap-1.5 text-gray-300">
-                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                    <span class="news-view-count text-xs sm:text-sm font-medium">0</span>
-                                </div>
-                                
-                                <!-- Bouton Voir -->
-                                <button class="news-open-button px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-white text-gray-900 text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-all duration-200">
-                                    Voir
-                                </button>
-                            </div>
+        .news-card:hover {
+            background: linear-gradient(180deg, #222, #141414);
+            border-color: rgba(248, 186, 89, 0.12);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+        }
+
+        .news-card-featured {
+            background: linear-gradient(180deg, #1f1f1f, #151515);
+            border: 1px solid rgba(248, 186, 89, 0.08);
+        }
+
+        .news-card-featured:hover {
+            border-color: rgba(248, 186, 89, 0.2);
+            box-shadow: 0 16px 40px rgba(248, 186, 89, 0.08);
+        }
+
+        .btn-news {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 0.75rem;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, background 0.3s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            color: #fff;
+        }
+
+        .btn-news:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+        }
+
+        .btn-news-primary {
+            background: linear-gradient(90deg, #FF6A1A, #F8BA59 60%);
+            box-shadow: 0 6px 18px rgba(255, 106, 26, 0.25);
+            border-color: rgba(248, 186, 89, 0.12);
+        }
+
+        .btn-news-primary:hover {
+            box-shadow: 0 8px 24px rgba(255, 106, 26, 0.35);
+        }
+
+        .btn-news-back {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-news-back:hover {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .category-badge {
+            background: linear-gradient(90deg, rgba(248, 186, 89, 0.15), rgba(255, 138, 66, 0.1));
+            border: 1px solid rgba(248, 186, 89, 0.2);
+            color: #F8BA59;
+        }
+
+        .category-badge-event {
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.1));
+            border-color: rgba(139, 92, 246, 0.2);
+            color: #A78BFA;
+        }
+
+        .category-badge-update {
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.15), rgba(74, 222, 128, 0.1));
+            border-color: rgba(34, 197, 94, 0.2);
+            color: #4ADE80;
+        }
+
+        .category-badge-community {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1));
+            border-color: rgba(59, 130, 246, 0.2);
+            color: #60A5FA;
+        }
+
+        /* Scrollbar personnalisée */
+        #newsContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #newsContainer::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        #newsContainer::-webkit-scrollbar-thumb {
+            background: rgba(248, 186, 89, 0.3);
+            border-radius: 4px;
+        }
+
+        #newsContainer::-webkit-scrollbar-thumb:hover {
+            background: rgba(248, 186, 89, 0.5);
+        }
+
+        /* Animation skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Animation fade in */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .news-card-animated {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        .news-card-animated:nth-child(1) { animation-delay: 0.05s; }
+        .news-card-animated:nth-child(2) { animation-delay: 0.1s; }
+        .news-card-animated:nth-child(3) { animation-delay: 0.15s; }
+        .news-card-animated:nth-child(4) { animation-delay: 0.2s; }
+        .news-card-animated:nth-child(5) { animation-delay: 0.25s; }
+        .news-card-animated:nth-child(6) { animation-delay: 0.3s; }
+    </style>
+
+    <!-- Contenu principal -->
+    <div class="flex flex-col min-h-screen w-full overflow-y-auto">
+        
+        <!-- Header fixe -->
+        <header class="news-header sticky top-0 z-50 px-6 py-4">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <!-- Gauche: Bouton retour + Titre -->
+                <div class="flex items-center gap-4">
+                    <button id="newsBackButton" class="btn-news btn-news-back group">
+                        <i class="bi bi-arrow-left text-lg transition-transform group-hover:-translate-x-1"></i>
+                        <span class="hidden sm:inline">Retour</span>
+                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                            <i class="bi bi-newspaper text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Actualités</h1>
+                            <p class="text-xs text-gray-500">MultiGames Studio</p>
                         </div>
                     </div>
                 </div>
-            </article>
-        </template>
-    </div>
-    </main>
 
-    <!-- Container d'erreur -->
-    <div id="newsErrorContainer" class="flex flex-col items-center justify-center min-h-[400px] text-center space-y-6">
-        <!-- État de chargement -->
-        <div id="newsErrorLoading" class="flex flex-col items-center space-y-4">
-            <div class="relative">
-                <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-amber-500"></div>
-                <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/20 to-transparent animate-pulse"></div>
-            </div>
-            <div class="space-y-2">
-                <span id="nELoadSpan" class="text-white/90 font-semibold text-lg">
-                    <%- lang('landing.newsErrorLoadSpan') %>
-                </span>
-                <p class="text-gray-400 text-sm">Veuillez patienter...</p>
-            </div>
-        </div>
-        
-        <!-- État d'échec -->
-        <div id="newsErrorFailed" class="hidden flex-col items-center space-y-5">
-            <div class="relative">
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-2xl shadow-red-500/30">
-                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3l-6.928-12c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
+                <!-- Droite: Actions -->
+                <div class="flex items-center gap-3">
+                    <button id="newsRefreshButton" class="btn-news refresh-news group" title="Rafraîchir">
+                        <i class="bi bi-arrow-clockwise text-lg transition-transform group-hover:rotate-180 duration-500"></i>
+                        <span class="hidden sm:inline">Rafraîchir</span>
+                    </button>
                 </div>
             </div>
-            <div class="space-y-3">
-                <span id="nEFailedSpan" class="text-white/90 font-semibold text-lg block">
-                    <%- lang('landing.newsErrorFailedSpan') %>
-                </span>
-                <p class="text-gray-400 text-sm max-w-md">Une erreur s'est produite lors du chargement des actualités</p>
-                <button id="newsErrorRetry" class="mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transform hover:scale-105">
-                    <%- lang('landing.newsErrorRetryButton') %>
-                </button>
-            </div>
-        </div>
-        
-        <!-- État aucune actualité -->
-        <div id="newsErrorNone" class="hidden flex-col items-center space-y-5">
-            <div class="relative">
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center shadow-2xl">
-                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
+        </header>
+
+        <!-- Zone de contenu -->
+        <main class="flex-1 px-6 py-8">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- Container d'erreur (inclut chargement, erreur, vide) -->
+                <div id="newsErrorContainer">
+                    <!-- État de chargement -->
+                    <div id="newsErrorLoading" class="flex flex-col items-center justify-center py-20">
+                        <div class="relative mb-6">
+                            <div class="w-16 h-16 rounded-full border-4 border-gray-800 border-t-amber-500 animate-spin"></div>
+                            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/10 to-transparent animate-pulse"></div>
+                        </div>
+                        <p id="nELoadSpan" class="text-white font-medium"><%- lang('landing.newsErrorLoadSpan') %></p>
+                        <p class="text-gray-500 text-sm mt-1">Veuillez patienter</p>
+                    </div>
+
+                    <!-- État d'erreur -->
+                    <div id="newsErrorFailed" class="hidden flex-col items-center justify-center py-20">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-700/10 flex items-center justify-center mb-6 border border-red-500/20">
+                            <i class="bi bi-exclamation-triangle text-red-500 text-3xl"></i>
+                        </div>
+                        <p id="nEFailedSpan" class="text-white font-medium text-lg"><%- lang('landing.newsErrorFailedSpan') %></p>
+                        <p class="text-gray-500 text-sm mt-2 mb-6">Vérifiez votre connexion internet</p>
+                        <button id="newsErrorRetry" class="btn-news btn-news-primary">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            <%- lang('landing.newsErrorRetryButton') %>
+                        </button>
+                    </div>
+
+                    <!-- État aucune actualité -->
+                    <div id="newsErrorNone" class="hidden flex-col items-center justify-center py-20">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-700/50 to-gray-800/30 flex items-center justify-center mb-6 border border-gray-700/50">
+                            <i class="bi bi-inbox text-gray-500 text-3xl"></i>
+                        </div>
+                        <p id="nENoneSpan" class="text-white font-medium text-lg"><%- lang('landing.newsErrorNoneSpan') %></p>
+                        <p class="text-gray-500 text-sm mt-2">Revenez plus tard pour voir les nouveautés</p>
+                    </div>
+                </div>
+
+                <!-- Contenu des actualités -->
+                <div id="newsContent" class="hidden">
+                    
+                    <!-- Article en vedette -->
+                    <section id="newsFeaturedSection" class="mb-10 hidden">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i class="bi bi-star-fill text-amber-500"></i>
+                            <h2 class="text-lg font-bold text-white">En vedette</h2>
+                        </div>
+                        <div id="newsFeaturedStrip" class="flex gap-4 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory">
+                            <!-- Les articles en vedette seront injectés ici -->
+                        </div>
+                    </section>
+
+                    <!-- Grille des actualités -->
+                    <section>
+                        <div class="flex items-center gap-3 mb-6">
+                            <i class="bi bi-grid-3x3-gap-fill text-gray-500"></i>
+                            <h2 class="text-lg font-bold text-white">Toutes les actualités</h2>
+                            <span id="newsCount" class="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-full">0</span>
+                        </div>
+                        
+                        <div id="newsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" aria-live="polite">
+                            <!-- Les cartes seront injectées ici -->
+                        </div>
+                    </section>
                 </div>
             </div>
-            <div class="space-y-2">
-                <span id="nENoneSpan" class="text-white/90 font-semibold text-lg block">
-                    <%- lang('landing.newsErrorNoneSpan') %>
-                </span>
-                <p class="text-gray-400 text-sm">Revenez plus tard pour voir les nouvelles actualités</p>
+        </main>
+
+        <!-- Footer -->
+        <footer class="px-6 py-4 border-t border-white/5 mt-auto">
+            <div class="max-w-7xl mx-auto flex items-center justify-between text-xs text-gray-600">
+                <span>© 2026 MultiGames Studio</span>
+                <a href="https://multigames-studio.fr" target="_blank" class="hover:text-amber-500 transition-colors">
+                    multigames-studio.fr
+                </a>
             </div>
-        </div>
+        </footer>
     </div>
+
+    <!-- Template pour carte d'actualité -->
+    <template id="news-card-template">
+        <article class="news-card news-card-animated cursor-pointer group opacity-0" role="article" tabindex="0">
+            <!-- Image -->
+            <div class="news-image relative h-44 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
+                <img src="" alt="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                
+                <!-- Badge catégorie -->
+                <div class="absolute top-3 left-3">
+                    <span class="news-category-badge category-badge text-xs font-semibold px-2.5 py-1 rounded-lg">
+                        Actualité
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Contenu -->
+            <div class="news-content p-4">
+                <h3 class="news-title-stacked font-bold text-white text-base leading-tight mb-2 line-clamp-2 group-hover:text-amber-400 transition-colors">
+                    Titre de l'actualité
+                </h3>
+                
+                <p class="news-excerpt-stacked text-gray-400 text-sm line-clamp-2 mb-4">
+                    Description de l'actualité...
+                </p>
+                
+                <!-- Footer carte -->
+                <div class="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div class="news-date flex items-center gap-2 text-gray-500 text-xs">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="news-date-day">--</span>
+                        <span class="news-date-month">---</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="news-views flex items-center gap-1 text-gray-500 text-xs">
+                            <i class="bi bi-eye"></i>
+                            <span class="news-view-count">0</span>
+                        </div>
+                        
+                        <button class="news-open-button text-xs font-semibold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1">
+                            Lire
+                            <i class="bi bi-arrow-right transition-transform group-hover:translate-x-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <!-- Template pour carte en vedette -->
+    <template id="news-featured-template">
+        <a class="news-featured-card news-card news-card-featured min-w-[300px] min-h-[180px] cursor-pointer group flex-shrink-0 snap-start overflow-hidden" 
+           role="article" 
+           tabindex="0">
+            <div class="relative h-full">
+                <!-- Image de fond -->
+                <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
+                <img src="" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                
+                <!-- Badge -->
+                <div class="absolute top-3 left-3">
+                    <span class="news-featured-category category-badge text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <i class="bi bi-star-fill text-amber-400 text-[10px]"></i>
+                        <span>En vedette</span>
+                    </span>
+                </div>
+                
+                <!-- Contenu -->
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <h4 class="news-featured-title font-bold text-white text-lg leading-tight line-clamp-2 group-hover:text-amber-400 transition-colors">
+                        Titre
+                    </h4>
+                    <p class="news-featured-summary text-gray-300 text-sm mt-2 line-clamp-2">
+                        Résumé
+                    </p>
+                </div>
+            </div>
+        </a>
+    </template>
 </section>
 
-<style>
-/* Seulement les styles essentiels qui ne peuvent pas être faits avec Tailwind */
+<script>
+    // Script pour le bouton retour et refresh
+    (function() {
+        const backBtn = document.getElementById('newsBackButton');
+        if (backBtn) {
+            backBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Retourner à la page landing
+                if (typeof switchView === 'function' && typeof getCurrentView === 'function') {
+                    switchView(getCurrentView(), '#landingContainer');
+                } else if (typeof window.switchView === 'function' && typeof window.getCurrentView === 'function') {
+                    window.switchView(window.getCurrentView(), '#landingContainer');
+                } else {
+                    // Fallback
+                    const newsContainer = document.getElementById('newsContainer');
+                    const landingContainer = document.getElementById('landingContainer');
+                    if (newsContainer) {
+                        newsContainer.classList.add('hidden');
+                        newsContainer.style.display = 'none';
+                    }
+                    if (landingContainer) {
+                        landingContainer.classList.remove('hidden');
+                        landingContainer.style.display = '';
+                    }
+                }
+            });
+        }
 
-/* Mode plein écran */
-#newsContainer.news-fullscreen {
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(0, 0, 0, 0.97));
-    padding: 2rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 !important;
-    display: block !important;
-}
+        // Bouton refresh
+        const refreshBtn = document.getElementById('newsRefreshButton');
+        const retryBtn = document.getElementById('newsErrorRetry');
+        
+        function refreshNews() {
+            if (typeof window.initNews === 'function') {
+                try { window.initNews(true); } catch(e) { console.warn('initNews error', e); }
+            }
+        }
 
-#newsContainer.news-fullscreen #newsGrid {
-    max-width: 1600px;
-    margin: 0 auto;
-}
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', refreshNews);
+        }
+        if (retryBtn) {
+            retryBtn.addEventListener('click', refreshNews);
+        }
 
-/* Backdrop visible */
-#newsBackdrop.visible {
-    opacity: 1;
-    pointer-events: auto;
-    display: block;
-}
+        // Mise à jour du compteur de news
+        const observer = new MutationObserver(function(mutations) {
+            const newsGrid = document.getElementById('newsGrid');
+            const newsCount = document.getElementById('newsCount');
+            if (newsGrid && newsCount) {
+                const count = newsGrid.querySelectorAll('.news-card').length;
+                newsCount.textContent = count;
+            }
+        });
 
-/* Classes Bento pour tailles différentes */
-.bento-large {
-    grid-column: span 2;
-    grid-row: span 2;
-    min-height: 500px;
-}
-
-.bento-medium {
-    grid-column: span 1;
-    grid-row: span 2;
-    min-height: 500px;
-}
-
-.bento-small {
-    grid-column: span 1;
-    grid-row: span 1;
-    min-height: 350px;
-}
-
-/* Responsive breakpoints pour les cartes Bento */
-@media (max-width: 640px) {
-    .bento-large,
-    .bento-medium,
-    .bento-small {
-        grid-column: span 1 !important;
-        grid-row: span 1 !important;
-        min-height: 350px !important;
-    }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-    .bento-large {
-        grid-column: span 2;
-        grid-row: span 2;
-        min-height: 450px;
-    }
-    
-    .bento-medium {
-        grid-column: span 1;
-        grid-row: span 1;
-        min-height: 350px;
-    }
-    
-    .bento-small {
-        grid-column: span 1;
-        grid-row: span 1;
-        min-height: 350px;
-    }
-}
-
-@media (min-width: 1025px) {
-    .bento-large {
-        grid-column: span 2;
-        grid-row: span 2;
-        min-height: 500px;
-    }
-    
-    .bento-medium {
-        grid-column: span 1;
-        grid-row: span 2;
-        min-height: 500px;
-    }
-    
-    .bento-small {
-        grid-column: span 1;
-        grid-row: span 1;
-        min-height: 350px;
-    }
-}
-
-/* Skeleton loading animation */
-.skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* Featured news strip scrollbar styling */
-#newsFeaturedStrip {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(251, 191, 36, 0.3) rgba(0, 0, 0, 0.2);
-}
-
-#newsFeaturedStrip::-webkit-scrollbar {
-    height: 6px;
-}
-
-#newsFeaturedStrip::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-}
-
-#newsFeaturedStrip::-webkit-scrollbar-thumb {
-    background: rgba(251, 191, 36, 0.3);
-    border-radius: 3px;
-}
-
-#newsFeaturedStrip::-webkit-scrollbar-thumb:hover {
-    background: rgba(251, 191, 36, 0.5);
-}
-
-/* Animations pour reduced motion */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-</style>
-
-
-<style>
-/* Styles personnalisés supplémentaires pour la grille responsive et les animations */
-.news-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    grid-auto-rows: minmax(180px, auto);
-}
-
-/* Classes pour les tailles de cartes Bento */
-.bento-large {
-    grid-column: span 2;
-    grid-row: span 2;
-    min-height: 400px;
-}
-
-.bento-medium {
-    grid-column: span 1;
-    grid-row: span 1;
-    min-height: 240px;
-}
-
-.bento-small {
-    grid-column: span 1;
-    grid-row: span 1;
-    min-height: 180px;
-}
-
-/* Mode plein écran */
-#newsContainer.news-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 90;
-    width: 100vw;
-    height: 100vh;
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(0, 0, 0, 0.95));
-    padding: 1.5rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 !important;
-    display: block !important;
-}
-
-@media (min-width: 640px) {
-    #newsContainer.news-fullscreen {
-        padding: 2rem;
-    }
-}
-
-#newsContainer.news-fullscreen .news-grid {
-    max-width: 80rem;
-    margin: 0 auto;
-}
-
-/* Backdrop visible */
-#newsBackdrop.visible {
-    opacity: 1;
-    pointer-events: auto;
-    display: block;
-}
-
-/* Animations pour reduced motion */
-@media (prefers-reduced-motion: reduce) {
-    .news-card, 
-    .news-open-button, 
-    .refresh-news,
-    .news-play,
-    #newsBackdrop {
-        transition: none;
-        animation: none;
-    }
-    
-    .news-image {
-        transform: none;
-    }
-}
-
-/* Responsive breakpoints pour la grille */
-@media (max-width: 640px) {
-    .news-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .bento-large,
-    .bento-medium,
-    .bento-small {
-        grid-column: span 1;
-        grid-row: span 1;
-        min-height: 200px;
-    }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-    .news-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-    }
-    
-    .bento-large {
-        grid-column: span 2;
-        grid-row: span 2;
-    }
-    
-    .bento-medium {
-        grid-column: span 1;
-        grid-row: span 1;
-    }
-    
-    .bento-small {
-        grid-column: span 1;
-        grid-row: span 1;
-    }
-}
-
-@media (min-width: 1025px) {
-    .news-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2rem;
-    }
-    
-    .bento-large {
-        grid-column: span 2;
-        grid-row: span 2;
-    }
-}
-
-/* Skeleton loading animation */
-.skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03));
-    position: relative;
-    overflow: hidden;
-}
-
-.skeleton::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%);
-    transform: translateX(-100%);
-    animation: skeleton-shimmer 1.4s linear infinite;
-}
-
-@keyframes skeleton-shimmer {
-    to { transform: translateX(100%); }
-}
-
-/* Focus states pour l'accessibilité */
-.news-card:focus-visible {
-    outline: 2px solid rgb(251, 191, 36);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.3);
-}
-
-.news-open-button:focus-visible,
-.refresh-news:focus-visible,
-#newsCloseButton:focus-visible,
-#newsErrorRetry:focus-visible {
-    outline: 2px solid rgb(251, 191, 36);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.3);
-}
-
-/* Animation de rotation pour le bouton refresh */
-.refresh-news:hover svg {
-    animation: rotate 0.5s ease-in-out;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(180deg); }
-}
-</style>
+        const newsGrid = document.getElementById('newsGrid');
+        if (newsGrid) {
+            observer.observe(newsGrid, { childList: true });
+        }
+    })();
+</script>

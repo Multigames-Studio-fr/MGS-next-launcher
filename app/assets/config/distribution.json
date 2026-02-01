@@ -1,6 +1,6 @@
 {
   "version": "3.56.0",
-  "rss": "https://multigames-studio.fr/rss",
+  "rss": "https://multigames-studio.fr/api/news/rss.xml",
   "discord": {
     "clientId": "771444716109430856",
     "smallImageText": "Multigames-studio.fr",

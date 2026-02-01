@@ -777,8 +777,12 @@
             }
 
             /* Contrôle explicite de l'affichage des boutons */
-            #launch_button.btn-hidden {
+            #launch_button.btn-hidden,
+            #launch_button.hidden {
                 display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
             }
 
             /* Contrôles quand instances actives */
@@ -786,10 +790,13 @@
                 display: none;
                 flex-direction: row;
                 gap: 0.5rem;
+                width: 100%;
             }
-
+            
             #running_controls.visible {
                 display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
 
             #add_instance_button:disabled {
@@ -1098,15 +1105,10 @@
                         <span class="text-sm font-medium">Paramètres</span>
                     </button>
 
-                    <!-- <button id="openNewsButton" class="btn btn-ghost w-full justify-start">
+                    <button id="openNewsButton" class="btn btn-ghost w-full justify-start">
                         <i class="bi bi-newspaper text-lg"></i>
                         <span class="text-sm font-medium">Actualités</span>
                     </button>
-
-                    <button id="toggleSidebarSideButton" class="btn btn-ghost w-full justify-start" aria-label="Position de la barre">
-                        <i class="bi bi-layout-sidebar-inset text-lg"></i>
-                        <span class="text-sm font-medium">Barre: Droite</span>
-                    </button>-->
                 </div>
 
                 <!-- Réseaux sociaux -->
@@ -1275,7 +1277,7 @@
                                 </button>
 
                                 <!-- Conteneur STOP + PLAY (quand instance active) -->
-                                <div id="running_controls" class="gap-2">
+                                <div id="running_controls" class="gap-2 w-full" style="display: none;">
                                     <!-- Bouton ARRÊTER -->
                                     <button id="stop_button"
                                         class="group relative flex-1 h-14 rounded-xl font-bold text-lg text-white overflow-hidden transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98] bg-gradient-to-r from-red-600 to-red-500 shadow-lg shadow-red-500/25">
@@ -1531,14 +1533,25 @@
 
                 // Afficher état: Prêt à lancer
                 showReady: function () {
-                    console.log('[LaunchUI] showReady');
+                    console.log('[LaunchUI] showReady - RESTORING LAUNCH BUTTON');
                     this.state.isLaunching = false;
                     this.state.isRunning = false;
 
-                    // Afficher bouton Lancer
-                    if (this.elements.launchBtn) {
+                    // Afficher bouton Lancer - réinitialiser TOUS les styles
+                    const launchBtn = document.getElementById('launch_button');
+                    if (launchBtn) {
+                        launchBtn.classList.remove('hidden', 'btn-hidden');
+                        launchBtn.style.display = '';  // Laisser le CSS par défaut
+                        launchBtn.style.visibility = 'visible';
+                        launchBtn.style.opacity = '1';
+                        launchBtn.disabled = false;
+                        console.log('[LaunchUI] launch_button RESTORED');
+                    }
+                    if (this.elements.launchBtn && this.elements.launchBtn !== launchBtn) {
                         this.elements.launchBtn.classList.remove('hidden', 'btn-hidden');
                         this.elements.launchBtn.style.display = '';
+                        this.elements.launchBtn.style.visibility = 'visible';
+                        this.elements.launchBtn.style.opacity = '1';
                         this.elements.launchBtn.disabled = false;
                     }
                     if (this.elements.launchIcon) {
@@ -1548,10 +1561,15 @@
                         this.elements.launchText.textContent = 'Lancer';
                     }
 
-                    // Cacher le conteneur running_controls
+                    // CACHER le conteneur running_controls
                     const runningControls = document.getElementById('running_controls');
                     if (runningControls) {
                         runningControls.classList.remove('visible');
+                        runningControls.classList.add('hidden');
+                        runningControls.style.display = 'none';
+                        runningControls.style.visibility = 'hidden';
+                        runningControls.style.opacity = '0';
+                        console.log('[LaunchUI] running_controls HIDDEN');
                     }
 
                     // Cacher statut
@@ -1559,6 +1577,8 @@
                         this.elements.statusContainer.classList.add('hidden');
                         this.elements.statusContainer.style.display = '';
                     }
+                    
+                    console.log('[LaunchUI] showReady COMPLETE');
                 },
 
                 // Afficher état: Téléchargement/Préparation
@@ -1577,6 +1597,7 @@
                     const runningControls = document.getElementById('running_controls');
                     if (runningControls) {
                         runningControls.classList.remove('visible');
+                        runningControls.style.display = 'none';
                     }
 
                     // Afficher statut de téléchargement
@@ -1601,22 +1622,38 @@
                     this.state.isLaunching = false;
                     this.state.isRunning = true;
 
-                    // CACHER le bouton Lancer
-                    if (this.elements.launchBtn) {
+                    // CACHER le bouton Lancer - méthode agressive
+                    const launchBtn = document.getElementById('launch_button');
+                    if (launchBtn) {
+                        launchBtn.classList.add('hidden', 'btn-hidden');
+                        launchBtn.style.display = 'none';
+                        launchBtn.style.visibility = 'hidden';
+                        launchBtn.style.opacity = '0';
+                        console.log('[LaunchUI] launch_button hidden, display:', launchBtn.style.display);
+                    }
+                    if (this.elements.launchBtn && this.elements.launchBtn !== launchBtn) {
                         this.elements.launchBtn.classList.add('hidden', 'btn-hidden');
                         this.elements.launchBtn.style.display = 'none';
+                        this.elements.launchBtn.style.visibility = 'hidden';
                     }
 
                     // AFFICHER le conteneur running_controls (contient Stop + Add)
                     const runningControls = document.getElementById('running_controls');
                     if (runningControls) {
                         runningControls.classList.add('visible');
-                        console.log('[LaunchUI] running_controls classList:', runningControls.classList.toString());
+                        runningControls.classList.remove('hidden');
+                        runningControls.style.display = 'flex';
+                        runningControls.style.visibility = 'visible';
+                        runningControls.style.opacity = '1';
+                        console.log('[LaunchUI] running_controls VISIBLE, display:', runningControls.style.display, 'classList:', runningControls.classList.toString());
+                    } else {
+                        console.error('[LaunchUI] running_controls NOT FOUND!');
                     }
 
                     // S'assurer que le bouton Stop est actif
                     if (this.elements.stopBtn) {
                         this.elements.stopBtn.disabled = false;
+                        this.elements.stopBtn.style.display = '';
                     }
                     if (this.elements.stopIcon) {
                         this.elements.stopIcon.className = 'bi bi-stop-fill text-2xl';
@@ -1625,11 +1662,18 @@
                         this.elements.stopText.textContent = 'Arrêter';
                     }
 
-                    // Cacher statut
+                    // Cacher statut de téléchargement
+                    const launchStatus = document.getElementById('launch_status');
+                    if (launchStatus) {
+                        launchStatus.classList.add('hidden');
+                        launchStatus.style.display = 'none';
+                    }
                     if (this.elements.statusContainer) {
                         this.elements.statusContainer.classList.add('hidden');
                         this.elements.statusContainer.style.display = 'none';
                     }
+                    
+                    console.log('[LaunchUI] showRunning COMPLETE');
                 },
 
                 // Afficher état: Arrêt en cours
@@ -1702,6 +1746,39 @@
     <script src="./assets/js/scripts/landing-inline.js"></script>
     <script src="./assets/js/scripts/landing.js"></script>
     <script src="./assets/js/scripts/news.js"></script>
+    <script>
+        // Bouton Actualités - ouvre la vue news
+        (function() {
+            const newsBtn = document.getElementById('openNewsButton');
+            if (newsBtn) {
+                newsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Utiliser switchView si disponible
+                    if (typeof switchView === 'function' && typeof getCurrentView === 'function') {
+                        switchView(getCurrentView(), '#newsContainer');
+                    } else if (typeof window.switchView === 'function' && typeof window.getCurrentView === 'function') {
+                        window.switchView(window.getCurrentView(), '#newsContainer');
+                    } else {
+                        // Fallback: afficher directement le container
+                        const newsContainer = document.getElementById('newsContainer');
+                        const landingContainer = document.getElementById('landingContainer');
+                        if (newsContainer) {
+                            newsContainer.classList.remove('hidden');
+                            newsContainer.style.display = 'block';
+                        }
+                        if (landingContainer) {
+                            landingContainer.classList.add('hidden');
+                            landingContainer.style.display = 'none';
+                        }
+                    }
+                    // Initialiser les news si pas encore fait
+                    if (typeof window.initNews === 'function') {
+                        try { window.initNews(); } catch(e) { console.warn('initNews error', e); }
+                    }
+                });
+            }
+        })();
+    </script>
     <script>
         (function () {
             'use strict';

@@ -288,6 +288,7 @@ function updateLaunchUIForServer(serverId){
                 }
                 if (runningControls) {
                     runningControls.classList.add('visible');
+                    runningControls.style.display = 'flex';
                 }
                 if (launchStatus) {
                     launchStatus.classList.add('hidden');
@@ -1390,8 +1391,11 @@ let hasRPC = false
 // Joined server regex
 // Change this if your server uses something different.
 const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
-const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+)$/
+const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+|Fabric Loader .+|Loading for game Minecraft .+|Environment: .+|Main\.java|Backend library: .+|minecraft:entity_type|net\.minecraft\.client\.main\.Main)$/i
+// Pattern to detect mc-logger buffer activity (indicates game process is running and producing output)
+const MC_LOGGER_BUFFER_REGEX = /\[mc-logger\]\s*buffered.*bufferLen/i
 const MIN_LINGER = 5000
+const MAX_LAUNCH_WAIT = 60000 // Maximum wait time for game launch detection (60 seconds)
 
 /**
  * Generate a deterministic offline-style UUID from a player name.
@@ -2376,8 +2380,36 @@ async function dlAsync(login = true) {
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
         const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
 
+        let loadCompleted = false
+        let mcLogLineCount = 0
+        const MC_LOG_LINE_THRESHOLD = 3 // Number of mc-log-line events to trigger game detection
+        
         const onLoadComplete = () => {
-            toggleLaunchArea(false)
+            if (loadCompleted) return // Prevent multiple calls
+            loadCompleted = true
+            
+            // Clear the fallback timeout
+            if (launchFallbackTimeout) {
+                clearTimeout(launchFallbackTimeout)
+                launchFallbackTimeout = null
+            }
+            
+            // Remove the mc-log-line listener
+            try {
+                const { ipcRenderer } = require('electron')
+                ipcRenderer.removeListener('mc-log-line', mcLogLineListener)
+            } catch (e) { /* ignore */ }
+            
+            // IMPORTANT: Call showRunning() directly since the game IS running
+            // Don't use toggleLaunchArea(false) because instanceStateMap might not be updated yet
+            if (window.LaunchUI && typeof window.LaunchUI.showRunning === 'function') {
+                console.log('[Landing] onLoadComplete - calling showRunning() directly')
+                window.LaunchUI.showRunning()
+            } else {
+                // Fallback: toggle launch area
+                toggleLaunchArea(false)
+            }
+            
             if(hasRPC){
                 DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.loading'))
                 proc.stdout.on('data', gameStateChange)
@@ -2386,13 +2418,88 @@ async function dlAsync(login = true) {
             proc.stderr.removeListener('data', gameErrorListener)
         }
         const start = Date.now()
+        
+        // Listen for mc-log-line IPC events (from mc-logger broadcaster)
+        // This is the primary method to detect game launch
+        const mcLogLineListener = (_, line) => {
+            if (loadCompleted) return
+            mcLogLineCount++
+            loggerLaunchSuite.debug(`[mc-log-line] received line #${mcLogLineCount}: ${(line || '').substring(0, 50)}...`)
+            
+            // After receiving a few log lines, consider the game launched
+            if (mcLogLineCount >= MC_LOG_LINE_THRESHOLD) {
+                loggerLaunchSuite.info(`Game launch detected via mc-log-line (${mcLogLineCount} lines received)`)
+                const diff = Date.now() - start
+                if (diff < MIN_LINGER) {
+                    setTimeout(onLoadComplete, MIN_LINGER - diff)
+                } else {
+                    onLoadComplete()
+                }
+            }
+        }
+        
+        try {
+            const { ipcRenderer } = require('electron')
+            ipcRenderer.on('mc-log-line', mcLogLineListener)
+            loggerLaunchSuite.info('Listening for mc-log-line events to detect game launch')
+        } catch (e) {
+            loggerLaunchSuite.warn('Could not setup mc-log-line listener:', e)
+        }
+
+        // Fallback timeout - if the game doesn't produce expected output within MAX_LAUNCH_WAIT,
+        // assume it has launched and hide the progress bar anyway
+        let launchFallbackTimeout = setTimeout(() => {
+            if (!loadCompleted) {
+                loggerLaunchSuite.warn('Game launch detection timed out, assuming game started successfully')
+                onLoadComplete()
+            }
+        }, MAX_LAUNCH_WAIT)
 
         // Attach a temporary listener to the client output.
         // Will wait for a certain bit of text meaning that
         // the client application has started, and we can hide
         // the progress bar stuff.
+        let hasReceivedAnyOutput = false
         const tempListener = function(data){
-            if(GAME_LAUNCH_REGEX.test(data.trim())){
+            const trimmedData = data.trim()
+            
+            // Track if we've received any output from the game
+            if (!hasReceivedAnyOutput && trimmedData.length > 0) {
+                hasReceivedAnyOutput = true
+                loggerLaunchSuite.info('Game process started producing output')
+            }
+            
+            // PRIMARY: Detect game launch via mc-logger buffer activity
+            if (!loadCompleted && MC_LOGGER_BUFFER_REGEX.test(trimmedData)) {
+                loggerLaunchSuite.info('Game launch detected via mc-logger buffer activity')
+                const diff = Date.now()-start
+                if(diff < MIN_LINGER) {
+                    setTimeout(onLoadComplete, MIN_LINGER-diff)
+                } else {
+                    onLoadComplete()
+                }
+                return
+            }
+            
+            if(GAME_LAUNCH_REGEX.test(trimmedData)){
+                loggerLaunchSuite.info('Game launch detected via regex match')
+                const diff = Date.now()-start
+                if(diff < MIN_LINGER) {
+                    setTimeout(onLoadComplete, MIN_LINGER-diff)
+                } else {
+                    onLoadComplete()
+                }
+            }
+            
+            // Also trigger on common Minecraft startup messages as a fallback
+            if (!loadCompleted && (
+                trimmedData.includes('Setting user:') ||
+                trimmedData.includes('Preparing level') ||
+                trimmedData.includes('Reloading ResourceManager') ||
+                trimmedData.includes('LWJGL Version') ||
+                trimmedData.includes('OpenAL initialized')
+            )) {
+                loggerLaunchSuite.info('Game launch detected via fallback pattern: ' + trimmedData.substring(0, 80))
                 const diff = Date.now()-start
                 if(diff < MIN_LINGER) {
                     setTimeout(onLoadComplete, MIN_LINGER-diff)
@@ -2476,6 +2583,13 @@ async function dlAsync(login = true) {
                     console.info('[Landing] calling window.onInstanceStateChanged', payload)
                     window.onInstanceStateChanged(payload)
                 }
+                
+                // FORCE immediate UI update to show stop button
+                if (window.LaunchUI && typeof window.LaunchUI.showRunning === 'function') {
+                    console.info('[Landing] Force calling LaunchUI.showRunning()')
+                    window.LaunchUI.showRunning()
+                }
+                
                 // Also explicitly send to main so it can broadcast to other renderers
                 try {
                     const { ipcRenderer } = require('electron')
@@ -2538,6 +2652,18 @@ async function dlAsync(login = true) {
             try {
                 proc.on('close', async (code, signal) => {
                     try {
+                        // Clear launch fallback timeout if still pending
+                        if (launchFallbackTimeout) {
+                            clearTimeout(launchFallbackTimeout)
+                            launchFallbackTimeout = null
+                        }
+                        
+                        // Ensure UI is updated even if launch detection failed
+                        if (!loadCompleted) {
+                            loadCompleted = true
+                            toggleLaunchArea(false)
+                        }
+                        
                         // Arrêter la surveillance des mods
                         if (typeof modWatcher !== 'undefined' && modWatcher) {
                             try {
@@ -3552,9 +3678,11 @@ window.onInstanceStateChanged = function(payload){
                 }
                 if (runningControls) {
                     runningControls.classList.add('visible');
+                    runningControls.style.display = 'flex';
                 }
                 if (launchStatus) {
                     launchStatus.classList.add('hidden');
+                    launchStatus.style.display = 'none';
                 }
             }
         } else if (payload.starting === true) {
@@ -3577,6 +3705,7 @@ window.onInstanceStateChanged = function(payload){
                 }
                 if (runningControls) {
                     runningControls.classList.remove('visible');
+                    runningControls.style.display = 'none';
                 }
             }
         }

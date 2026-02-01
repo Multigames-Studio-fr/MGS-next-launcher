@@ -3,6 +3,12 @@ if (typeof MSFT_OPCODE === 'undefined') {
     var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require('./assets/js/ipcconstants')
 }
 
+const { LoggerUtil } = require('helios-core')
+const { isDisplayableError } = require('helios-core/common')
+const AuthManager = require('./assets/js/authmanager')
+
+const msftLoginLogger = LoggerUtil.getLogger('Microsoft Login')
+
 const loginOptionsCancelContainer = document.getElementById('loginOptionCancelContainer')
 const loginOptionMicrosoft = document.getElementById('loginOptionMicrosoft')
 const loginOptionsCancelButton = document.getElementById('loginOptionCancelButton')
@@ -112,10 +118,10 @@ loginOptionsCancelButton.onclick = (e) => {
 
 // Gérer les réponses de l'authentification Microsoft
 ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
-    // Masquer le statut de connexion et réactiver le bouton
-    resetLoginUI()
-
     if (arguments_[0] === MSFT_REPLY_TYPE.ERROR) {
+        // Masquer le statut de connexion et réactiver le bouton en cas d'erreur
+        resetLoginUI()
+        
         const viewOnClose = arguments_[2]
         const errorType = arguments_[1]
         
@@ -142,6 +148,8 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
         
         // Erreur dans la réponse de Microsoft
         if (Object.prototype.hasOwnProperty.call(queryMap, 'error')) {
+            resetLoginUI()
+            
             const error = queryMap.error
             const errorDesc = queryMap.error_description || 'Erreur d\'authentification Microsoft'
             
@@ -161,11 +169,46 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
             
         } else if (Object.prototype.hasOwnProperty.call(queryMap, 'code')) {
             // Succès - nous avons reçu le code d'autorisation
-            console.log('Microsoft auth successful, received auth code')
+            msftLoginLogger.info('Acquired authCode, proceeding with authentication.')
             loginAttemptCount = 0 // Reset on success
-            switchView(getCurrentView(), loginOptionsViewOnLoginSuccess, 500, 500)
+            
+            const authCode = queryMap.code
+            
+            // Afficher un indicateur de chargement pendant l'authentification
+            $('#loginStatusMicrosoft').removeClass('hidden')
+            $('#loginOptionMicrosoft').prop('disabled', true).addClass('opacity-50 cursor-not-allowed')
+            
+            AuthManager.addMicrosoftAccount(authCode)
+                .then((value) => {
+                    msftLoginLogger.info('Microsoft account added successfully.')
+                    // Mettre à jour le compte sélectionné
+                    if (typeof updateSelectedAccount === 'function') {
+                        updateSelectedAccount(value)
+                    }
+                    resetLoginUI()
+                    switchView(getCurrentView(), loginOptionsViewOnLoginSuccess, 500, 500)
+                })
+                .catch((displayableError) => {
+                    resetLoginUI()
+                    let actualDisplayableError
+                    if (isDisplayableError(displayableError)) {
+                        msftLoginLogger.error('Error while logging in.', displayableError)
+                        actualDisplayableError = displayableError
+                    } else {
+                        // Unexpected error
+                        msftLoginLogger.error('Unhandled error during login.', displayableError)
+                        actualDisplayableError = {
+                            title: 'Erreur de connexion',
+                            desc: displayableError.message || 'Une erreur inattendue s\'est produite.',
+                            message: displayableError.message || 'Une erreur inattendue s\'est produite.'
+                        }
+                    }
+                    
+                    showLoginError(actualDisplayableError.title, actualDisplayableError.desc, 10000)
+                })
         } else {
             // Réponse inattendue sans code ni erreur
+            resetLoginUI()
             console.error('Unexpected Microsoft auth response:', queryMap)
             showLoginError('Erreur inattendue', 'La réponse de Microsoft est invalide. Veuillez réessayer.')
         }
