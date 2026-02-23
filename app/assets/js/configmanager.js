@@ -11,8 +11,6 @@ try {
 const logger = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('ConfigManager') : console
 const os = require("os");
 const path = require("path");
-
-const logger = LoggerUtil.getLogger("ConfigManager");
 const SqlStorage = require('./sqlstorage')
 
 const sysRoot =
