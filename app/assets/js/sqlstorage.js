@@ -1,7 +1,15 @@
 // SQLite storage using sql.js (WASM) for portability (no native rebuild)
 const fs = require('fs')
 const path = require('path')
-const { LoggerUtil } = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore - may be provided globally
+}
 const { getSqlJsConfig } = require('./wasm-config')
 const log = LoggerUtil.getLogger('SqlStorage')
 

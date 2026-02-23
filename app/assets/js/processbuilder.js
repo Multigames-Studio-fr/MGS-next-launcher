@@ -2,7 +2,15 @@ const AdmZip                = require('adm-zip')
 const child_process         = require('child_process')
 const crypto                = require('crypto')
 const fs                    = require('fs-extra')
-const { LoggerUtil }        = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore
+}
 const { getMojangOS, isLibraryCompatible, mcVersionAtLeast }  = require('helios-core/common')
 const { Type }              = require('helios-distribution-types')
 const os                    = require('os')
@@ -14,7 +22,7 @@ const AuthManager              = require('./authmanager')
 const { ipcRenderer }          = require('electron')
 const { MSFT_OPCODE }         = require('./ipcconstants')
 
-const logger = LoggerUtil.getLogger('ProcessBuilder')
+const logger = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('ProcessBuilder') : console
 
 
 /**

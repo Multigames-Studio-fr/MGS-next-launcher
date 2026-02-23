@@ -1,5 +1,14 @@
 const fs = require("fs-extra");
-const { LoggerUtil } = require("helios-core");
+let LoggerUtil
+try {
+  if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+    const _hc = require('helios-core')
+    LoggerUtil = _hc && _hc.LoggerUtil
+  }
+} catch (e) {
+  // ignore
+}
+const logger = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('ConfigManager') : console
 const os = require("os");
 const path = require("path");
 

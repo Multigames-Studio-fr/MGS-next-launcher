@@ -1,11 +1,16 @@
 const fs = require('fs-extra')
 const path = require('path')
-const { LoggerUtil } = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore - may be provided globally
+}
 
-const fs = require('fs-extra')
-const { LoggerUtil } = require('helios-core')
-
-const logger = LoggerUtil.getLogger('ResourcePackFixer')
+const logger = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('ResourcePackFixer') : console
 
 // Stubbed ResourcePackFixer: module removed by request. This minimal
 // implementation provides no-op functions to keep any existing imports

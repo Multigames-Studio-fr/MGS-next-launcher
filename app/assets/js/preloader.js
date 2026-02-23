@@ -6,7 +6,15 @@ const path           = require('path')
 const ConfigManager  = require('./configmanager')
 const { DistroAPI }  = require('./distromanager')
 const LangLoader     = require('./langloader')
-const { LoggerUtil } = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore - may be provided globally
+}
 // eslint-disable-next-line no-unused-vars
 const { HeliosDistribution } = require('helios-core/common')
 

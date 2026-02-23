@@ -10,7 +10,15 @@
  */
 // Requirements
 const ConfigManager          = require('./configmanager')
-const { LoggerUtil }         = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore - may be provided globally
+}
 const { RestResponseStatus } = require('helios-core/common')
 const { MojangRestAPI, mojangErrorDisplayable, MojangErrorCode } = require('helios-core/mojang')
 const { MicrosoftAuth, microsoftErrorDisplayable, MicrosoftErrorCode } = require('helios-core/microsoft')
@@ -41,7 +49,7 @@ function makeMicrosoftDisplayable(code) {
 }
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 
-const log = LoggerUtil.getLogger('AuthManager')
+const log = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('AuthManager') : console
 
 // Functions
 

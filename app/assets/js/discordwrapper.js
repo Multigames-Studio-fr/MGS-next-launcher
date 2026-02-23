@@ -1,5 +1,13 @@
 // Work in progress
-const { LoggerUtil } = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore - may be provided globally
+}
 
 const logger = LoggerUtil.getLogger('DiscordWrapper')
 

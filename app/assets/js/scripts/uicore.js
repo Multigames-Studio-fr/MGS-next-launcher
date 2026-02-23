@@ -9,11 +9,19 @@ const $                              = require('jquery')
 const {ipcRenderer, shell, webFrame} = require('electron')
 const remote                         = require('@electron/remote')
 const isDev                          = require('./assets/js/isdev')
-const { LoggerUtil }                 = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && _hc.LoggerUtil
+    }
+} catch (e) {
+    // ignore
+}
 const Lang                           = require('./assets/js/langloader')
 
-const loggerUICore             = LoggerUtil.getLogger('UICore')
-const loggerAutoUpdater        = LoggerUtil.getLogger('AutoUpdater')
+const loggerUICore = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('UICore') : console
+const loggerAutoUpdater = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('AutoUpdater') : console
 
 // Log deprecation and process warnings.
 process.traceProcessWarnings = true
