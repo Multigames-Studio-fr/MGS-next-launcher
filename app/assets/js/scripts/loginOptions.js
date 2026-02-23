@@ -3,7 +3,15 @@ if (typeof MSFT_OPCODE === 'undefined') {
     var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require('./assets/js/ipcconstants')
 }
 
-const { LoggerUtil } = require('helios-core')
+let LoggerUtil
+try {
+    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+        const _hc = require('helios-core')
+        LoggerUtil = _hc && (_hc.LoggerUtil || _hc.LoggerUtil)
+    }
+} catch (e) {
+    // ignore; LoggerUtil may be provided globally by other bundles
+}
 const { isDisplayableError } = require('helios-core/common')
 const AuthManager = require('./assets/js/authmanager')
 

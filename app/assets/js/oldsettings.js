@@ -574,7 +574,7 @@ function processLogOut(val, isLastAccount) {
         validateSelectedAccount();
       }
       if (isLastAccount) {
-        loginOptionsCancelEnabled(false);
+        if (typeof loginOptionsCancelEnabled === 'function') loginOptionsCancelEnabled(false);
         loginOptionsViewOnLoginSuccess = VIEWS.settings;
         loginOptionsViewOnLoginCancel = VIEWS.loginOptions;
         switchView(getCurrentView(), VIEWS.loginOptions);
@@ -623,7 +623,7 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGOUT, (_, ...arguments_) => {
           validateSelectedAccount();
         }
         if (isLastAccount) {
-          loginOptionsCancelEnabled(false);
+          if (typeof loginOptionsCancelEnabled === 'function') loginOptionsCancelEnabled(false);
           loginOptionsViewOnLoginSuccess = VIEWS.settings;
           loginOptionsViewOnLoginCancel = VIEWS.loginOptions;
           switchView(getCurrentView(), VIEWS.loginOptions);

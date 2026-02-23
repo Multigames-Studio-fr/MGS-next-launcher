@@ -420,7 +420,7 @@ async function showMainUI(data) {
                 currentView = VIEWS.landing
                 if (DISABLE_VIEW_ANIMATIONS) $(VIEWS.landing).show(); else $(VIEWS.landing).fadeIn(1000)
             } else {
-                loginOptionsCancelEnabled(false)
+                if (typeof loginOptionsCancelEnabled === 'function') loginOptionsCancelEnabled(false)
                 loginOptionsViewOnLoginSuccess = VIEWS.landing
                 loginOptionsViewOnLoginCancel = VIEWS.loginOptions
                 currentView = VIEWS.loginOptions
@@ -843,9 +843,9 @@ async function validateSelectedAccount(force = false) {
                         ConfigManager.save()
                         validateSelectedAccount()
                     }
-                    loginOptionsCancelEnabled(true)
+                    if (typeof loginOptionsCancelEnabled === 'function') loginOptionsCancelEnabled(true)
                 } else {
-                    loginOptionsCancelEnabled(false)
+                    if (typeof loginOptionsCancelEnabled === 'function') loginOptionsCancelEnabled(false)
                 }
                 toggleOverlay(false)
                 switchView(getCurrentView(), VIEWS.loginOptions)
