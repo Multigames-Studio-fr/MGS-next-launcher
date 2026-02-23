@@ -9,19 +9,14 @@ const $                              = require('jquery')
 const {ipcRenderer, shell, webFrame} = require('electron')
 const remote                         = require('@electron/remote')
 const isDev                          = require('./assets/js/isdev')
-let LoggerUtil
-try {
-    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
-        const _hc = require('helios-core')
-        LoggerUtil = _hc && _hc.LoggerUtil
-    }
-} catch (e) {
-    // ignore
-}
+const _LoggerUtil = (typeof window !== 'undefined' && window.LoggerUtil) || (function(){
+    try { const _hc = require('helios-core'); if(_hc && _hc.LoggerUtil){ if(typeof window !== 'undefined') window.LoggerUtil = _hc.LoggerUtil; return _hc.LoggerUtil } } catch(e) {}
+    return null
+})()
 const Lang                           = require('./assets/js/langloader')
 
-const loggerUICore = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('UICore') : console
-const loggerAutoUpdater = (LoggerUtil && typeof LoggerUtil.getLogger === 'function') ? LoggerUtil.getLogger('AutoUpdater') : console
+const loggerUICore = (_LoggerUtil && typeof _LoggerUtil.getLogger === 'function') ? _LoggerUtil.getLogger('UICore') : console
+const loggerAutoUpdater = (_LoggerUtil && typeof _LoggerUtil.getLogger === 'function') ? _LoggerUtil.getLogger('AutoUpdater') : console
 
 // Log deprecation and process warnings.
 process.traceProcessWarnings = true

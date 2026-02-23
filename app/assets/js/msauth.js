@@ -5,17 +5,12 @@
 const { RestResponseStatus } = require('helios-core/common')
 const { MicrosoftAuth, microsoftErrorDisplayable, MicrosoftErrorCode } = require('helios-core/microsoft')
 const { AZURE_CLIENT_ID } = require('./ipcconstants')
-let LoggerUtil
-try {
-    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
-        const _hc = require('helios-core')
-        LoggerUtil = _hc && _hc.LoggerUtil
-    }
-} catch (e) {
-    // ignore - may be provided globally
-}
+const _LoggerUtil = (typeof window !== 'undefined' && window.LoggerUtil) || (function(){
+    try { const _hc = require('helios-core'); if(_hc && _hc.LoggerUtil){ if(typeof window !== 'undefined') window.LoggerUtil = _hc.LoggerUtil; return _hc.LoggerUtil } } catch(e) {}
+    return null
+})()
 
-const log = LoggerUtil.getLogger('MSAuth')
+const log = (_LoggerUtil && typeof _LoggerUtil.getLogger === 'function') ? _LoggerUtil.getLogger('MSAuth') : console
 
 function makeMicrosoftDisplayable(code) {
     try {

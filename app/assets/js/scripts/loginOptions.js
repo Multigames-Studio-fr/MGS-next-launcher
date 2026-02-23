@@ -1,3 +1,4 @@
+(function(){
 // Import IPC constants if not already loaded
 if (typeof MSFT_OPCODE === 'undefined') {
     var { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require('./assets/js/ipcconstants')
@@ -5,9 +6,12 @@ if (typeof MSFT_OPCODE === 'undefined') {
 
 let LoggerUtil
 try {
-    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
+    if ((typeof window !== 'undefined' && window.LoggerUtil)) {
+        LoggerUtil = window.LoggerUtil
+    } else {
         const _hc = require('helios-core')
-        LoggerUtil = _hc && (_hc.LoggerUtil || _hc.LoggerUtil)
+        LoggerUtil = _hc && _hc.LoggerUtil
+        if (typeof window !== 'undefined') window.LoggerUtil = LoggerUtil
     }
 } catch (e) {
     // ignore; LoggerUtil may be provided globally by other bundles
@@ -222,3 +226,4 @@ ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
         }
     }
 })
+})();

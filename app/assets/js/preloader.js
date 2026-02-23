@@ -6,19 +6,14 @@ const path           = require('path')
 const ConfigManager  = require('./configmanager')
 const { DistroAPI }  = require('./distromanager')
 const LangLoader     = require('./langloader')
-let LoggerUtil
-try {
-    if (typeof LoggerUtil === 'undefined' || !LoggerUtil) {
-        const _hc = require('helios-core')
-        LoggerUtil = _hc && _hc.LoggerUtil
-    }
-} catch (e) {
-    // ignore - may be provided globally
-}
+const _LoggerUtil = (typeof window !== 'undefined' && window.LoggerUtil) || (function(){
+    try { const _hc = require('helios-core'); if(_hc && _hc.LoggerUtil){ if(typeof window !== 'undefined') window.LoggerUtil = _hc.LoggerUtil; return _hc.LoggerUtil } } catch(e) {}
+    return null
+})()
 // eslint-disable-next-line no-unused-vars
 const { HeliosDistribution } = require('helios-core/common')
 
-const logger = LoggerUtil.getLogger('Preloader')
+const logger = (_LoggerUtil && typeof _LoggerUtil.getLogger === 'function') ? _LoggerUtil.getLogger('Preloader') : console
 
 logger.info('Loading..')
 
