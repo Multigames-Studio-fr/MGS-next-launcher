@@ -1,6 +1,6 @@
 {
   "name": "multigames-studio-launcher",
-  "version": "3.8.10",
+  "version": "3.8.11",
   "description": "MultiGames Studios Launcher - Your simple and efficient gaming launcher",
   "author": "MultiGames Studio <noreply@multigames-studio.fr>",
   "license": "MIT",
@@ -94,4 +94,3 @@
     }
   }
 }
- 

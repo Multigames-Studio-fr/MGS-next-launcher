@@ -417,6 +417,9 @@ const _msAddBtn = document.getElementById("settingsAddMicrosoftAccount");
 if (_msAddBtn) {
   _msAddBtn.onclick = (e) => {
     switchView(getCurrentView(), VIEWS.waiting, 500, 500, () => {
+      // loginOptions.js also listens to REPLY_LOGIN; claim the reply so the
+      // single-use auth code is only redeemed once.
+      window.msftLoginOwner = "settings";
       ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, VIEWS.settings, VIEWS.settings);
     });
   };
@@ -424,6 +427,10 @@ if (_msAddBtn) {
 
 // Bind reply for Microsoft Login.
 ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
+  // Reply belongs to loginOptions.js.
+  if (window.msftLoginOwner !== "settings") {
+    return;
+  }
   if (arguments_[0] === MSFT_REPLY_TYPE.ERROR) {
     const viewOnClose = arguments_[2];
     console.log(arguments_);

@@ -102,6 +102,9 @@ loginOptionMicrosoft.onclick = (e) => {
     
     // Lancer la connexion Microsoft sans changer de vue
     try {
+        // settings.js écoute aussi REPLY_LOGIN : on marque ce script comme
+        // destinataire pour que le code d'autorisation ne soit échangé qu'une fois.
+        window.msftLoginOwner = 'loginOptions'
         ipcRenderer.send(
             MSFT_OPCODE.OPEN_LOGIN,
             loginOptionsViewOnLoginSuccess,
@@ -130,6 +133,10 @@ loginOptionsCancelButton.onclick = (e) => {
 
 // Gérer les réponses de l'authentification Microsoft
 ipcRenderer.on(MSFT_OPCODE.REPLY_LOGIN, (_, ...arguments_) => {
+    // Réponse destinée à settings.js : un code d'autorisation n'est utilisable qu'une fois
+    if (window.msftLoginOwner !== 'loginOptions') {
+        return
+    }
     if (arguments_[0] === MSFT_REPLY_TYPE.ERROR) {
         // Masquer le statut de connexion et réactiver le bouton en cas d'erreur
         resetLoginUI()

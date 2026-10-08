@@ -126,6 +126,7 @@ class ProcessBuilder {
                                     console.info('[ProcessBuilder] Sending IPC to main: OPEN_LOGIN')
                                     // Ask main process to open the Microsoft OAuth window.
                                     // Pass the login view selector so the renderer can handle the reply consistently.
+                                    window.msftLoginOwner = 'loginOptions'
                                     ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, '#loginOptionsContainer', '#loginOptionsContainer')
                                     console.info('[ProcessBuilder] IPC OPEN_LOGIN sent')
                                 } catch (e) {
@@ -139,6 +140,7 @@ class ProcessBuilder {
                             logger.error('Error refreshing token:', err)
                             try {
                                 console.info('[ProcessBuilder] Sending IPC to main: OPEN_LOGIN (on catch)')
+                                window.msftLoginOwner = 'loginOptions'
                                 ipcRenderer.send(MSFT_OPCODE.OPEN_LOGIN, '#loginOptionsContainer', '#loginOptionsContainer')
                             } catch (e) {
                                 console.error('[ProcessBuilder] Failed to send OPEN_LOGIN ipc message', e)

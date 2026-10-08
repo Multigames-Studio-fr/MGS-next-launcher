@@ -995,7 +995,7 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
 
             queries.forEach(query => {
                 const [name, value] = query.split('=')
-                queryMap[name] = decodeURI(value)
+                queryMap[name] = decodeURIComponent(value)
             })
 
             try {
